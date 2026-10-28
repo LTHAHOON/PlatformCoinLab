@@ -16,7 +16,6 @@ namespace CoinGame.Network
         private PlayerInput _playerInput;
         private InputAction _moveAction;
         private CancellationTokenSource _moveCts;
-        private Vector3 _moveDir = Vector3.zero;
 
         public override void OnNetworkSpawn()
         {
@@ -29,7 +28,7 @@ namespace CoinGame.Network
                 _controller = GetComponent<CharacterController>();
                 if (!_controller)
                 {
-                    Debug.LogError("ERROR: CharacterController�?찾을 ???�습?�다.");
+                    Debug.LogError("ERROR: CharacterController을 찾을 수 없습니다.");
                     return;
                 }
             }
@@ -38,12 +37,16 @@ namespace CoinGame.Network
                 _playerInput = FindAnyObjectByType<PlayerInput>();
                 if (!_playerInput)
                 {
-                    Debug.LogError("ERROR: PlayerInput??찾을 ???�습?�다.");
+                    Debug.LogError("ERROR: PlayerInput을 찾을 수 없습니다.");
                     return;
                 }
-                _moveAction = _playerInput.actions["Move"];
-                _moveAction.performed += OnMove;
-                _moveAction.canceled += OnMove;
+                InputActionMap playerMap = _playerInput.actions.FindActionMap("Player");
+                _moveAction = playerMap.FindAction("Move");
+                if (_moveAction == null)
+                {
+                    Debug.LogError("ERROR: PlayerInput에서 Player/Move 액션을 찾을 수 없습니다.");
+                    return;
+                }
             }
             if (_moveCts is null)
             {
@@ -70,21 +73,12 @@ namespace CoinGame.Network
             }
             if (_moveAction is not null)
             {
-                _moveAction.performed -= OnMove;
-                _moveAction.canceled -= OnMove;
                 _moveAction.Disable();
             }
             if (_controller)
             {
                 _controller.enabled = false;
             }
-        }
-
-        private void OnMove(InputAction.CallbackContext context)
-        {
-            Vector2 moveDir = context.ReadValue<Vector2>();
-            _moveDir = new(moveDir.x, 0f, moveDir.y);
-            _moveDir.Normalize();
         }
 
         private async UniTaskVoid MoveAsync(CancellationToken token)
@@ -94,9 +88,16 @@ namespace CoinGame.Network
                 while (true)
                 {
                     token.ThrowIfCancellationRequested();
-                    if (_moveDir != Vector3.zero)
+                    Vector2 moveInput = _moveAction.ReadValue<Vector2>();
+                    if (moveInput.sqrMagnitude < 0.0001f && Gamepad.current != null)
                     {
-                        _controller.Move(_moveSpeed * Time.deltaTime * _moveDir);
+                        moveInput = Gamepad.current.leftStick.ReadValue();
+                    }
+
+                    Vector3 moveDir = new(moveInput.x, 0f, moveInput.y);
+                    if (moveDir.sqrMagnitude > 0.0001f)
+                    {
+                        _controller.Move(_moveSpeed * Time.deltaTime * moveDir.normalized);
                     }
                     await UniTask.Yield(PlayerLoopTiming.EarlyUpdate, token);
                 }
@@ -110,4 +111,3 @@ namespace CoinGame.Network
 
     }
 }
-
