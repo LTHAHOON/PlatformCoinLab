@@ -74,7 +74,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
-  GlobalObjectIdHash: 2647734077
+  GlobalObjectIdHash: 40446122
   InScenePlacedSourceGlobalObjectIdHash: 40446122
   m_InScenePlacedDisabledByDefault: 0
   DeferredDespawnTick: 0
@@ -108,9 +108,9 @@ MonoBehaviour:
   RotationInterpolationType: 1
   ScaleInterpolationType: 0
   PositionLerpSmoothing: 1
-  PositionMaxInterpolationTime: 0.1
+  PositionMaxInterpolationTime: 0.07
   RotationLerpSmoothing: 1
-  RotationMaxInterpolationTime: 0.1
+  RotationMaxInterpolationTime: 0.07
   ScaleLerpSmoothing: 1
   ScaleMaxInterpolationTime: 0.1
   AuthorityMode: 1
@@ -149,6 +149,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::NetworkPlayerController
   ShowTopMostFoldoutHeaderGroup: 1
   _moveSpeed: 4
+  _playerPosMinMaxData: {fileID: 11400000, guid: b65b34205923623489a6006f23252fdf, type: 2}
 --- !u!114 &5609413358507253651
 MonoBehaviour:
   m_ObjectHideFlags: 0

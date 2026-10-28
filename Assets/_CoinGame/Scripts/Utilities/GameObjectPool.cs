@@ -9,12 +9,13 @@ namespace CoinGame.Utilities
     {
         protected readonly GameObject _prefab;
         protected readonly ObjectPool<GameObject> _pool;
-
-        public GameObjectPool(GameObject prefab, int defaultCapacity, int maxSize)
+        protected readonly Transform _parent;
+        public GameObjectPool(GameObject prefab, int defaultCapacity, int maxSize, Transform parent = null)
         {
             _prefab = prefab;
             _pool = new ObjectPool<GameObject>(Create, OnGet, OnRelease, OnDestroy,
                 true, defaultCapacity, maxSize);
+            _parent = parent;
         }
 
         public GameObject Get()
@@ -30,7 +31,7 @@ namespace CoinGame.Utilities
 
         protected GameObject Create()
         {
-            GameObject newObj = UnityEngine.Object.Instantiate(_prefab);
+            GameObject newObj = UnityEngine.Object.Instantiate(_prefab, _parent);
             return newObj;
         }
 

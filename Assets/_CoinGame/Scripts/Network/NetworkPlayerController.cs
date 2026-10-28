@@ -7,11 +7,15 @@ using UnityEngine.InputSystem;
 
 namespace CoinGame.Network
 {
+    using CoinGame.Utilities;
+
     [RequireComponent(typeof(CharacterController))]
     public class NetworkPlayerController : NetworkBehaviour
     {
         [SerializeField]
         private float _moveSpeed = 4f;
+        [SerializeField]
+        private VectorMinMaxData _playerPosMinMaxData;
         private CharacterController _controller;
         private PlayerInput _playerInput;
         private InputAction _moveAction;
@@ -97,7 +101,9 @@ namespace CoinGame.Network
                     Vector3 moveDir = new(moveInput.x, 0f, moveInput.y);
                     if (moveDir.sqrMagnitude > 0.0001f)
                     {
-                        _controller.Move(_moveSpeed * Time.deltaTime * moveDir.normalized);
+                        Vector3 moveDelta = _moveSpeed * Time.deltaTime * moveDir.normalized;
+                        Vector3 targetPlayerPos = _controller.transform.position + moveDelta;
+                        _controller.transform.position = targetPlayerPos.Clamp(_playerPosMinMaxData.MinVector, _playerPosMinMaxData.MaxVetor);
                     }
                     await UniTask.Yield(PlayerLoopTiming.EarlyUpdate, token);
                 }

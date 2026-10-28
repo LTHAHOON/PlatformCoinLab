@@ -10,7 +10,7 @@ namespace CoinGame.Utilities
         private static readonly Dictionary<GameObject, NetworkGameObjectPool> Owners = new();
         private readonly Dictionary<GameObject, CancellationTokenSource> _leases = new();
 
-        public NetworkGameObjectPool(GameObject prefab, int defaultCapacity, int maxSize) : base(prefab, defaultCapacity, maxSize) { }
+        public NetworkGameObjectPool(GameObject prefab, int defaultCapacity, int maxSize, Transform parent = null) : base(prefab, defaultCapacity, maxSize, parent) { }
 
         public CancellationToken GetDespawnToken(GameObject instance)
         {
