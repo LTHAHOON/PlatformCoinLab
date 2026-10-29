@@ -2,6 +2,7 @@ using Unity.Netcode;
 using UnityEngine;
 using CoinGame.Player;
 using CoinGame.UI;
+using CoinGame.Sessions;
 
 namespace CoinGame.Network
 {
@@ -29,11 +30,7 @@ namespace CoinGame.Network
             _playerStatsView.SetScoreText(0, _curScore.Value);
             _curScore.OnValueChanged += _playerStatsView.SetScoreText;
             _curScore.OnValueChanged += OnScoreChanged;
-
-            if (PlayerScoreStore.Instance.TryGetScoreData(PlayerAccount.ID, out int curScore))
-            {
-                SetScoreRpc(curScore);
-            }
+            PlayerSession.GetOrInitPlayerSessionFloat(PlayerSessionKey.SCORE, 0f);
         }
 
         public override void OnNetworkDespawn()
@@ -65,7 +62,7 @@ namespace CoinGame.Network
             _curScore.Value += addAmount;
         }
 
-        private const int MaxSetScoreAmount = 0;
+        private const int MaxSetScoreAmount = 10000000;
         [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
         public void SetScoreRpc(int curScore)
         {
@@ -79,7 +76,7 @@ namespace CoinGame.Network
 
         public void OnScoreChanged(int previousValue, int newValue)
         {
-            PlayerScoreStore.Instance.SetScoreData(PlayerAccount.ID, newValue);
+            
         }
     }
 }

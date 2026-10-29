@@ -51,7 +51,8 @@ namespace CoinGame.Utilities
         [SerializeField]
         public bool _canUseObjectPool;
 
-        private NetworkGameObjectPool _objectPool;
+        private NetworkGameObjectPool _networkObjectPool;
+        private GameObjectPool _objectPool;
         private bool _poolHandlerRegistered;
         private NetworkObject _spawnNetworkParent;
         private List<CancellationToken> _spawnedTokens;
@@ -71,10 +72,14 @@ namespace CoinGame.Utilities
             }
             if (_canUseObjectPool && _spawnPrefab)
             {
-                _objectPool = new NetworkGameObjectPool(_spawnPrefab, _spawnCount, _spawnCount, _spawnParent);
                 if (_spawnType == SpawnType.NetworkObject)
                 {
+                    _networkObjectPool = new NetworkGameObjectPool(_spawnPrefab, _spawnCount, _spawnCount, _spawnParent);
                     RegisterPoolHandlerAsync(destroyCancellationToken).Forget();
+                }
+                else
+                {
+                    _objectPool = new GameObjectPool(_spawnPrefab, _spawnCount, _spawnCount, _spawnParent);
                 }
             }
             if (_isDefaultPlayerSpawner)
@@ -107,12 +112,12 @@ namespace CoinGame.Utilities
 
         private void EnsurePoolHandler()
         {
-            if (_objectPool == null || _poolHandlerRegistered)
+            if (_networkObjectPool == null || _poolHandlerRegistered)
             {
                 return;
             }
 
-            _poolHandlerRegistered = NetworkManager.Singleton.PrefabHandler.AddHandler(_spawnPrefab, new PooledNetworkPrefabHandler(_objectPool));
+            _poolHandlerRegistered = NetworkManager.Singleton.PrefabHandler.AddHandler(_spawnPrefab, new PooledNetworkPrefabHandler(_networkObjectPool));
             if (!_poolHandlerRegistered)
             {
                 throw new InvalidOperationException("Pool 핸들러가 등록되지 못했습니다.");
@@ -140,7 +145,7 @@ namespace CoinGame.Utilities
             {
                 NetworkManager.Singleton.PrefabHandler.RemoveHandler(_spawnPrefab);
             }
-            _objectPool?.Dispose();
+            _networkObjectPool?.Dispose();
             if (_spawnCts is not null)
             {
                 _spawnCts.Cancel();
@@ -297,11 +302,16 @@ namespace CoinGame.Utilities
                 Vector3 spawnPosition = await GetSpawnPosition(token);
                 token.ThrowIfCancellationRequested();
 
+                if (_spawnNetworkParent != null)
+                {
+                    await UniTask.WaitUntil(() => _spawnNetworkParent.IsSpawned, cancellationToken: token);
+                }
+
                 EnsurePoolHandler();
                 NetworkObject newNetworkObject = null;
-                if (_objectPool != null)
+                if (_networkObjectPool != null)
                 {
-                    GameObject newObject = _objectPool.Get();
+                    GameObject newObject = _networkObjectPool.Get();
                     if (newObject)
                     {
                         newObject.TryGetComponent(out newNetworkObject);
@@ -334,9 +344,12 @@ namespace CoinGame.Utilities
                 }
                 if (_spawnNetworkParent)
                 {
-                    newNetworkObject.TrySetParent(_spawnNetworkParent);
+                    if (!newNetworkObject.TrySetParent(_spawnNetworkParent))
+                    {
+                        Debug.LogWarning($"Failed to parent spawned NetworkObject '{newNetworkObject.name}' to '{_spawnNetworkParent.name}'.", this);
+                    }
                 }
-                return _objectPool != null ? _objectPool.GetDespawnToken(newNetworkObject.gameObject) : newNetworkObject.destroyCancellationToken;
+                return _networkObjectPool != null ? _networkObjectPool.GetDespawnToken(newNetworkObject.gameObject) : newNetworkObject.destroyCancellationToken;
             }
             catch (OperationCanceledException) { }
             catch (Exception ex)
@@ -370,7 +383,7 @@ namespace CoinGame.Utilities
                             token.ThrowIfCancellationRequested();
                             GameObject newSpawnObject = _objectPool != null ? _objectPool.Get() : Instantiate(_spawnPrefab, _spawnParent);
                             newSpawnObject.transform.position = spawnPosition;
-                            spawnedToken = _objectPool != null ? _objectPool.GetDespawnToken(newSpawnObject) : newSpawnObject.GetCancellationTokenOnDestroy();
+                            spawnedToken = newSpawnObject.GetCancellationTokenOnDestroy();
                             spawnSucceeded = true;
                             break;
                         case SpawnType.NetworkObject:

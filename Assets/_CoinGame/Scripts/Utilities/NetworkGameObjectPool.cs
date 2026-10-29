@@ -21,7 +21,6 @@ namespace CoinGame.Utilities
             return cts.Token;
         }
 
-        // Pooled object: Despawn(false), non-pooled object: Despawn(true), regular object: Destroy()
         public static void Despawn(GameObject instance)
         {
             bool canUseObjectPool = Owners.TryGetValue(instance, out NetworkGameObjectPool pool);
@@ -50,6 +49,7 @@ namespace CoinGame.Utilities
             {
                 return;
             }
+            instance.transform.SetParent(null, true);
             Owners.Remove(instance);
             lease.Cancel();
             lease.Dispose();

@@ -102,8 +102,11 @@ namespace CoinGame.Network
                     if (moveDir.sqrMagnitude > 0.0001f)
                     {
                         Vector3 moveDelta = _moveSpeed * Time.deltaTime * moveDir.normalized;
-                        Vector3 targetPlayerPos = _controller.transform.position + moveDelta;
-                        _controller.transform.position = targetPlayerPos.Clamp(_playerPosMinMaxData.MinVector, _playerPosMinMaxData.MaxVetor);
+                        Vector3 curPlayerPos = _controller.transform.position;
+                        Vector3 targetPlayerPos = curPlayerPos + moveDelta;
+                        targetPlayerPos = targetPlayerPos.Clamp(_playerPosMinMaxData.MinVector, _playerPosMinMaxData.MaxVetor);
+                        
+                        _controller.Move(targetPlayerPos - curPlayerPos);
                     }
                     await UniTask.Yield(PlayerLoopTiming.EarlyUpdate, token);
                 }
