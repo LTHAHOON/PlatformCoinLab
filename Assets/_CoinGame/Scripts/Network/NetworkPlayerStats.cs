@@ -1,18 +1,30 @@
 using Unity.Netcode;
 using UnityEngine;
-using CoinGame.Player;
 using CoinGame.UI;
-using CoinGame.Sessions;
+using CoinGame.Utilities;
+using CoinGame.Player;
 
 namespace CoinGame.Network
 {
     public class NetworkPlayerStats : NetworkBehaviour
     {
         private readonly NetworkVariable<int> _curScore = new(0);
+        private readonly NetworkVariable<PlayerRole> _role = new(PlayerRole.Unselected);
+        private readonly NetworkVariable<double> _coinLockUntil = new(0d);
+        private readonly NetworkVariable<int> _matchPlayerCount = new(0);
         private PlayerStatsView _playerStatsView;
+
+        public PlayerRole Role => _role.Value;
+        public int MatchPlayerCount => _matchPlayerCount.Value;
+        public bool IsCoinLocked => NetworkManager.Singleton != null && NetworkManager.Singleton.ServerTime.Time < _coinLockUntil.Value;
 
         public override void OnNetworkSpawn()
         {
+            if (IsServer)
+            {
+                RefreshMatchPlayerCount();
+            }
+
             if (!IsOwner)
             {
                 return;
@@ -30,7 +42,8 @@ namespace CoinGame.Network
             _playerStatsView.SetScoreText(0, _curScore.Value);
             _curScore.OnValueChanged += _playerStatsView.SetScoreText;
             _curScore.OnValueChanged += OnScoreChanged;
-            PlayerSession.GetOrInitPlayerSessionFloat(PlayerSessionKey.SCORE, 0f);
+            _role.OnValueChanged += OnRoleChanged;
+            PlayerPrefsStorage.GetOrInitPlayerSessionFloat(PlayerSessionKey.SCORE, 0f);
         }
 
         public override void OnNetworkDespawn()
@@ -47,6 +60,7 @@ namespace CoinGame.Network
             _playerStatsView.SetScoreText(0, 0);
             _curScore.OnValueChanged -= _playerStatsView.SetScoreText;
             _curScore.OnValueChanged -= OnScoreChanged;
+            _role.OnValueChanged -= OnRoleChanged;
         }
 
         private const int MaxAddScoreAmount = 10000;
@@ -76,7 +90,76 @@ namespace CoinGame.Network
 
         public void OnScoreChanged(int previousValue, int newValue)
         {
-            
+        }
+
+        public void SelectRole(PlayerRole role)
+        {
+            SelectRoleRpc(role);
+        }
+
+        [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Owner)]
+        private void SelectRoleRpc(PlayerRole role)
+        {
+            if (role is not (PlayerRole.Collector or PlayerRole.Disruptor))
+            {
+                return;
+            }
+
+            foreach (NetworkClient client in NetworkManager.Singleton.ConnectedClientsList)
+            {
+                if (client.PlayerObject == null || client.PlayerObject == gameObject)
+                {
+                    continue;
+                }
+
+                NetworkPlayerStats otherStats = client.PlayerObject.GetComponent<NetworkPlayerStats>();
+                if (otherStats != null && otherStats.Role == role)
+                {
+                    return;
+                }
+            }
+
+            _role.Value = role;
+        }
+
+        public bool TrySpendScore(int amount)
+        {
+            if (!IsServer || amount <= 0 || _curScore.Value < amount)
+            {
+                return false;
+            }
+
+            _curScore.Value -= amount;
+            return true;
+        }
+
+        public void AddScoreServer(int amount)
+        {
+            if (IsServer && amount > 0)
+            {
+                _curScore.Value += amount;
+            }
+        }
+
+        public void SetCoinLockServer(double until)
+        {
+            if (IsServer)
+            {
+                _coinLockUntil.Value = until;
+            }
+        }
+
+        private void OnRoleChanged(PlayerRole previousRole, PlayerRole newRole)
+        {
+        }
+
+        private void RefreshMatchPlayerCount()
+        {
+            NetworkPlayerStats[] stats = FindObjectsByType<NetworkPlayerStats>(FindObjectsSortMode.None);
+            foreach (NetworkPlayerStats playerStats in stats)
+            {
+                playerStats._matchPlayerCount.Value = stats.Length;
+            }
         }
     }
 }

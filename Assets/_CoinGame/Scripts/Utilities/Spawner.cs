@@ -5,6 +5,8 @@ using Cysharp.Threading.Tasks;
 using Unity.Netcode;
 using UnityEngine;
 using CoinGame.Network;
+using CoinGame.Managers;
+using CoinGame.Session;
 
 namespace CoinGame.Utilities
 {
@@ -24,6 +26,8 @@ namespace CoinGame.Utilities
         private Transform _spawnParent;
         [SerializeField]
         private bool _onAwakeSpawn;
+        [SerializeField]
+        private bool _syncSpawnCountWithStageSession;
         [SerializeField]
         private bool _isDefaultPlayerSpawner;
 
@@ -95,9 +99,42 @@ namespace CoinGame.Utilities
             }
             if (_onAwakeSpawn)
             {
-                SpawnAsync(_spawnCts.Token, _spawnCount, _spawnFirstDelay).Forget();
+                if (!_syncSpawnCountWithStageSession)
+                {
+                    SpawnAsync(_spawnCts.Token, _spawnCount, _spawnFirstDelay).Forget();
+                }
             }
 
+        }
+
+        private void OnEnable()
+        {
+            if (_syncSpawnCountWithStageSession)
+            {
+                GameManager.Instance.OnStageSessionChanged += OnStageSessionChanged;
+            }
+        }
+
+        private void OnDisable()
+        {
+            if (_syncSpawnCountWithStageSession)
+            {
+                GameManager.Instance.OnStageSessionChanged -= OnStageSessionChanged;
+            }
+        }
+
+        private void OnStageSessionChanged(StageSession stageSession, bool isStart)
+        {
+            SetSpawnCount(stageSession.RequiredCoins);
+            if (isStart)
+            {
+                SpawnAsync(_spawnCts.Token, _spawnCount, _spawnFirstDelay).Forget();
+            }
+        }
+
+        public void SetSpawnCount(int spawnCount)
+        {
+            _spawnCount = Mathf.Max(1, spawnCount);
         }
 
         private async UniTask RegisterPoolHandlerAsync(CancellationToken token)

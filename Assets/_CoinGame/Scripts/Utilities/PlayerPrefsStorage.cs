@@ -1,14 +1,14 @@
 using System;
 using UnityEngine;
 
-namespace CoinGame.Sessions
+namespace CoinGame.Utilities
 {
     public static class PlayerSessionKey
     {
         public const string SCORE = "CoinGame.Sessions.Score";
     }
 
-    public static class PlayerSession
+    public static class PlayerPrefsStorage
     {
         public static void SaveAll()
         {

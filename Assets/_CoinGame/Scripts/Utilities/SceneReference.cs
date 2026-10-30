@@ -9,6 +9,7 @@ using UnityEditor.UIElements;
 
 namespace CoinGame.Utilities
 {
+    
     #if UNITY_EDITOR
     [CustomPropertyDrawer(typeof(SceneReference))]
     public class SceneReferenceDrawer : PropertyDrawer
@@ -48,6 +49,5 @@ namespace CoinGame.Utilities
         private string _scenePath;
 
         public string ScenePath => _scenePath;
-        public Scene GetScene() => SceneManager.GetSceneByPath(_scenePath);
     }
 }

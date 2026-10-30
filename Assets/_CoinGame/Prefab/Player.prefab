@@ -150,6 +150,7 @@ MonoBehaviour:
   ShowTopMostFoldoutHeaderGroup: 1
   _moveSpeed: 4
   _playerPosMinMaxData: {fileID: 11400000, guid: b65b34205923623489a6006f23252fdf, type: 2}
+  _roleAbilityConfig: {fileID: 11400000, guid: 1c2e27d6c3ae4d2d9aa4a4b809951f3a, type: 2}
 --- !u!114 &5609413358507253651
 MonoBehaviour:
   m_ObjectHideFlags: 0

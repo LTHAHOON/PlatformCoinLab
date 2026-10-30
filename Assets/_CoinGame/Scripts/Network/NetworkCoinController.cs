@@ -5,6 +5,7 @@ using Cysharp.Threading.Tasks.Triggers;
 using Unity.Netcode;
 using UnityEngine;
 using CoinGame.Utilities;
+using CoinGame.Managers;
 
 namespace CoinGame.Network
 {
@@ -65,7 +66,12 @@ namespace CoinGame.Network
                     {
                         continue;
                     }
+                    if (playerStats.Role != CoinGame.Player.PlayerRole.Collector || playerStats.IsCoinLocked)
+                    {
+                        continue;
+                    }
                     playerStats.AddScoreRpc(1);
+                    NotifyStageCoinCollectedRpc();
                     NetworkGameObjectPool.Despawn(gameObject);
                     break;
                 }
@@ -76,7 +82,18 @@ namespace CoinGame.Network
                 Debug.LogError(ex.Message);
             }
         }
+
+        [Rpc(SendTo.Everyone)]
+        private void NotifyStageCoinCollectedRpc()
+        {
+            if (!GameManager.Instance)
+            {
+                Debug.LogError("GameManager를 찾을 수 없습니다.", this);
+                return;
+            }
+
+            GameManager.Instance.CollectStageCoin();
+        }
     }
 
 }
-

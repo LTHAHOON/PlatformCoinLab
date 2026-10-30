@@ -1,7 +1,9 @@
 using Unity.Netcode;
 using UnityEngine;
+
 using CoinGame.Player;
 using CoinGame.Utilities;
+using CoinGame.UI;
 
 namespace CoinGame.Network
 {
@@ -9,6 +11,8 @@ namespace CoinGame.Network
     {
         [SerializeField]
         private Spawner _defaultPlayerSpawner;
+        [SerializeField]
+        private bool _autoConnectOnStart = true;
 
         private void OnConnectedCallBack(ulong clientId)
         {
@@ -23,6 +27,22 @@ namespace CoinGame.Network
             }
 
             _defaultPlayerSpawner.SpawnPlayer(clientId);
+        }
+
+        private void Start()
+        {
+            gameObject.AddComponent<RoleSelectionUI>();
+            if (_autoConnectOnStart)
+            {
+                if (Unity.Multiplayer.PlayMode.CurrentPlayer.IsMainEditor)
+                {
+                    ConnectHost();
+                }
+                else
+                {
+                    ConnectClient();
+                }
+            }
         }
 
         private void OnDisconnectedCallBack(ulong clientId)
