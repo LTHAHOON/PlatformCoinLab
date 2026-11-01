@@ -28,6 +28,12 @@ namespace CoinGame.Stage
             return (int)Math.Min(int.MaxValue, count);
         }
 
+        public int GetSpawnCoinCount(int round, int coinMultiplier)
+        {
+            long count = (long)GetRequiredCoins(round) * Mathf.Max(1, coinMultiplier);
+            return (int)Math.Min(int.MaxValue, count);
+        }
+
         public float GetTimeLimit(int round)
         {
             float timeLimit = Mathf.Max(MinimumTimeLimit, BaseTimeLimit - (round - 1) * TimeDecreasePerRound);

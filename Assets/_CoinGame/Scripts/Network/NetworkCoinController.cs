@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using Cysharp.Threading.Tasks.Triggers;
@@ -66,12 +66,17 @@ namespace CoinGame.Network
                     {
                         continue;
                     }
-                    if (playerStats.Role != CoinGame.Player.PlayerRole.Collector || playerStats.IsCoinLocked)
+                    if (playerStats.Role is not (CoinGame.Player.PlayerRole.Collector or CoinGame.Player.PlayerRole.Disruptor))
                     {
                         continue;
                     }
+                    if (playerStats.IsCoinLocked || playerStats.IsBeingPushed)
+                    {
+                        playerStats.RegisterBlockedCoinAttemptServer();
+                        continue;
+                    }
                     playerStats.AddScoreRpc(1);
-                    NotifyStageCoinCollectedRpc();
+                    NetworkRoundState.Instance?.CollectCoinServer();
                     NetworkGameObjectPool.Despawn(gameObject);
                     break;
                 }
@@ -88,7 +93,7 @@ namespace CoinGame.Network
         {
             if (!GameManager.Instance)
             {
-                Debug.LogError("GameManager를 찾을 수 없습니다.", this);
+                Debug.LogError("GameManager瑜?李얠쓣 ???놁뒿?덈떎.", this);
                 return;
             }
 
@@ -97,3 +102,4 @@ namespace CoinGame.Network
     }
 
 }
+

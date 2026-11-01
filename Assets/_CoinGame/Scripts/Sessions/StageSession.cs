@@ -24,6 +24,14 @@ namespace CoinGame.Session
 
             CollectedCoins = 0;
         }
+
+        public StageSession(int round, int requiredCoins, float timeLimit, int collectedCoins)
+        {
+            Round = round;
+            RequiredCoins = Mathf.Max(0, requiredCoins);
+            TimeLimit = Mathf.Max(0f, timeLimit);
+            CollectedCoins = Mathf.Clamp(collectedCoins, 0, RequiredCoins);
+        }
         
         public void CollectCoin()
         {

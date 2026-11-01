@@ -17,11 +17,23 @@ namespace CoinGame.Network
         private void OnConnectedCallBack(ulong clientId)
         {
             NetworkManager networkManager = NetworkManager.Singleton;
-            if (networkManager == null || !networkManager.IsServer || _defaultPlayerSpawner == null)
+            if (networkManager == null)
+            {
+                return;
+            }
+            if (clientId == networkManager.LocalClientId)
+            {
+                PlayerAccount.IsOnline = true;
+            }
+            if (!networkManager.IsServer || _defaultPlayerSpawner == null)
             {
                 return;
             }
             if (!networkManager.ConnectedClients.ContainsKey(clientId))
+            {
+                return;
+            }
+            if (networkManager.ConnectedClients[clientId].PlayerObject != null)
             {
                 return;
             }
@@ -32,6 +44,15 @@ namespace CoinGame.Network
         private void Start()
         {
             gameObject.AddComponent<RoleSelectionUI>();
+            SubscribeNetworkCallbacks();
+            NetworkManager networkManager = NetworkManager.Singleton;
+            if (networkManager != null && networkManager.IsServer && _defaultPlayerSpawner != null)
+            {
+                foreach (ulong clientId in networkManager.ConnectedClientsIds)
+                {
+                    OnConnectedCallBack(clientId);
+                }
+            }
             if (_autoConnectOnStart)
             {
                 if (Unity.Multiplayer.PlayMode.CurrentPlayer.IsMainEditor)
@@ -45,8 +66,27 @@ namespace CoinGame.Network
             }
         }
 
+        private void SubscribeNetworkCallbacks()
+        {
+            NetworkManager networkManager = NetworkManager.Singleton;
+            if (networkManager == null)
+            {
+                return;
+            }
+
+            networkManager.OnClientConnectedCallback -= OnConnectedCallBack;
+            networkManager.OnClientDisconnectCallback -= OnDisconnectedCallBack;
+            networkManager.OnClientConnectedCallback += OnConnectedCallBack;
+            networkManager.OnClientDisconnectCallback += OnDisconnectedCallBack;
+        }
+
         private void OnDisconnectedCallBack(ulong clientId)
         {
+            NetworkManager networkManager = NetworkManager.Singleton;
+            if (networkManager != null && clientId == networkManager.LocalClientId)
+            {
+                PlayerAccount.IsOnline = false;
+            }
             if (_defaultPlayerSpawner == null)
             {
                 return;
@@ -64,10 +104,7 @@ namespace CoinGame.Network
                 return;
             }
 
-            networkManager.OnClientConnectedCallback -= OnConnectedCallBack;
-            networkManager.OnClientDisconnectCallback -= OnDisconnectedCallBack;
-            networkManager.OnClientConnectedCallback += OnConnectedCallBack;
-            networkManager.OnClientDisconnectCallback += OnDisconnectedCallBack;
+            SubscribeNetworkCallbacks();
 
             PlayerAccount.IsOnline = networkManager.StartHost();
             if (!PlayerAccount.IsOnline)

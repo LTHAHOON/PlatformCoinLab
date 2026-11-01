@@ -29,6 +29,31 @@ namespace CoinGame.Network
         private float _lockCooldownUntil;
         private float _stealCooldownUntil;
         private Renderer[] _renderers;
+
+        [Rpc(SendTo.Everyone, InvokePermission = RpcInvokePermission.Server)]
+        public void RelocateForGameRpc(Vector3 position)
+        {
+            // This project's NetworkTransform uses owner authority.
+            if (!IsOwner || !IsSpawned)
+            {
+                return;
+            }
+
+            Unity.Netcode.Components.NetworkTransform networkTransform =
+                GetComponent<Unity.Netcode.Components.NetworkTransform>();
+            if (networkTransform == null)
+            {
+                Debug.LogError("NetworkPlayerController requires a NetworkTransform to relocate the player.", this);
+                return;
+            }
+
+            _controller ??= GetComponent<CharacterController>();
+            bool wasEnabled = _controller.enabled;
+            _controller.enabled = false;
+            networkTransform.Teleport(position, transform.rotation, transform.localScale);
+            _controller.enabled = wasEnabled;
+            NetworkRoundState.Instance?.ReportPositionedRpc();
+        }
         [SerializeField]
         private RoleAbilityConfig _roleAbilityConfig;
 
@@ -165,17 +190,28 @@ namespace CoinGame.Network
         private float StealCooldown => _roleAbilityConfig ? _roleAbilityConfig.StealCooldown : 10f;
         private float LockDuration => _roleAbilityConfig ? _roleAbilityConfig.CoinLockDuration : 3f;
         private float PushForce => _roleAbilityConfig ? _roleAbilityConfig.PushForce : 5f;
+        private float PushStunDuration => _roleAbilityConfig ? _roleAbilityConfig.PushStunDuration : 1f;
         private int StealAmount => _roleAbilityConfig ? _roleAbilityConfig.StealAmount : 1;
 
         [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Owner)]
         private void UsePushRpc(Vector3 origin, Vector3 direction)
         {
+            NetworkPlayerStats ownStats = GetComponent<NetworkPlayerStats>();
             NetworkPlayerController target = FindNearestOpponent(origin);
-            if (target == null)
+            NetworkPlayerStats targetStats = target != null ? target.GetComponent<NetworkPlayerStats>() : null;
+            if (ownStats == null || ownStats.Role != PlayerRole.Disruptor || targetStats == null)
             {
                 return;
             }
 
+            ownStats.RegisterPushAttemptServer();
+            if (targetStats.Role != PlayerRole.Collector)
+            {
+                return;
+            }
+
+            ownStats.RegisterSuccessfulPushServer();
+            targetStats.SetBeingPushedServer(NetworkManager.Singleton.ServerTime.Time + PushStunDuration, ownStats);
             target.ReceivePushRpc(target.OwnerClientId, direction.normalized, PushForce);
         }
 
@@ -194,9 +230,13 @@ namespace CoinGame.Network
         private void UseLockRpc(Vector3 origin)
         {
             NetworkPlayerController target = FindNearestOpponent(origin);
-            if (target != null)
+            NetworkPlayerStats ownStats = GetComponent<NetworkPlayerStats>();
+            NetworkPlayerStats targetStats = target != null ? target.GetComponent<NetworkPlayerStats>() : null;
+            if (ownStats != null && ownStats.Role == PlayerRole.Disruptor && targetStats != null &&
+                targetStats.Role == PlayerRole.Collector)
             {
-                target.GetComponent<NetworkPlayerStats>().SetCoinLockServer(NetworkManager.Singleton.ServerTime.Time + LockDuration);
+                targetStats.SetCoinLockServer(NetworkManager.Singleton.ServerTime.Time + LockDuration, ownStats);
+                ownStats.RegisterSuccessfulLockServer();
             }
         }
 
@@ -206,9 +246,11 @@ namespace CoinGame.Network
             NetworkPlayerController target = FindNearestOpponent(origin);
             NetworkPlayerStats targetStats = target ? target.GetComponent<NetworkPlayerStats>() : null;
             NetworkPlayerStats ownStats = GetComponent<NetworkPlayerStats>();
-            if (targetStats != null && ownStats != null && targetStats.TrySpendScore(StealAmount))
+            if (targetStats != null && ownStats != null && ownStats.Role == PlayerRole.Disruptor &&
+                targetStats.Role == PlayerRole.Collector && targetStats.TrySpendScore(StealAmount))
             {
                 ownStats.AddScoreServer(StealAmount);
+                ownStats.RegisterSuccessfulStealServer();
             }
         }
 

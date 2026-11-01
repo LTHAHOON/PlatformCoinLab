@@ -15,6 +15,8 @@ namespace CoinGame.Stage
         public float CoinLockDuration = 3f;
         [Min(0f)]
         public float PushForce = 5f;
+        [Min(0.1f)]
+        public float PushStunDuration = 1f;
         [Min(1)]
         public int StealAmount = 1;
     }

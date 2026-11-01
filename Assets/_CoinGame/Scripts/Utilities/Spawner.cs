@@ -63,6 +63,59 @@ namespace CoinGame.Utilities
         private CancellationTokenSource _spawnCts;
         private Dictionary<ulong, CancellationTokenSource> _dicSpawnPlayerCts;
         private const int MAX_ITER = 50;
+        public bool IsDefaultPlayerSpawner => _isDefaultPlayerSpawner;
+        private int _lastSpawnedStageRound = -1;
+
+        public bool TryRelocatePlayers()
+        {
+            if (NetworkManager.Singleton == null || !NetworkManager.Singleton.IsServer || !_isDefaultPlayerSpawner)
+            {
+                return false;
+            }
+
+            Physics.SyncTransforms();
+            var assignments = new List<(NetworkPlayerController player, Vector3 position, float radius)>();
+            foreach (NetworkClient client in NetworkManager.Singleton.ConnectedClientsList)
+            {
+                if (client.PlayerObject == null) return false;
+                var player = client.PlayerObject.GetComponent<NetworkPlayerController>();
+                var controller = client.PlayerObject.GetComponent<CharacterController>();
+                if (player == null || controller == null) return false;
+                bool found = false;
+                Vector3 candidate = default;
+                float playerRadius = controller.radius * Mathf.Max(player.transform.lossyScale.x, player.transform.lossyScale.z);
+                for (int attempt = 0; attempt < MAX_ITER * 4; attempt++)
+                {
+                    candidate = transform.position + new Vector3(
+                        UnityEngine.Random.Range(-_spawnArea.x / 2f, _spawnArea.x / 2f),
+                        0f, UnityEngine.Random.Range(-_spawnArea.z / 2f, _spawnArea.z / 2f));
+                    float halfHeight = Mathf.Max(playerRadius, controller.height * player.transform.lossyScale.y / 2f);
+                    Vector3 center = candidate + Vector3.Scale(controller.center, player.transform.lossyScale);
+                    Vector3 offset = Vector3.up * (halfHeight - playerRadius);
+                    bool blocked = false;
+                    foreach (Collider hit in Physics.OverlapCapsule(center - offset, center + offset,
+                        playerRadius, _blockingLayerMask, QueryTriggerInteraction.Ignore))
+                    {
+                        if (hit.transform.root != player.transform.root) { blocked = true; break; }
+                    }
+                    if (blocked) continue;
+                    foreach (var assignment in assignments)
+                    {
+                        float requiredDistance = playerRadius + assignment.radius + 0.05f;
+                        Vector3 horizontalDelta = candidate - assignment.position;
+                        horizontalDelta.y = 0f;
+                        if (horizontalDelta.sqrMagnitude < requiredDistance * requiredDistance)
+                        { blocked = true; break; }
+                    }
+                    if (!blocked) { found = true; break; }
+                }
+                if (!found) return false;
+                assignments.Add((player, candidate, playerRadius));
+            }
+            foreach (var assignment in assignments) assignment.player.RelocateForGameRpc(assignment.position);
+            return true;
+        }
+        private bool _stageSessionBound;
 
         private void Awake()
         {
@@ -109,25 +162,50 @@ namespace CoinGame.Utilities
 
         private void OnEnable()
         {
-            if (_syncSpawnCountWithStageSession)
+            TryBindStageSession();
+        }
+
+        private void Start()
+        {
+            TryBindStageSession();
+            if (_syncSpawnCountWithStageSession && GameManager.Instance != null &&
+                GameManager.Instance.IsRoundStarted && GameManager.Instance.CurrentStageSession.Round > 0)
             {
-                GameManager.Instance.OnStageSessionChanged += OnStageSessionChanged;
+                OnStageSessionChanged(GameManager.Instance.CurrentStageSession, true);
             }
+        }
+
+        private void TryBindStageSession()
+        {
+            if (!_syncSpawnCountWithStageSession || _stageSessionBound || GameManager.Instance == null)
+            {
+                return;
+            }
+
+            GameManager.Instance.OnStageSessionChanged += OnStageSessionChanged;
+            _stageSessionBound = true;
         }
 
         private void OnDisable()
         {
-            if (_syncSpawnCountWithStageSession)
+            if (_stageSessionBound && GameManager.Instance != null)
             {
                 GameManager.Instance.OnStageSessionChanged -= OnStageSessionChanged;
+                _stageSessionBound = false;
             }
         }
 
         private void OnStageSessionChanged(StageSession stageSession, bool isStart)
         {
-            SetSpawnCount(stageSession.RequiredCoins);
+            SetSpawnCount(NetworkRoundState.Instance != null ? NetworkRoundState.Instance.SpawnCoins : stageSession.RequiredCoins);
             if (isStart)
             {
+                if (_lastSpawnedStageRound == stageSession.Round)
+                {
+                    return;
+                }
+
+                _lastSpawnedStageRound = stageSession.Round;
                 SpawnAsync(_spawnCts.Token, _spawnCount, _spawnFirstDelay).Forget();
             }
         }

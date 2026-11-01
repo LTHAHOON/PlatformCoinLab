@@ -34,9 +34,13 @@ namespace CoinGame.Timeline
             _playableDirector.Play();
         }
 
-        private void OnLoadScene(GameScene gameScene)
+        private async void OnLoadScene(GameScene gameScene)
         {
-            GameManager.Instance.LoadSceneAsync(gameScene).Forget();
+            await GameManager.Instance.LoadSceneAsync(gameScene);
+            if (gameScene == GameScene.InGame && Unity.Netcode.NetworkManager.Singleton != null && Unity.Netcode.NetworkManager.Singleton.IsHost)
+            {
+                GameManager.Instance.StartRound();
+            }
         }
 
         public void OnLoadScene(int gameScene)

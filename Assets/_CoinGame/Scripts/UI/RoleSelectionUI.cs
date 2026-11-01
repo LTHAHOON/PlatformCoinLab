@@ -1,4 +1,4 @@
-using Unity.Netcode;
+﻿using Unity.Netcode;
 using UnityEngine;
 using CoinGame.Network;
 using CoinGame.Player;
@@ -28,23 +28,27 @@ namespace CoinGame.UI
                 return;
             }
 
-            if (_localStats.MatchPlayerCount < 2 || _localStats.Role != PlayerRole.Unselected)
+            if (RoomLobbyController.Instance == null || !RoomLobbyController.Instance.IsRoomFull || _localStats.Role != PlayerRole.Unselected)
             {
                 return;
             }
 
-            const float width = 360f;
-            const float height = 210f;
-            Rect panel = new((Screen.width - width) * 0.5f, (Screen.height - height) * 0.5f, width, height);
-            GUI.Box(panel, "역할 선택");
-            GUI.Label(new Rect(panel.x + 24f, panel.y + 38f, width - 48f, 30f), "두 플레이어가 접속했습니다.");
-            GUI.Label(new Rect(panel.x + 24f, panel.y + 66f, width - 48f, 30f), "한 명은 수집가, 한 명은 방해자입니다.");
+            float width = Mathf.Min(Screen.width * 0.9f, 560f);
+            float height = Mathf.Min(Screen.height * 0.32f, 250f);
+            float x = (Screen.width - width) * 0.5f;
+            float y = Mathf.Max(24f, (Screen.height - height) * 0.5f);
+            Rect panel = new(x, y, width, height);
+            GUI.Box(panel, "Choose your role");
+            GUI.Label(new Rect(panel.x + 24f, panel.y + 42f, width - 48f, 30f), "All players are ready.");
+            GUI.Label(new Rect(panel.x + 24f, panel.y + 70f, width - 48f, 30f), "Select Collector or Disruptor.");
 
-            if (GUI.Button(new Rect(panel.x + 24f, panel.y + 112f, 145f, 58f), "Coin 수집가"))
+            float buttonWidth = (width - 72f) * 0.5f;
+            float buttonY = panel.y + height - 78f;
+            if (GUI.Button(new Rect(panel.x + 24f, buttonY, buttonWidth, 54f), "Collector"))
             {
                 _localStats.SelectRole(PlayerRole.Collector);
             }
-            if (GUI.Button(new Rect(panel.x + 191f, panel.y + 112f, 145f, 58f), "방해자"))
+            if (GUI.Button(new Rect(panel.x + 48f + buttonWidth, buttonY, buttonWidth, 54f), "Disruptor"))
             {
                 _localStats.SelectRole(PlayerRole.Disruptor);
             }
