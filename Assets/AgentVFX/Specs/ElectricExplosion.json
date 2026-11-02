@@ -1,0 +1,39 @@
+{
+  "id": "ElectricExplosion",
+  "seed": 8127,
+  "texture": {
+    "width": 128,
+    "height": 128,
+    "noiseScale": 5.0,
+    "gradientStart": {"r": 0.05, "g": 0.15, "b": 1.0, "a": 1.0},
+    "gradientEnd": {"r": 0.15, "g": 0.8, "b": 1.0, "a": 1.0},
+    "radialPower": 2.5
+  },
+  "mesh": {
+    "type": "Ring",
+    "radius": 0.8,
+    "innerRadius": 0.25,
+    "height": 0.05,
+    "segments": 32
+  },
+  "material": {
+    "shader": "Universal Render Pipeline/Unlit",
+    "color": {"r": 0.1, "g": 0.65, "b": 1.0, "a": 0.9},
+    "emission": {"r": 0.1, "g": 0.5, "b": 2.5, "a": 1.0}
+  },
+  "particle": {
+    "duration": 0.8,
+    "startLifetime": 0.45,
+    "startSpeed": 1.5,
+    "startSize": 0.7,
+    "maxParticles": 64,
+    "burstCount": 24,
+    "shapeRadius": 0.2,
+    "simulationSpace": "World"
+  },
+  "prefab": {
+    "loop": false,
+    "playOnAwake": true,
+    "localScale": [1.0, 1.0, 1.0]
+  }
+}

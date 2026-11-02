@@ -19,6 +19,7 @@ namespace CoinGame.Network
         private readonly NetworkVariable<int> _disruptionScore = new(0);
         private readonly NetworkVariable<int> _matchPlayerCount = new(0);
         private PlayerStatsView _playerStatsView;
+        private bool _scoreEventsBound;
         private ulong _coinLockSourceClientId = ulong.MaxValue;
         private ulong _pushSourceClientId = ulong.MaxValue;
 
@@ -41,7 +42,11 @@ namespace CoinGame.Network
             }
 
             TryBindStatsView();
-            _curScore.OnValueChanged += OnScoreChanged;
+            if (!_scoreEventsBound)
+            {
+                _curScore.OnValueChanged += OnScoreChanged;
+                _scoreEventsBound = true;
+            }
             PlayerPrefsStorage.GetOrInitPlayerSessionFloat(PlayerSessionKey.SCORE, 0f);
         }
 
@@ -76,14 +81,16 @@ namespace CoinGame.Network
             {
                 return;
             }
-            if (!_playerStatsView)
+
+            if (_playerStatsView)
             {
-                return;
+                _playerStatsView.SetScoreText(0, 0);
+                _curScore.OnValueChanged -= _playerStatsView.SetScoreText;
             }
 
-            _playerStatsView.SetScoreText(0, 0);
-            _curScore.OnValueChanged -= _playerStatsView.SetScoreText;
             _curScore.OnValueChanged -= OnScoreChanged;
+            _playerStatsView = null;
+            _scoreEventsBound = false;
         }
 
         private const int MaxAddScoreAmount = 10000;

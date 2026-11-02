@@ -75,7 +75,7 @@ namespace CoinGame.Network
                         playerStats.RegisterBlockedCoinAttemptServer();
                         continue;
                     }
-                    playerStats.AddScoreRpc(1);
+                    playerStats.AddScoreServer(1);
                     NetworkRoundState.Instance?.CollectCoinServer();
                     NetworkGameObjectPool.Despawn(gameObject);
                     break;

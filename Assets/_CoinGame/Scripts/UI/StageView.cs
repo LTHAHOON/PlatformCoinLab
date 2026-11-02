@@ -39,6 +39,7 @@ namespace CoinGame.UI
         private TMP_Text _roundBannerText;
         private CancellationTokenSource _roundBannerCts;
         private float _nextScoreboardRefresh;
+        private float _nextLocalStatsLookup;
         private int _lastBannerRound = -1;
         private int _roundBannerVersion;
 
@@ -70,12 +71,16 @@ namespace CoinGame.UI
 
         private void Update()
         {
-            if (_localStats == null && NetworkManager.Singleton != null && NetworkManager.Singleton.IsClient)
+            if (Time.unscaledTime >= _nextLocalStatsLookup)
             {
-                NetworkObject localObject = NetworkManager.Singleton.SpawnManager.GetLocalPlayerObject();
-                if (localObject != null)
+                _nextLocalStatsLookup = Time.unscaledTime + 0.25f;
+                if ((_localStats == null || !_localStats.IsSpawned) && NetworkManager.Singleton != null && NetworkManager.Singleton.IsClient)
                 {
-                    _localStats = localObject.GetComponent<NetworkPlayerStats>();
+                    NetworkObject localObject = NetworkManager.Singleton.SpawnManager.GetLocalPlayerObject();
+                    if (localObject != null)
+                    {
+                        _localStats = localObject.GetComponent<NetworkPlayerStats>();
+                    }
                 }
             }
 

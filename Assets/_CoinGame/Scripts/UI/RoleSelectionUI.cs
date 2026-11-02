@@ -8,10 +8,17 @@ namespace CoinGame.UI
     public class RoleSelectionUI : MonoBehaviour
     {
         private NetworkPlayerStats _localStats;
+        private float _nextLocalStatsLookup;
 
         private void Update()
         {
-            if (_localStats == null && NetworkManager.Singleton != null && NetworkManager.Singleton.IsClient)
+            if (Time.unscaledTime < _nextLocalStatsLookup)
+            {
+                return;
+            }
+
+            _nextLocalStatsLookup = Time.unscaledTime + 0.25f;
+            if ((_localStats == null || !_localStats.IsSpawned) && NetworkManager.Singleton != null && NetworkManager.Singleton.IsClient)
             {
                 NetworkObject localObject = NetworkManager.Singleton.SpawnManager.GetLocalPlayerObject();
                 if (localObject != null)

@@ -15,6 +15,11 @@ namespace CoinGame.UI
 
         public void SetUserNameText(string userName)
         {
+            if (_userNameText == null)
+            {
+                return;
+            }
+
             _sb.Append(userName);
             _userNameText.SetText(_sb);
             _sb.Clear();
@@ -22,6 +27,11 @@ namespace CoinGame.UI
 
         public void SetOnlineStatusText(bool isOnline)
         {
+            if (_onlineStatusText == null)
+            {
+                return;
+            }
+
             _sb.Append("Online Status: ");
             if (isOnline)
             {

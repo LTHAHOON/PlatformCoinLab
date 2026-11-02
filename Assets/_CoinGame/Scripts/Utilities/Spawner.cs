@@ -206,6 +206,7 @@ namespace CoinGame.Utilities
                 }
 
                 _lastSpawnedStageRound = stageSession.Round;
+                _spawnCts ??= CancellationTokenSource.CreateLinkedTokenSource(destroyCancellationToken);
                 SpawnAsync(_spawnCts.Token, _spawnCount, _spawnFirstDelay).Forget();
             }
         }

@@ -33,6 +33,7 @@ namespace CoinGame.Network
         private float _lockCooldownUntil;
         private float _stealCooldownUntil;
         private Renderer[] _playerRenderers;
+        private MaterialPropertyBlock _playerPropertyBlock;
 
         [Rpc(SendTo.Everyone, InvokePermission = RpcInvokePermission.Server)]
         public void RelocateForGameRpc(Vector3 position)
@@ -65,6 +66,7 @@ namespace CoinGame.Network
         public override void OnNetworkSpawn()
         {
             _playerRenderers = GetComponentsInChildren<Renderer>();
+            _playerPropertyBlock ??= new MaterialPropertyBlock();
             _networkPlayerStats = GetComponent<NetworkPlayerStats>();
             if (_networkPlayerStats == null)
             {
@@ -135,7 +137,9 @@ namespace CoinGame.Network
 
             foreach (Renderer renderer in _playerRenderers)
             {
-                renderer.material.color = roleColor;
+                _playerPropertyBlock.SetColor("_BaseColor", roleColor);
+                _playerPropertyBlock.SetColor("_Color", roleColor);
+                renderer.SetPropertyBlock(_playerPropertyBlock);
             }
         }
 
@@ -204,8 +208,13 @@ namespace CoinGame.Network
         [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Owner)]
         private void UsePushRpc(Vector3 origin, Vector3 direction)
         {
+            if (!IsServer || _networkPlayerStats == null)
+            {
+                return;
+            }
+
             NetworkPlayerController target = FindNearestOpponent(origin);
-            if(target.TryGetComponent(out NetworkPlayerStats targetStats))
+            if (target != null && target.TryGetComponent(out NetworkPlayerStats targetStats))
             {
                 if (_networkPlayerStats.Role == PlayerRole.Disruptor && targetStats.Role == PlayerRole.Collector)
                 {
@@ -229,8 +238,13 @@ namespace CoinGame.Network
         [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Owner)]
         private void UseLockRpc(Vector3 origin)
         {
+            if (!IsServer || _networkPlayerStats == null)
+            {
+                return;
+            }
+
             NetworkPlayerController target = FindNearestOpponent(origin);
-            if(target.TryGetComponent(out NetworkPlayerStats targetStats))
+            if (target != null && target.TryGetComponent(out NetworkPlayerStats targetStats))
             {
                 if (_networkPlayerStats.Role == PlayerRole.Disruptor && targetStats.Role == PlayerRole.Collector)
                 {
@@ -242,6 +256,11 @@ namespace CoinGame.Network
         [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Owner)]
         private void UseStealRpc(Vector3 origin)
         {
+            if (!IsServer || _networkPlayerStats == null)
+            {
+                return;
+            }
+
             NetworkPlayerController target = FindNearestOpponent(origin);
             NetworkPlayerStats targetStats = target ? target.GetComponent<NetworkPlayerStats>() : null;
             NetworkPlayerStats ownStats = GetComponent<NetworkPlayerStats>();
@@ -254,6 +273,11 @@ namespace CoinGame.Network
 
         private NetworkPlayerController FindNearestOpponent(Vector3 origin)
         {
+            if (!IsServer || NetworkManager.Singleton == null)
+            {
+                return null;
+            }
+
             NetworkPlayerController nearest = null;
             float nearestDistance = float.MaxValue;
             foreach (NetworkClient client in NetworkManager.Singleton.ConnectedClientsList)
@@ -264,6 +288,11 @@ namespace CoinGame.Network
                 }
 
                 NetworkPlayerController candidate = client.PlayerObject.GetComponent<NetworkPlayerController>();
+                if (candidate == null)
+                {
+                    continue;
+                }
+
                 float distance = (candidate.transform.position - origin).sqrMagnitude;
                 if (distance < nearestDistance)
                 {

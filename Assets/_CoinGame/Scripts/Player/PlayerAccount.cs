@@ -12,6 +12,7 @@ namespace CoinGame.Player
         public static event Action<bool> OnlineStatusChanged;
         private static Guid _id;
         private static bool _isOnline;
+        private static PlayerAccount _instance;
 
         public static bool IsOnline
         {
@@ -25,10 +26,45 @@ namespace CoinGame.Player
 
         private void Awake()
         {
-            OnlineStatusChanged = _playerAccountView.SetOnlineStatusText;
+            if (_instance != null && _instance != this)
+            {
+                Debug.LogError("PlayerAccount는 한 씬에 하나만 존재해야 합니다.", this);
+                enabled = false;
+                return;
+            }
+
+            _instance = this;
+            if (_id == Guid.Empty)
+            {
+                _id = Guid.NewGuid();
+            }
+
+            if (_playerAccountView != null)
+            {
+                OnlineStatusChanged -= _playerAccountView.SetOnlineStatusText;
+                OnlineStatusChanged += _playerAccountView.SetOnlineStatusText;
+                _playerAccountView.SetUserNameText(_id.ToString());
+            }
+            else
+            {
+                Debug.LogWarning("PlayerAccountView가 연결되지 않았습니다.", this);
+            }
+
             IsOnline = false;
-            _id = Guid.NewGuid();
-            _playerAccountView.SetUserNameText(_id.ToString());
+        }
+
+        private void OnDestroy()
+        {
+            if (_playerAccountView != null)
+            {
+                OnlineStatusChanged -= _playerAccountView.SetOnlineStatusText;
+            }
+
+            if (_instance == this)
+            {
+                _instance = null;
+                IsOnline = false;
+            }
         }
 
         public static Guid ID => _id;

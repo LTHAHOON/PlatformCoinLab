@@ -34,6 +34,7 @@ namespace CoinGame
             if (operation.Status != AsyncOperationStatus.Succeeded)
             {
                 Debug.LogError("Failed to load stage: " + operation.OperationException);
+                ReleaseOwnedOperation();
                 return;
             }
 
@@ -65,6 +66,7 @@ namespace CoinGame
                 return;
             }
 
+            handle.Completed -= OnStageLoaded;
             if (handle.Status == AsyncOperationStatus.Succeeded)
             {
                 // 성공한 InstantiateAsync 요청은 생성된 인스턴스와 참조를 함께 해제합니다.

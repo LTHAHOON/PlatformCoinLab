@@ -1,4 +1,4 @@
-# PlatformCoinLab 에이전트 지침
+﻿# PlatformCoinLab 에이전트 지침
 
 이 파일은 이 저장소에서 작업하는 코딩 에이전트의 공통 지침이다.
 
@@ -60,3 +60,18 @@
 
 - Keep [SerializeField] on its own line directly above the member field.
 - Add null checks only where the lifecycle or data flow requires them; avoid repeated defensive checks for the same object.
+
+## Codex 멀티 에이전트 역할 분배
+
+현재 설치된 Codex IDE/CLI(`codex-cli 0.164.0-alpha.11.1`)에서는 프로젝트별 `agents/*.toml`로 Subagent를 등록하는 공식 로컬 스키마가 확인되지 않는다. 역할 정의는 이 문서에 보관하고, 실제 위임은 Codex 세션의 멀티 에이전트 기능으로 수행한다.
+
+- Main Agent: 전체 작업 분석, 역할 분배, Unity MCP 변경 조율, 통합 및 최종 검증을 담당한다.
+- gameplay: Unity 6 C# 게임플레이, 플레이어·전투·인벤토리·상호작용을 담당하며 관련 범위 밖 파일 수정을 피한다.
+- ui: uGUI/UI Toolkit/HUD/메뉴를 담당하며 게임플레이 로직과 표현을 분리한다.
+- vfx: Particle System, Visual Effect Graph, Shader Graph, 머티리얼·셰이더·전투 및 환경 효과를 담당한다. URP/HDRP와 GPU/CPU 성능·오버드로우를 확인하고, Unity MCP로 VFX·씬을 변경하기 전 Main Agent의 승인을 받는다.
+- reviewer: C# 품질, Unity 수명주기·이벤트·직렬화 위험을 읽기 전용으로 검토하고 프로덕션 파일을 수정하지 않는다.
+- qa: EditMode/PlayMode 자동 테스트, 기능·회귀·버그 재현, Console·성능·GC Alloc 검토를 담당한다. 실행하지 않은 테스트를 통과로 보고하지 않으며 문제별 심각도·재현 방법과 수정 후 재검증 결과를 보고한다.
+
+기존 `tester` 역할은 `qa`로 확장·이관했다. 저장소에 별도 Tester 설정 파일은 존재하지 않았으므로 삭제하지 않았고, 기존 역할 규칙의 의미는 QA 프롬프트에 보존했다.
+
+독립적인 읽기·분석 업무는 가능한 경우 병렬로 위임하되 동시 실행은 최대 3~4개로 제한한다. 같은 Unity Editor 인스턴스 또는 씬·프리팹·ProjectSettings를 여러 역할이 동시에 변경하지 않는다. Unity MCP의 씬·프리팹·ProjectSettings 변경은 Main Agent가 순차 조율하고 실행 전 승인을 받는다. Library/Temp/Logs/obj는 수정하지 않는다. 모든 역할은 한국어로 결과를 보고한다.
