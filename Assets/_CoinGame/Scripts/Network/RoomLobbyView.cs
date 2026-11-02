@@ -7,21 +7,36 @@ namespace CoinGame.Network
 {
     public sealed class RoomLobbyView : MonoBehaviour
     {
-        [SerializeField] private GameObject _panel;
-        [SerializeField] private TMP_InputField _roomNameInput;
-        [SerializeField] private TMP_InputField _roomIdInput;
-        [SerializeField] private TMP_InputField _joinRoomIdInput;
-        [SerializeField] private TMP_InputField _maxPlayersInput;
-        [SerializeField] private TMP_InputField _maxCollectorsInput;
-        [SerializeField] private TMP_InputField _maxDisruptorsInput;
-        [SerializeField] private Button _createButton;
-        [SerializeField] private Button _joinButton;
-        [SerializeField] private Button _optionsButton;
-        [SerializeField] private GameObject _optionsPanel;
-        [SerializeField] private TMP_InputField _maxRoundsInput;
-        [SerializeField] private TMP_InputField _coinMultiplierInput;
-        [SerializeField] private TMP_Text _statusText;
-        [SerializeField] private TMP_Text _countdownText;
+        [SerializeField]
+        private GameObject _panel;
+        [SerializeField]
+        private TMP_InputField _roomNameInput;
+        [SerializeField]
+        private TMP_InputField _roomIdInput;
+        [SerializeField]
+        private TMP_InputField _joinRoomIdInput;
+        [SerializeField]
+        private TMP_InputField _maxPlayersInput;
+        [SerializeField]
+        private TMP_InputField _maxCollectorsInput;
+        [SerializeField]
+        private TMP_InputField _maxDisruptorsInput;
+        [SerializeField]
+        private Button _createButton;
+        [SerializeField]
+        private Button _joinButton;
+        [SerializeField]
+        private Button _optionsButton;
+        [SerializeField]
+        private GameObject _optionsPanel;
+        [SerializeField]
+        private TMP_InputField _maxRoundsInput;
+        [SerializeField]
+        private TMP_InputField _coinMultiplierInput;
+        [SerializeField]
+        private TMP_Text _statusText;
+        [SerializeField]
+        private TMP_Text _countdownText;
 
         public event Action CreateRequested;
         public event Action JoinRequested;

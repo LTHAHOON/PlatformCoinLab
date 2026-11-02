@@ -9,10 +9,22 @@ namespace CoinGame.Network
 {
     public class NetworkConnector : MonoBehaviour
     {
+        public static NetworkConnector Instance { get; private set; }
+
         [SerializeField]
         private Spawner _defaultPlayerSpawner;
         [SerializeField]
         private bool _autoConnectOnStart = true;
+
+        public bool TryRelocatePlayers()
+        {
+            return _defaultPlayerSpawner != null && _defaultPlayerSpawner.TryRelocatePlayers();
+        }
+
+        private void Awake()
+        {
+            Instance = this;
+        }
 
         private void OnConnectedCallBack(ulong clientId)
         {
@@ -151,6 +163,11 @@ namespace CoinGame.Network
             {
                 networkManager.OnClientConnectedCallback -= OnConnectedCallBack;
                 networkManager.OnClientDisconnectCallback -= OnDisconnectedCallBack;
+            }
+
+            if (Instance == this)
+            {
+                Instance = null;
             }
 
         }

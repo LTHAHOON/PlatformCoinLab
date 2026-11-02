@@ -55,3 +55,8 @@
 - 스크립트 생성·수정 후 컴파일 완료를 기다리고 Unity Console의 오류를 확인한다.
 - 여러 독립적인 Unity 작업은 가능한 경우 `batch_execute`로 묶고, 결과는 씬 상태·콘솔·필요한 스크린샷으로 검증한다.
 - 프로젝트 에디터 버전과 설치된 패키지 API를 기준으로 작업하며, Unity MCP 템플릿의 예시는 현재 프로젝트에서 확인한 뒤 적용한다.
+
+## Additional code style
+
+- Keep [SerializeField] on its own line directly above the member field.
+- Add null checks only where the lifecycle or data flow requires them; avoid repeated defensive checks for the same object.

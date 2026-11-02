@@ -23,14 +23,9 @@ namespace CoinGame.Network
         private ulong _pushSourceClientId = ulong.MaxValue;
 
         public PlayerRole Role => _role.Value;
-        public int MatchPlayerCount => _matchPlayerCount.Value;
         public bool IsCoinLocked => NetworkManager.Singleton != null && NetworkManager.Singleton.ServerTime.Time < _coinLockUntil.Value;
         public bool IsBeingPushed => NetworkManager.Singleton != null && NetworkManager.Singleton.ServerTime.Time < _pushedUntil.Value;
         public int Score => _curScore.Value;
-        public int PushAttempts => _pushAttempts.Value;
-        public int SuccessfulPushes => _successfulPushes.Value;
-        public int SuccessfulLocks => _successfulLocks.Value;
-        public int SuccessfulSteals => _successfulSteals.Value;
         public int DisruptionScore => _disruptionScore.Value;
 
         public override void OnNetworkSpawn()
@@ -47,7 +42,6 @@ namespace CoinGame.Network
 
             TryBindStatsView();
             _curScore.OnValueChanged += OnScoreChanged;
-            _role.OnValueChanged += OnRoleChanged;
             PlayerPrefsStorage.GetOrInitPlayerSessionFloat(PlayerSessionKey.SCORE, 0f);
         }
 
@@ -90,7 +84,6 @@ namespace CoinGame.Network
             _playerStatsView.SetScoreText(0, 0);
             _curScore.OnValueChanged -= _playerStatsView.SetScoreText;
             _curScore.OnValueChanged -= OnScoreChanged;
-            _role.OnValueChanged -= OnRoleChanged;
         }
 
         private const int MaxAddScoreAmount = 10000;
@@ -229,26 +222,6 @@ namespace CoinGame.Network
             }
         }
 
-        public void RegisterPushAttemptServer()
-        {
-            if (IsServer) _pushAttempts.Value++;
-        }
-
-        public void RegisterSuccessfulPushServer()
-        {
-            if (IsServer) _successfulPushes.Value++;
-        }
-
-        public void RegisterSuccessfulLockServer()
-        {
-            if (IsServer) _successfulLocks.Value++;
-        }
-
-        public void RegisterSuccessfulStealServer()
-        {
-            if (IsServer) _successfulSteals.Value++;
-        }
-
         public void ResetRoundDisruptorStatsServer()
         {
             if (!IsServer) return;
@@ -262,16 +235,24 @@ namespace CoinGame.Network
             _pushSourceClientId = ulong.MaxValue;
         }
 
-        private void OnRoleChanged(PlayerRole previousRole, PlayerRole newRole)
-        {
-        }
-
         private void RefreshMatchPlayerCount()
         {
-            NetworkPlayerStats[] stats = FindObjectsByType<NetworkPlayerStats>(FindObjectsSortMode.None);
-            foreach (NetworkPlayerStats playerStats in stats)
+            NetworkManager networkManager = NetworkManager.Singleton;
+            if (!IsServer || networkManager == null)
             {
-                playerStats._matchPlayerCount.Value = stats.Length;
+                return;
+            }
+
+            int playerCount = networkManager.ConnectedClientsList.Count;
+            foreach (NetworkClient client in networkManager.ConnectedClientsList)
+            {
+                NetworkPlayerStats playerStats = client.PlayerObject != null
+                    ? client.PlayerObject.GetComponent<NetworkPlayerStats>()
+                    : null;
+                if (playerStats != null)
+                {
+                    playerStats._matchPlayerCount.Value = playerCount;
+                }
             }
         }
     }

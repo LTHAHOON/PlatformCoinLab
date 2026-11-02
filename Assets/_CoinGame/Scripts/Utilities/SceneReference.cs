@@ -9,7 +9,7 @@ using UnityEditor.UIElements;
 
 namespace CoinGame.Utilities
 {
-    
+
     #if UNITY_EDITOR
     [CustomPropertyDrawer(typeof(SceneReference))]
     public class SceneReferenceDrawer : PropertyDrawer

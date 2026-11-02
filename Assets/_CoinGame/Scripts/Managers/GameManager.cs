@@ -21,6 +21,8 @@ namespace CoinGame.Managers
 
     public class GameManager : MonoBehaviour
     {
+        public const float RoundBannerFadeInDuration = 0.35f;
+
         [SerializeField]
         private StageConfig _stageConfig;
         [SerializeField]
@@ -31,7 +33,7 @@ namespace CoinGame.Managers
         private float _roundStartDelay = 1f;
         [SerializeField]
         private NetworkRoundState _networkRoundState;
-        
+
         private StageSession _stageSession;
         private int _curRound = 1;
         private float _remainingTime;
@@ -39,6 +41,7 @@ namespace CoinGame.Managers
         private CancellationTokenSource _timerCts;
         private CancellationTokenSource _roundStartCts;
         private bool _isRoundStarted;
+        private bool _isRoundStarting;
         private bool _networkRoundStateBound;
 
         public static GameManager Instance {get; private set;}
@@ -93,6 +96,7 @@ namespace CoinGame.Managers
 
             _networkRoundState.StateChanged += OnNetworkRoundStateChanged;
             _networkRoundState.RoundFinished += OnNetworkRoundFinished;
+            _networkRoundState.MatchFinished += OnNetworkMatchFinished;
             _networkRoundStateBound = true;
             OnNetworkRoundStateChanged(
                 _networkRoundState.Round,
@@ -108,7 +112,7 @@ namespace CoinGame.Managers
             {
                 if (_networkRoundState.IsServer)
                 {
-                    _networkRoundState.StartRoundServer();
+                    _networkRoundState.StartRoundServer(_roundStartDelay);
                 }
                 return;
             }
@@ -124,6 +128,7 @@ namespace CoinGame.Managers
             }
 
             _isRoundStarted = true;
+            _isRoundStarting = true;
             _roundStartCts?.Cancel();
             _roundStartCts?.Dispose();
             _roundStartCts = CancellationTokenSource.CreateLinkedTokenSource(destroyCancellationToken);
@@ -147,8 +152,10 @@ namespace CoinGame.Managers
         {
             try
             {
+                OnStageSessionChanged?.Invoke(_stageSession, true);
                 await UniTask.Delay(TimeSpan.FromSeconds(_roundStartDelay), cancellationToken: token);
                 token.ThrowIfCancellationRequested();
+                _isRoundStarting = false;
 
                 _timerCts?.Cancel();
                 _timerCts?.Dispose();
@@ -157,13 +164,17 @@ namespace CoinGame.Managers
                 _stageSession = new(_curRound, _stageConfig);
                 _remainingTime = _stageSession.TimeLimit;
                 _timerEndTime = Time.timeAsDouble + _remainingTime;
-                OnStageSessionChanged?.Invoke(_stageSession, true);
+
                 OnStageTimerChanged?.Invoke(_remainingTime);
 
                 _timerCts = CancellationTokenSource.CreateLinkedTokenSource(destroyCancellationToken);
                 UpdateTimerAsync(_timerCts.Token).Forget();
             }
             catch (OperationCanceledException) { }
+            finally
+            {
+                _isRoundStarting = false;
+            }
         }
 
         public void NextRound()
@@ -172,7 +183,7 @@ namespace CoinGame.Managers
             {
                 if (_networkRoundState.IsServer)
                 {
-                    _networkRoundState.StartRoundServer();
+                    _networkRoundState.StartRoundServer(_roundStartDelay);
                 }
                 return;
             }
@@ -257,7 +268,7 @@ namespace CoinGame.Managers
 
             await unloadOperation;
         }
-        
+
         private SceneReference GetSceneReference(GameScene gameScene)
         {
             return gameScene switch
@@ -268,14 +279,19 @@ namespace CoinGame.Managers
             };
         }
 
-        public StageSession CurrentStageSession => _stageSession;
-        public float RemainingTime => _remainingTime;
-        public bool IsRoundStarted => _isRoundStarted;
-
         private void OnNetworkRoundStateChanged(int round, int targetCoins, int remainingCoins, float remainingTime, bool isActive)
         {
             if (!isActive)
             {
+                if (round > 0 && targetCoins > 0 && remainingTime > 0f &&
+                    _stageSession.Round != round)
+                {
+                    _curRound = round;
+                    _stageSession = new StageSession(round, targetCoins, remainingTime, targetCoins - remainingCoins);
+                    _isRoundStarting = true;
+                    OnStageSessionChanged?.Invoke(_stageSession, true);
+                }
+
                 OnStageTimerChanged?.Invoke(remainingTime);
                 return;
             }
@@ -283,6 +299,7 @@ namespace CoinGame.Managers
             _curRound = round;
             _stageSession = new StageSession(round, targetCoins, remainingTime, targetCoins - remainingCoins);
             _isRoundStarted = true;
+            _isRoundStarting = false;
             OnStageSessionChanged?.Invoke(_stageSession, true);
             OnStageTimerChanged?.Invoke(remainingTime);
         }
@@ -292,17 +309,43 @@ namespace CoinGame.Managers
             OnStageTimerChanged?.Invoke(0f);
         }
 
+        private void OnNetworkMatchFinished(bool collectorWon)
+        {
+            NetworkPlayerStats localStats = NetworkManager.Singleton?.SpawnManager.GetLocalPlayerObject()?.GetComponent<NetworkPlayerStats>();
+            if (localStats == null)
+            {
+                return;
+            }
+
+            PlayerPrefsStorage.SetPlayerSessionInt(PlayerSessionKey.SCORE, localStats.Score);
+            PlayerPrefsStorage.SetPlayerSessionInt(PlayerSessionKey.DISTRUPT, localStats.DisruptionScore);
+            PlayerPrefsStorage.SaveAll();
+        }
+
         private void OnDestroy()
         {
             if (_networkRoundStateBound && _networkRoundState != null)
             {
                 _networkRoundState.StateChanged -= OnNetworkRoundStateChanged;
                 _networkRoundState.RoundFinished -= OnNetworkRoundFinished;
+                _networkRoundState.MatchFinished -= OnNetworkMatchFinished;
             }
             _roundStartCts?.Cancel();
             _roundStartCts?.Dispose();
             _timerCts?.Cancel();
             _timerCts?.Dispose();
         }
+
+        public StageSession CurrentStageSession => _stageSession;
+        public float RemainingTime => _remainingTime;
+        public bool IsRoundStarted => _isRoundStarted;
+        public float RoundStartDelay => _roundStartDelay;
+        public bool CanPlayersMove => !IsInGameSceneLoaded || (_networkRoundState != null && _networkRoundState.IsSpawned
+            ? _networkRoundState.IsRoundActive
+            : _isRoundStarted && !_isRoundStarting);
+
+        private bool IsInGameSceneLoaded => _inGameSceneRef != null &&
+            !string.IsNullOrEmpty(_inGameSceneRef.ScenePath) &&
+            SceneManager.GetSceneByPath(_inGameSceneRef.ScenePath).isLoaded;
     }
 }

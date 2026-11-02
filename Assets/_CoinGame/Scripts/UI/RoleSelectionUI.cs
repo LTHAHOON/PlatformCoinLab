@@ -28,7 +28,8 @@ namespace CoinGame.UI
                 return;
             }
 
-            if (RoomLobbyController.Instance == null || !RoomLobbyController.Instance.IsRoomFull || _localStats.Role != PlayerRole.Unselected)
+            if (NetworkRoundState.Instance == null || !NetworkRoundState.Instance.IsRoleSelectionOpen ||
+                _localStats.Role != PlayerRole.Unselected)
             {
                 return;
             }

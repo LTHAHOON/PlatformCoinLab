@@ -17,7 +17,6 @@ namespace CoinGame.UI
             {
                 _sb = new();
             }
-            _sb.Append("Score: ");
             _sb.Append(newScore);
             _scoreText.SetText(_sb);
             _sb.Clear();

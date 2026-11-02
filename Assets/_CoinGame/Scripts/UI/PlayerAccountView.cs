@@ -7,23 +7,21 @@ namespace CoinGame.UI
     public class PlayerAccountView : MonoBehaviour
     {
         [SerializeField]
-        private TMP_Text _playerIdText;
+        private TMP_Text _userNameText;
         [SerializeField]
         private TMP_Text _onlineStatusText;
 
         private readonly StringBuilder _sb = new();
 
-        public void SetPlayerIdText(string playerId)
+        public void SetUserNameText(string userName)
         {
+            _sb.Append(userName);
+            _userNameText.SetText(_sb);
             _sb.Clear();
-            _sb.Append("Player ID: ");
-            _sb.Append(playerId);
-            _playerIdText.SetText(_sb);
         }
 
         public void SetOnlineStatusText(bool isOnline)
         {
-            _sb.Clear();
             _sb.Append("Online Status: ");
             if (isOnline)
             {
@@ -34,6 +32,7 @@ namespace CoinGame.UI
                 _sb.Append("<color=red>Offline</color>");
             }
             _onlineStatusText.SetText(_sb);
+            _sb.Clear();
         }
     }
 

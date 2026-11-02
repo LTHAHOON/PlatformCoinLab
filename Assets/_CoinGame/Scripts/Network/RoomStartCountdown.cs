@@ -7,7 +7,8 @@ namespace CoinGame.Network
 {
     public sealed class RoomStartCountdown : MonoBehaviour
     {
-        [SerializeField] private TMP_Text _countdownText;
+        [SerializeField]
+        private TMP_Text _countdownText;
 
         private bool _isRunning;
         private int _remainingSeconds;

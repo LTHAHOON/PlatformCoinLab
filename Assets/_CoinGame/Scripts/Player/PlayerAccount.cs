@@ -28,7 +28,7 @@ namespace CoinGame.Player
             OnlineStatusChanged = _playerAccountView.SetOnlineStatusText;
             IsOnline = false;
             _id = Guid.NewGuid();
-            _playerAccountView.SetPlayerIdText(_id.ToString());
+            _playerAccountView.SetUserNameText(_id.ToString());
         }
 
         public static Guid ID => _id;

@@ -32,7 +32,7 @@ namespace CoinGame.Session
             TimeLimit = Mathf.Max(0f, timeLimit);
             CollectedCoins = Mathf.Clamp(collectedCoins, 0, RequiredCoins);
         }
-        
+
         public void CollectCoin()
         {
             CollectedCoins++;

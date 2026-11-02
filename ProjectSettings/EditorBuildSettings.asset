@@ -15,4 +15,5 @@ EditorBuildSettings:
     path: Packages/com.unity.multiplayer.getting-started.casual/Example.unity
     guid: 94659d20428b566959ae961951f03a7c
   m_configObjects:
+    com.unity.addressableassets: {fileID: 11400000, guid: 08efdfd92033ad541bfe8f2428570cde, type: 2}
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}

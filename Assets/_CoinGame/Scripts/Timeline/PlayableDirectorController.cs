@@ -11,7 +11,7 @@ namespace CoinGame.Timeline
     {
         [SerializeField]
         private PlayableAsset _Start_PlayableAsset;
-        
+
         private PlayableDirector _playableDirector;
 
         private void Awake()

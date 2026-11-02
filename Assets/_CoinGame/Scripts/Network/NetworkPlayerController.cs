@@ -4,20 +4,24 @@ using Cysharp.Threading.Tasks;
 using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using CoinGame.Managers;
 using CoinGame.Player;
 using CoinGame.Stage;
 
 namespace CoinGame.Network
 {
     using CoinGame.Utilities;
+    using Unity.Netcode.Components;
 
-    [RequireComponent(typeof(CharacterController))]
+    [RequireComponent(typeof(CharacterController), typeof(NetworkTransform), typeof(NetworkPlayerStats))]
     public class NetworkPlayerController : NetworkBehaviour
     {
         [SerializeField]
         private float _moveSpeed = 4f;
         [SerializeField]
         private VectorMinMaxData _playerPosMinMaxData;
+
+        private NetworkPlayerStats _networkPlayerStats;
         private CharacterController _controller;
         private PlayerInput _playerInput;
         private InputAction _moveAction;
@@ -28,26 +32,27 @@ namespace CoinGame.Network
         private float _pushCooldownUntil;
         private float _lockCooldownUntil;
         private float _stealCooldownUntil;
-        private Renderer[] _renderers;
+        private Renderer[] _playerRenderers;
 
         [Rpc(SendTo.Everyone, InvokePermission = RpcInvokePermission.Server)]
         public void RelocateForGameRpc(Vector3 position)
         {
-            // This project's NetworkTransform uses owner authority.
             if (!IsOwner || !IsSpawned)
             {
                 return;
             }
 
-            Unity.Netcode.Components.NetworkTransform networkTransform =
-                GetComponent<Unity.Netcode.Components.NetworkTransform>();
+            NetworkTransform networkTransform = GetComponent<NetworkTransform>();
             if (networkTransform == null)
             {
                 Debug.LogError("NetworkPlayerController requires a NetworkTransform to relocate the player.", this);
                 return;
             }
-
-            _controller ??= GetComponent<CharacterController>();
+            if(!_controller)
+            {
+                Debug.LogError("ERROR: CharacterController을 찾을 수 없습니다.");
+                return;
+            }
             bool wasEnabled = _controller.enabled;
             _controller.enabled = false;
             networkTransform.Teleport(position, transform.rotation, transform.localScale);
@@ -59,7 +64,13 @@ namespace CoinGame.Network
 
         public override void OnNetworkSpawn()
         {
-            _renderers = GetComponentsInChildren<Renderer>();
+            _playerRenderers = GetComponentsInChildren<Renderer>();
+            _networkPlayerStats = GetComponent<NetworkPlayerStats>();
+            if (_networkPlayerStats == null)
+            {
+                Debug.LogError("NetworkPlayerController requires a NetworkPlayerStats component.", this);
+                return;
+            }
             if (!IsOwner)
             {
                 return;
@@ -98,7 +109,6 @@ namespace CoinGame.Network
                 MoveAsync(_moveCts.Token).Forget();
                 AbilityAsync(_moveCts.Token).Forget();
             }
-
             _moveAction.Enable();
             _attackAction?.Enable();
             _interactAction?.Enable();
@@ -112,15 +122,18 @@ namespace CoinGame.Network
             {
                 return;
             }
+            if (_networkPlayerStats == null)
+            {
+                return;
+            }
 
-            NetworkPlayerStats stats = GetComponent<NetworkPlayerStats>();
-            Color roleColor = stats.IsCoinLocked
+            Color roleColor = _networkPlayerStats.IsCoinLocked
                 ? new Color(0.35f, 0.75f, 1f)
-                : stats.Role == PlayerRole.Disruptor
+                : _networkPlayerStats.Role == PlayerRole.Disruptor
                     ? new Color(1f, 0.45f, 0.25f)
                     : Color.white;
 
-            foreach (Renderer renderer in _renderers)
+            foreach (Renderer renderer in _playerRenderers)
             {
                 renderer.material.color = roleColor;
             }
@@ -159,8 +172,11 @@ namespace CoinGame.Network
                 while (true)
                 {
                     token.ThrowIfCancellationRequested();
-                    NetworkPlayerStats stats = GetComponent<NetworkPlayerStats>();
-                    if (stats.Role == PlayerRole.Disruptor)
+                    if (_networkPlayerStats == null)
+                    {
+                        return;
+                    }
+                    if (_networkPlayerStats.Role == PlayerRole.Disruptor)
                     {
                         if (_attackAction != null && _attackAction.WasPressedThisFrame() && Time.time >= _pushCooldownUntil)
                         {
@@ -185,34 +201,18 @@ namespace CoinGame.Network
             catch (OperationCanceledException) { }
         }
 
-        private float PushCooldown => _roleAbilityConfig ? _roleAbilityConfig.PushCooldown : 2f;
-        private float LockCooldown => _roleAbilityConfig ? _roleAbilityConfig.LockCooldown : 8f;
-        private float StealCooldown => _roleAbilityConfig ? _roleAbilityConfig.StealCooldown : 10f;
-        private float LockDuration => _roleAbilityConfig ? _roleAbilityConfig.CoinLockDuration : 3f;
-        private float PushForce => _roleAbilityConfig ? _roleAbilityConfig.PushForce : 5f;
-        private float PushStunDuration => _roleAbilityConfig ? _roleAbilityConfig.PushStunDuration : 1f;
-        private int StealAmount => _roleAbilityConfig ? _roleAbilityConfig.StealAmount : 1;
-
         [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Owner)]
         private void UsePushRpc(Vector3 origin, Vector3 direction)
         {
-            NetworkPlayerStats ownStats = GetComponent<NetworkPlayerStats>();
             NetworkPlayerController target = FindNearestOpponent(origin);
-            NetworkPlayerStats targetStats = target != null ? target.GetComponent<NetworkPlayerStats>() : null;
-            if (ownStats == null || ownStats.Role != PlayerRole.Disruptor || targetStats == null)
+            if(target.TryGetComponent(out NetworkPlayerStats targetStats))
             {
-                return;
+                if (_networkPlayerStats.Role == PlayerRole.Disruptor && targetStats.Role == PlayerRole.Collector)
+                {
+                    targetStats.SetBeingPushedServer(NetworkManager.Singleton.ServerTime.Time + PushStunDuration, _networkPlayerStats);
+                    target.ReceivePushRpc(target.OwnerClientId, direction.normalized, PushForce);
+                }
             }
-
-            ownStats.RegisterPushAttemptServer();
-            if (targetStats.Role != PlayerRole.Collector)
-            {
-                return;
-            }
-
-            ownStats.RegisterSuccessfulPushServer();
-            targetStats.SetBeingPushedServer(NetworkManager.Singleton.ServerTime.Time + PushStunDuration, ownStats);
-            target.ReceivePushRpc(target.OwnerClientId, direction.normalized, PushForce);
         }
 
         [Rpc(SendTo.NotServer)]
@@ -230,13 +230,12 @@ namespace CoinGame.Network
         private void UseLockRpc(Vector3 origin)
         {
             NetworkPlayerController target = FindNearestOpponent(origin);
-            NetworkPlayerStats ownStats = GetComponent<NetworkPlayerStats>();
-            NetworkPlayerStats targetStats = target != null ? target.GetComponent<NetworkPlayerStats>() : null;
-            if (ownStats != null && ownStats.Role == PlayerRole.Disruptor && targetStats != null &&
-                targetStats.Role == PlayerRole.Collector)
+            if(target.TryGetComponent(out NetworkPlayerStats targetStats))
             {
-                targetStats.SetCoinLockServer(NetworkManager.Singleton.ServerTime.Time + LockDuration, ownStats);
-                ownStats.RegisterSuccessfulLockServer();
+                if (_networkPlayerStats.Role == PlayerRole.Disruptor && targetStats.Role == PlayerRole.Collector)
+                {
+                    targetStats.SetCoinLockServer(NetworkManager.Singleton.ServerTime.Time + LockDuration, _networkPlayerStats);
+                }
             }
         }
 
@@ -250,7 +249,6 @@ namespace CoinGame.Network
                 targetStats.Role == PlayerRole.Collector && targetStats.TrySpendScore(StealAmount))
             {
                 ownStats.AddScoreServer(StealAmount);
-                ownStats.RegisterSuccessfulStealServer();
             }
         }
 
@@ -283,6 +281,12 @@ namespace CoinGame.Network
                 while (true)
                 {
                     token.ThrowIfCancellationRequested();
+                    if (GameManager.Instance != null && !GameManager.Instance.CanPlayersMove)
+                    {
+                        await UniTask.Yield(PlayerLoopTiming.EarlyUpdate, token);
+                        continue;
+                    }
+
                     Vector2 moveInput = _moveAction.ReadValue<Vector2>();
                     if (moveInput.sqrMagnitude < 0.0001f && Gamepad.current != null)
                     {
@@ -296,7 +300,7 @@ namespace CoinGame.Network
                         Vector3 curPlayerPos = _controller.transform.position;
                         Vector3 targetPlayerPos = curPlayerPos + moveDelta;
                         targetPlayerPos = targetPlayerPos.Clamp(_playerPosMinMaxData.MinVector, _playerPosMinMaxData.MaxVetor);
-                        
+
                         _controller.Move(targetPlayerPos - curPlayerPos);
                     }
                     await UniTask.Yield(PlayerLoopTiming.EarlyUpdate, token);
@@ -309,5 +313,12 @@ namespace CoinGame.Network
             }
         }
 
+        private float PushCooldown => _roleAbilityConfig ? _roleAbilityConfig.PushCooldown : 2f;
+        private float LockCooldown => _roleAbilityConfig ? _roleAbilityConfig.LockCooldown : 8f;
+        private float StealCooldown => _roleAbilityConfig ? _roleAbilityConfig.StealCooldown : 10f;
+        private float LockDuration => _roleAbilityConfig ? _roleAbilityConfig.CoinLockDuration : 3f;
+        private float PushForce => _roleAbilityConfig ? _roleAbilityConfig.PushForce : 5f;
+        private float PushStunDuration => _roleAbilityConfig ? _roleAbilityConfig.PushStunDuration : 1f;
+        private int StealAmount => _roleAbilityConfig ? _roleAbilityConfig.StealAmount : 1;
     }
 }

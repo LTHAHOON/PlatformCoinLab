@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using Cysharp.Threading.Tasks;
 using Unity.Netcode;
@@ -20,10 +20,14 @@ namespace CoinGame.Network
 
         public static RoomLobbyController Instance { get; private set; }
 
-        [SerializeField] private RoomLobbyView _view;
-        [SerializeField] private RoomStartCountdown _countdown;
-        [SerializeField] private Canvas _outGameCanvas;
-        [SerializeField] private NetworkRoundState _networkRoundStatePrefab;
+        [SerializeField]
+        private RoomLobbyView _view;
+        [SerializeField]
+        private RoomStartCountdown _countdown;
+        [SerializeField]
+        private Canvas _outGameCanvas;
+        [SerializeField]
+        private NetworkRoundState _networkRoundStatePrefab;
 
         private SessionConnector _sessionConnector;
         private MultiplayerSession _multiplayerSession;

@@ -6,6 +6,7 @@ namespace CoinGame.Utilities
     public static class PlayerSessionKey
     {
         public const string SCORE = "CoinGame.Sessions.Score";
+        public const string DISTRUPT = "CoinGame.Sessions.Distrupt";
     }
 
     public static class PlayerPrefsStorage

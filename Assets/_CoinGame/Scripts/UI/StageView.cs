@@ -27,34 +27,20 @@ namespace CoinGame.UI
         private NetworkPlayerStats _localStats;
         private PlayerRole _lastRole = PlayerRole.Unselected;
         private bool _isBound;
-        [SerializeField] private TMP_Text _scoreboardText;
-        [SerializeField] private TMP_Text _collectorScoreboardText;
-        [SerializeField] private TMP_Text _disruptorScoreboardText;
-        [SerializeField] private CanvasGroup _roundBannerGroup;
-        [SerializeField] private TMP_Text _roundBannerText;
+        [SerializeField]
+        private TMP_Text _scoreboardText;
+        [SerializeField]
+        private TMP_Text _collectorScoreboardText;
+        [SerializeField]
+        private TMP_Text _disruptorScoreboardText;
+        [SerializeField]
+        private CanvasGroup _roundBannerGroup;
+        [SerializeField]
+        private TMP_Text _roundBannerText;
         private CancellationTokenSource _roundBannerCts;
         private float _nextScoreboardRefresh;
         private int _lastBannerRound = -1;
         private int _roundBannerVersion;
-
-        private void Awake()
-        {
-            RemoveDuplicateScoreboards();
-        }
-
-        private void RemoveDuplicateScoreboards()
-        {
-            Transform configuredScoreboard = _collectorScoreboardText != null
-                ? _collectorScoreboardText.transform.parent
-                : _scoreboardText != null ? _scoreboardText.transform.parent : null;
-            foreach (Transform candidate in FindObjectsByType<Transform>(FindObjectsSortMode.None))
-            {
-                if (candidate.name == "RoleScoreboard" && candidate != configuredScoreboard)
-                {
-                    Destroy(candidate.gameObject);
-                }
-            }
-        }
 
         private void OnEnable()
         {
@@ -98,7 +84,7 @@ namespace CoinGame.UI
                 _lastRole = _localStats.Role;
                 if (_remainingCoinText != null)
                 {
-                    _remainingCoinText.gameObject.SetActive(_lastRole != PlayerRole.Disruptor);
+                    _remainingCoinText.transform.parent.gameObject.SetActive(_lastRole != PlayerRole.Disruptor);
                 }
             }
 
@@ -117,7 +103,7 @@ namespace CoinGame.UI
                 if (stageSession.Round > 0 && stageSession.Round != _lastBannerRound)
                 {
                     _lastBannerRound = stageSession.Round;
-                    ShowRoundBannerAsync(stageSession.Round).Forget();
+                    ShowRoundBannerAsync(stageSession.Round, GameManager.Instance.RoundStartDelay).Forget();
                 }
             }
 
@@ -131,7 +117,6 @@ namespace CoinGame.UI
                 return;
             }
 
-            _sb.Append("Remaining Coin: ");
             _sb.Append(remainingCoin);
             _remainingCoinText.SetText(_sb);
             _sb.Clear();
@@ -148,7 +133,6 @@ namespace CoinGame.UI
             int minutes = totalSeconds / 60;
             int seconds = totalSeconds % 60;
 
-            _sb.Append("Timer: ");
             _sb.Append(minutes.ToString("00"));
             _sb.Append(':');
             _sb.Append(seconds.ToString("00"));
@@ -163,7 +147,6 @@ namespace CoinGame.UI
                 return;
             }
 
-            _sb.Append("Round: ");
             _sb.Append(curRound);
             _roundText.SetText(_sb);
             _sb.Clear();
@@ -227,7 +210,7 @@ namespace CoinGame.UI
             _disruptorScoreboardText.SetText(disruptorBuilder);
         }
 
-        private async UniTaskVoid ShowRoundBannerAsync(int round)
+        private async UniTaskVoid ShowRoundBannerAsync(int round, float startDelay)
         {
             if (_roundBannerGroup == null || _roundBannerText == null)
             {
@@ -245,8 +228,8 @@ namespace CoinGame.UI
 
             try
             {
-                await FadeBannerAsync(0f, 1f, 0.35f, token);
-                await UniTask.Delay(TimeSpan.FromSeconds(1f), cancellationToken: token);
+                await FadeBannerAsync(0f, 1f, GameManager.RoundBannerFadeInDuration, token);
+                await UniTask.Delay(TimeSpan.FromSeconds(startDelay), cancellationToken: token);
                 await FadeBannerAsync(1f, 0f, 0.5f, token);
                 if (bannerVersion == _roundBannerVersion)
                 {
