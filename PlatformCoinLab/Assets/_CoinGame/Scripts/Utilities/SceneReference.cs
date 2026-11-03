@@ -43,8 +43,10 @@ namespace CoinGame.Utilities
     [Serializable]
     public class SceneReference
     {
+#if UNITY_EDITOR
         [SerializeField]
         private SceneAsset _sceneAsset;
+#endif
         [SerializeField]
         private string _scenePath;
 

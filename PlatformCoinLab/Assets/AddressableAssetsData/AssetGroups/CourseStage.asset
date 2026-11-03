@@ -15,12 +15,14 @@ MonoBehaviour:
   m_GroupName: CourseStage
   m_GUID: 81254a3fa78fdf947801f15c65aba4f9
   m_SerializeEntries:
-  - m_GUID: c75450dbbea6658479a29242d5738a32
-    m_Address: Coin_Spawner
+  - m_GUID: b7ab07fd164ff764a8444e817e135db9
+    m_Address: Ground_01
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
   m_ReadOnly: 0
   m_Settings: {fileID: 11400000, guid: 07a49db2446faef4aab6e4be37f87228, type: 2}
   m_SchemaSet:
-    m_Schemas: []
+    m_Schemas:
+    - {fileID: 11400000, guid: ab49316edf519b6459dccd9d39637311, type: 2}
+    - {fileID: 11400000, guid: 7ec23e042dee0c24192145aa32476bfd, type: 2}
