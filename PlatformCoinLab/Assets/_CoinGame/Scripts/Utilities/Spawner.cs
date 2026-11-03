@@ -4,6 +4,9 @@ using System.Threading;
 using Cysharp.Threading.Tasks;
 using Unity.Netcode;
 using UnityEngine;
+using UnityEngine.AddressableAssets;
+using UnityEngine.ResourceManagement.AsyncOperations;
+using UnityEngine.Serialization;
 using CoinGame.Network;
 using CoinGame.Managers;
 using CoinGame.Session;
@@ -21,6 +24,11 @@ namespace CoinGame.Utilities
         [SerializeField]
         private SpawnType _spawnType;
         [SerializeField]
+        private AssetReferenceGameObject _spawnPrefabReference;
+        [SerializeField]
+        [HideInInspector]
+        [FormerlySerializedAs("_spawnPrefab")]
+        private GameObject _legacySpawnPrefab;
         private GameObject _spawnPrefab;
         [SerializeField]
         private Transform _spawnParent;
@@ -62,6 +70,8 @@ namespace CoinGame.Utilities
         private List<CancellationToken> _spawnedTokens;
         private CancellationTokenSource _spawnCts;
         private Dictionary<ulong, CancellationTokenSource> _dicSpawnPlayerCts;
+        private AsyncOperationHandle<GameObject> _spawnPrefabHandle;
+        private UniTask _spawnPrefabInitializationTask;
         private const int MAX_ITER = 50;
         public bool IsDefaultPlayerSpawner => _isDefaultPlayerSpawner;
         private int _lastSpawnedStageRound = -1;
@@ -119,6 +129,30 @@ namespace CoinGame.Utilities
 
         private void Awake()
         {
+            _spawnPrefabInitializationTask = InitializeSpawnPrefabAsync(destroyCancellationToken).Preserve();
+            _spawnPrefabInitializationTask.Forget();
+        }
+
+        private async UniTask InitializeSpawnPrefabAsync(CancellationToken token)
+        {
+            try
+            {
+                if (_spawnPrefabReference != null && _spawnPrefabReference.RuntimeKeyIsValid())
+                {
+                    _spawnPrefabHandle = _spawnPrefabReference.LoadAssetAsync();
+                    _spawnPrefab = await _spawnPrefabHandle.ToUniTask(cancellationToken: token);
+                }
+                else
+                {
+                    _spawnPrefab = _legacySpawnPrefab;
+                }
+
+                if (!_spawnPrefab)
+                {
+                    Debug.LogError("ERROR: SpawnPrefab is not assigned.", this);
+                    return;
+                }
+
             if(_spawnParent && _spawnType == SpawnType.NetworkObject)
             {
                 if(!_spawnParent.TryGetComponent<NetworkObject>(out _spawnNetworkParent))
@@ -157,7 +191,12 @@ namespace CoinGame.Utilities
                     SpawnAsync(_spawnCts.Token, _spawnCount, _spawnFirstDelay).Forget();
                 }
             }
-
+            }
+            catch (OperationCanceledException) { }
+            catch (Exception ex)
+            {
+                Debug.LogException(ex, this);
+            }
         }
 
         private void OnEnable()
@@ -262,6 +301,11 @@ namespace CoinGame.Utilities
                 NetworkManager.Singleton.PrefabHandler.RemoveHandler(_spawnPrefab);
             }
             _networkObjectPool?.Dispose();
+            if (_spawnPrefabHandle.IsValid())
+            {
+                Addressables.Release(_spawnPrefabHandle);
+                _spawnPrefabHandle = default;
+            }
             if (_spawnCts is not null)
             {
                 _spawnCts.Cancel();
@@ -287,6 +331,12 @@ namespace CoinGame.Utilities
 
         public void SpawnPlayer(ulong clientId)
         {
+            if (_spawnPrefab == null)
+            {
+                SpawnPlayerWhenReadyAsync(clientId).Forget();
+                return;
+            }
+
             NetworkManager networkManager = NetworkManager.Singleton;
             if (networkManager == null || !networkManager.IsServer || !_isDefaultPlayerSpawner)
             {
@@ -308,6 +358,19 @@ namespace CoinGame.Utilities
                 _dicSpawnPlayerCts.Add(clientId, CancellationTokenSource.CreateLinkedTokenSource(destroyCancellationToken));
             }
             SpawnPlayerAsync(_dicSpawnPlayerCts[clientId].Token, networkObject, clientId).Forget();
+        }
+
+        private async UniTask SpawnPlayerWhenReadyAsync(ulong clientId)
+        {
+            try
+            {
+                await _spawnPrefabInitializationTask;
+                if (_spawnPrefab != null)
+                {
+                    SpawnPlayer(clientId);
+                }
+            }
+            catch (OperationCanceledException) { }
         }
 
         public void CancelSpawnPlayer(ulong clientId)
@@ -410,6 +473,8 @@ namespace CoinGame.Utilities
         {
             try
             {
+                await _spawnPrefabInitializationTask;
+                token.ThrowIfCancellationRequested();
                 await UniTask.WaitUntil(() => NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening, cancellationToken: token);
                 if (!NetworkManager.Singleton.IsServer)
                 {
@@ -479,6 +544,8 @@ namespace CoinGame.Utilities
         {
             try
             {
+                await _spawnPrefabInitializationTask;
+                token.ThrowIfCancellationRequested();
                 if (!_spawnPrefab)
                 {
                     Debug.LogError("ERROR: SpawnPrefab이 Null입니다.");

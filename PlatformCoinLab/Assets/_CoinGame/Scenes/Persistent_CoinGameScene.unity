@@ -309,7 +309,13 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Spawner
   _spawnType: 1
-  _spawnPrefab: {fileID: 5359521999124769492, guid: d64d0af4d0985ef47a0a441c5ae15808, type: 3}
+  _spawnPrefabReference:
+    m_AssetGUID: d64d0af4d0985ef47a0a441c5ae15808
+    m_SubObjectName: 
+    m_SubObjectType: 
+    m_SubObjectGUID: 
+    m_EditorAssetChanged: 0
+  _legacySpawnPrefab: {fileID: 5359521999124769492, guid: d64d0af4d0985ef47a0a441c5ae15808, type: 3}
   _spawnParent: {fileID: 0}
   _onAwakeSpawn: 0
   _syncSpawnCountWithStageSession: 0
@@ -2811,6 +2817,7 @@ MonoBehaviour:
   _countdown: {fileID: 150262848}
   _outGameCanvas: {fileID: 1443105579}
   _networkRoundStatePrefab: {fileID: 4597449833319584482, guid: 58f01d0a75e2f9b4984caa32b2109f91, type: 3}
+  _contentServerHealthUrl: https://localhost:5443/health
 --- !u!114 &840817113
 MonoBehaviour:
   m_ObjectHideFlags: 0

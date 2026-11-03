@@ -23,6 +23,12 @@ namespace CoinGame.Network
 
         private void Awake()
         {
+            if (Instance != null && Instance != this)
+            {
+                Destroy(gameObject);
+                return;
+            }
+
             Instance = this;
         }
 
@@ -55,7 +61,10 @@ namespace CoinGame.Network
 
         private void Start()
         {
-            gameObject.AddComponent<RoleSelectionUI>();
+            if (GetComponent<RoleSelectionUI>() == null)
+            {
+                gameObject.AddComponent<RoleSelectionUI>();
+            }
             SubscribeNetworkCallbacks();
             NetworkManager networkManager = NetworkManager.Singleton;
             if (networkManager != null && networkManager.IsServer && _defaultPlayerSpawner != null)
@@ -136,6 +145,7 @@ namespace CoinGame.Network
                 return;
             }
 
+            SubscribeNetworkCallbacks();
             PlayerAccount.IsOnline = networkManager.StartClient();
             if (!PlayerAccount.IsOnline)
             {

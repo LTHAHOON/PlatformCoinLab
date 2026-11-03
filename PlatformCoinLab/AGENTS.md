@@ -71,7 +71,8 @@
 - vfx: Particle System, Visual Effect Graph, Shader Graph, 머티리얼·셰이더·전투 및 환경 효과를 담당한다. URP/HDRP와 GPU/CPU 성능·오버드로우를 확인하고, Unity MCP로 VFX·씬을 변경하기 전 Main Agent의 승인을 받는다.
 - reviewer: C# 품질, Unity 수명주기·이벤트·직렬화 위험을 읽기 전용으로 검토하고 프로덕션 파일을 수정하지 않는다.
 - qa: EditMode/PlayMode 자동 테스트, 기능·회귀·버그 재현, Console·성능·GC Alloc 검토를 담당한다. 실행하지 않은 테스트를 통과로 보고하지 않으며 문제별 심각도·재현 방법과 수정 후 재검증 결과를 보고한다.
+- server: Unity Netcode for GameObjects, Unity Multiplayer Services, 세션·로비·룸·매치메이킹, Dedicated/Listen Server 구조, RPC·상태 동기화, Addressables 기반 원격 콘텐츠, ASP.NET Core ContentServer, 인증·권한·입력 검증·영속 데이터·관측성을 담당한다. 구현 전 현재 네트워크 라이브러리와 ContentServer 구조를 조사하고 확인되지 않은 백엔드 기술이나 외부 서비스를 임의로 도입하지 않는다. 운영 서버·운영 데이터·비용이 발생하는 클라우드 리소스를 승인 없이 변경하지 않으며, Unity 씬·프리팹·ProjectSettings 변경은 Main Agent와 조율한다.
 
 기존 `tester` 역할은 `qa`로 확장·이관했다. 저장소에 별도 Tester 설정 파일은 존재하지 않았으므로 삭제하지 않았고, 기존 역할 규칙의 의미는 QA 프롬프트에 보존했다.
 
-독립적인 읽기·분석 업무는 가능한 경우 병렬로 위임하되 동시 실행은 최대 3~4개로 제한한다. 같은 Unity Editor 인스턴스 또는 씬·프리팹·ProjectSettings를 여러 역할이 동시에 변경하지 않는다. Unity MCP의 씬·프리팹·ProjectSettings 변경은 Main Agent가 순차 조율하고 실행 전 승인을 받는다. Library/Temp/Logs/obj는 수정하지 않는다. 모든 역할은 한국어로 결과를 보고한다.
+독립적인 읽기·분석 업무는 가능한 경우 병렬로 위임하되 동시 실행은 최대 3~4개로 제한한다. server는 네트워크·백엔드 구조와 데이터 흐름을 먼저 읽기 전용으로 조사하고, gameplay와 서버 권한 게임 로직·상태 동기화를 조율하며, ui에는 로그인·로비·매치메이킹 API와 연결 상태·오류 규격을 제공하고, vfx에는 서버 이벤트와 시각 효과 분리 규격을 제공한다. reviewer는 서버 코드의 보안·동시성·데이터 무결성을 검토하고, qa는 지연·패킷 손실·재접속·API·부하·회귀 검증을 담당한다. 같은 Unity Editor 인스턴스 또는 씬·프리팹·ProjectSettings를 여러 역할이 동시에 변경하지 않는다. Unity MCP의 씬·프리팹·ProjectSettings 변경은 Main Agent가 순차 조율하고 실행 전 승인을 받는다. Library/Temp/Logs/obj는 수정하지 않는다. 모든 역할은 한국어로 결과를 보고한다.

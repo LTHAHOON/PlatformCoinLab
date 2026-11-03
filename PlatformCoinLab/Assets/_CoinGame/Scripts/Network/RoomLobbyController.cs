@@ -1,11 +1,7 @@
 using System;
-using System.Collections.Generic;
 using Cysharp.Threading.Tasks;
 using Unity.Netcode;
-using Unity.Services.Authentication;
-using Unity.Services.Core;
 using Unity.Services.Multiplayer;
-using Unity.Services.Multiplayer.Components;
 using UnityEngine;
 using CoinGame.Managers;
 using CoinGame.Player;
@@ -16,7 +12,6 @@ namespace CoinGame.Network
     {
         private const int DefaultMaxPlayers = 2;
         private const int MaxSupportedPlayers = 8;
-        private const int StartCountdownSeconds = 10;
 
         public static RoomLobbyController Instance { get; private set; }
 
@@ -28,14 +23,18 @@ namespace CoinGame.Network
         private Canvas _outGameCanvas;
         [SerializeField]
         private NetworkRoundState _networkRoundStatePrefab;
+        [SerializeField]
+        private string _contentServerHealthUrl = "https://localhost:5443/health";
 
-        private SessionConnector _sessionConnector;
-        private MultiplayerSession _multiplayerSession;
+        private RoomSessionService _sessionService;
         private ISession _session;
         private bool _servicesReady;
         private bool _sessionReady;
         private bool _isHost;
         private bool _gameStarting;
+        private bool _roomActionInProgress;
+        private bool _isShuttingDown;
+        private ContentServerHealthProbe _contentServerHealthProbe;
         private int _maxCollectors = 1;
         private int _maxDisruptors = 1;
         private int _maxRounds = 5;
@@ -74,6 +73,10 @@ namespace CoinGame.Network
             }
 
             Instance = this;
+            _sessionService = new RoomSessionService();
+            _sessionService.Connected += OnSessionConnected;
+            _sessionService.Failed += OnSessionFailed;
+            _contentServerHealthProbe = new ContentServerHealthProbe(_contentServerHealthUrl);
             NetworkManager networkManager = NetworkManager.Singleton;
             if (networkManager != null)
             {
@@ -111,7 +114,7 @@ namespace CoinGame.Network
             InitializeServicesAsync().Forget();
         }
 
-        private async UniTaskVoid PrepareLobbySceneAsync()
+        private async UniTask PrepareLobbySceneAsync()
         {
             await UniTask.Yield(PlayerLoopTiming.Update);
             if (GameManager.Instance != null)
@@ -158,60 +161,117 @@ namespace CoinGame.Network
             }
         }
 
-        private async UniTaskVoid InitializeServicesAsync()
+        private async UniTask InitializeServicesAsync()
         {
-            try
+            await _sessionService.InitializeServicesAsync(destroyCancellationToken);
+            _servicesReady = _sessionService.IsServicesReady;
+            if (_servicesReady)
             {
-                if (UnityServices.State != ServicesInitializationState.Initialized)
-                {
-                    await UnityServices.InitializeAsync();
-                }
-                if (!AuthenticationService.Instance.IsSignedIn)
-                {
-                    await AuthenticationService.Instance.SignInAnonymouslyAsync();
-                }
-
-                _servicesReady = true;
                 _view?.SetStatus("Create a room or join with a Room ID.");
                 _view?.SetButtonsInteractable(true);
-            }
-            catch (Exception exception)
-            {
-                _view?.SetStatus($"Service initialization failed: {exception.Message}");
-                Debug.LogException(exception, this);
             }
         }
 
         private void CreateRoom()
         {
-            if (!TryReadRoomSettings(out RoomSettings settings))
-            {
-                return;
-            }
-            ConnectSessionAsync(settings, true).Forget();
+            CreateRoomAsync().Forget();
         }
 
         private void JoinRoom()
         {
-            if (!_servicesReady)
-            {
-                _view?.SetStatus("Please wait for services to initialize.");
-                return;
-            }
-
-            string roomId = _view != null ? _view.JoinRoomId : string.Empty;
-            if (string.IsNullOrWhiteSpace(roomId))
-            {
-                _view?.SetStatus("Enter a Room ID to join.");
-                return;
-            }
-
-            // Hide the create/join form immediately while the client is connecting.
-            _view?.SetPanelVisible(false);
-            ConnectSessionAsync(new RoomSettings(roomId, string.Empty, DefaultMaxPlayers, 1, 1, 5, 2), false).Forget();
+            JoinRoomAsync().Forget();
         }
 
-        private async UniTaskVoid ConnectSessionAsync(RoomSettings settings, bool createOrJoin)
+        private async UniTask CreateRoomAsync()
+        {
+            if (!TryBeginRoomAction())
+            {
+                return;
+            }
+
+            try
+            {
+                if (!_servicesReady)
+                {
+                    _view?.SetStatus("Please wait for services to initialize.");
+                    return;
+                }
+
+                if (!await IsContentServerAvailableAsync())
+                {
+                    return;
+                }
+
+                if (TryReadRoomSettings(out RoomSettings settings))
+                {
+                    ConnectSessionAsync(settings, true).Forget();
+                }
+            }
+            finally
+            {
+                _roomActionInProgress = false;
+            }
+        }
+
+        private async UniTask JoinRoomAsync()
+        {
+            if (!TryBeginRoomAction())
+            {
+                return;
+            }
+
+            try
+            {
+                if (!_servicesReady)
+                {
+                    _view?.SetStatus("Please wait for services to initialize.");
+                    return;
+                }
+
+                string roomId = _view != null ? _view.JoinRoomId : string.Empty;
+                if (string.IsNullOrWhiteSpace(roomId))
+                {
+                    _view?.SetStatus("Enter a Room ID to join.");
+                    return;
+                }
+
+                if (!await IsContentServerAvailableAsync())
+                {
+                    return;
+                }
+
+                // Hide the create/join form immediately while the client is connecting.
+                _view?.SetPanelVisible(false);
+                ConnectSessionAsync(new RoomSettings(roomId, string.Empty, DefaultMaxPlayers, 1, 1, 5, 2), false).Forget();
+            }
+            finally
+            {
+                _roomActionInProgress = false;
+            }
+        }
+
+        private bool TryBeginRoomAction()
+        {
+            if (_roomActionInProgress || _sessionReady || _gameStarting)
+            {
+                return false;
+            }
+
+            _roomActionInProgress = true;
+            return true;
+        }
+
+        private async UniTask<bool> IsContentServerAvailableAsync()
+        {
+            bool available = await _contentServerHealthProbe.IsAvailableAsync(destroyCancellationToken);
+            if (!available)
+            {
+                _view?.SetStatus("The content server is not running. Please start the server and try again.");
+            }
+            return available;
+        }
+
+        private async UniTask ConnectSessionAsync(RoomSettings settings, bool createOrJoin)
         {
             if (!_servicesReady || _sessionReady)
             {
@@ -220,87 +280,26 @@ namespace CoinGame.Network
 
             _view?.SetButtonsInteractable(false);
             _view?.SetStatus(createOrJoin ? "Creating room..." : "Joining room...");
-
-            try
-            {
-                await ResetNetworkManagerAsync();
-            }
-            catch (Exception exception)
-            {
-                OnSessionFailed($"Network reset failed: {exception.Message}");
-                return;
-            }
-
-            if (_sessionConnector != null)
-            {
-                _sessionConnector.SuccessfulExecution.RemoveListener(OnSessionConnected);
-                _sessionConnector.FailedExecution.RemoveListener(OnSessionFailed);
-                Destroy(_sessionConnector);
-                _sessionConnector = null;
-            }
-            if (_multiplayerSession != null)
-            {
-                Destroy(_multiplayerSession);
-                _multiplayerSession = null;
-            }
-
-            _multiplayerSession = ScriptableObject.CreateInstance<MultiplayerSession>();
-            _sessionConnector = ScriptableObject.CreateInstance<SessionConnector>();
-            _sessionConnector.MultiplayerSession = _multiplayerSession;
-            _sessionConnector.SuccessfulExecution.AddListener(OnSessionConnected);
-            _sessionConnector.FailedExecution.AddListener(OnSessionFailed);
-
-            if (createOrJoin)
-            {
-                Dictionary<string, SessionProperty> properties = new()
-                {
-                    ["collectors"] = new SessionProperty(settings.MaxCollectors.ToString(), VisibilityPropertyOptions.Public, PropertyIndex.String1),
-                    ["disruptors"] = new SessionProperty(settings.MaxDisruptors.ToString(), VisibilityPropertyOptions.Public, PropertyIndex.String2),
-                    ["maxRounds"] = new SessionProperty(settings.MaxRounds.ToString(), VisibilityPropertyOptions.Public, PropertyIndex.String3),
-                    ["coinMultiplier"] = new SessionProperty(settings.CoinMultiplier.ToString(), VisibilityPropertyOptions.Public, PropertyIndex.String4),
-                };
-                SessionOptions sessionOptions = new()
-                {
-                    Name = settings.RoomName,
-                    MaxPlayers = settings.MaxPlayers,
-                    SessionProperties = properties,
-                };
-                _sessionConnector.WithCreateOrJoin(settings.RoomId)
-                    .WithSessionOptions(sessionOptions)
-                    .WithRelayNetworkOptions(RelayNetworkOptions.Default, RelayProtocol.Default)
-                    .Execute();
-            }
-            else
-            {
-                _sessionConnector.WithJoinById(settings.RoomId).Execute();
-            }
-
-            await UniTask.Yield(PlayerLoopTiming.Update);
-        }
-
-        private async UniTask ResetNetworkManagerAsync()
-        {
-            NetworkManager networkManager = NetworkManager.Singleton;
-            if (networkManager == null || !networkManager.IsListening)
-            {
-                return;
-            }
-
-            networkManager.Shutdown();
-            await UniTask.WaitUntil(() => !networkManager.IsListening, cancellationToken: destroyCancellationToken);
+            await _sessionService.ConnectAsync(settings, createOrJoin, destroyCancellationToken);
         }
 
         private void OnSessionConnected(ISession session)
         {
+            if (_isShuttingDown)
+            {
+                return;
+            }
+
             _session = session;
             _sessionReady = true;
             _isHost = session.IsHost;
+            _roomActionInProgress = false;
             ReadSessionProperties(session);
             EnsureNetworkRoundStateAsync().Forget();
             WaitForNetworkAsync(session).Forget();
         }
 
-        private async UniTaskVoid EnsureNetworkRoundStateAsync()
+        private async UniTask EnsureNetworkRoundStateAsync()
         {
             try
             {
@@ -341,9 +340,14 @@ namespace CoinGame.Network
             catch (OperationCanceledException)
             {
             }
+            catch (Exception exception)
+            {
+                Debug.LogException(exception, this);
+                OnSessionFailed($"Network state setup failed: {exception.Message}");
+            }
         }
 
-        private async UniTaskVoid WaitForNetworkAsync(ISession session)
+        private async UniTask WaitForNetworkAsync(ISession session)
         {
             try
             {
@@ -355,13 +359,24 @@ namespace CoinGame.Network
             catch (OperationCanceledException)
             {
             }
+            catch (Exception exception)
+            {
+                Debug.LogException(exception, this);
+                OnSessionFailed($"Network connection failed: {exception.Message}");
+            }
         }
 
         private void OnSessionFailed(string message)
         {
+            if (_isShuttingDown)
+            {
+                return;
+            }
+
             _sessionReady = false;
             _isHost = false;
             _session = null;
+            _roomActionInProgress = false;
             _view?.SetButtonsInteractable(true);
             _view?.SetPanelVisible(true);
             _view?.SetStatus($"Room connection failed: {message}");
@@ -400,7 +415,7 @@ namespace CoinGame.Network
             StartGameAsync().Forget();
         }
 
-        private async UniTaskVoid StartGameAsync()
+        private async UniTask StartGameAsync()
         {
             _gameStarting = true;
             _view?.SetPanelVisible(false);
@@ -411,6 +426,8 @@ namespace CoinGame.Network
 
             if (GameManager.Instance == null)
             {
+                _gameStarting = false;
+                _view?.SetPanelVisible(true);
                 _view?.SetStatus("Game manager is unavailable.");
                 return;
             }
@@ -496,42 +513,11 @@ namespace CoinGame.Network
 
         private void OnDestroy()
         {
+            _isShuttingDown = true;
             if (Instance == this) Instance = null;
-            ISession session = _multiplayerSession?.Session;
-            if (session != null)
-            {
-                if (session.IsHost) session.AsHost().DeleteAsync();
-                else session.LeaveAsync();
-            }
-            if (_sessionConnector != null)
-            {
-                _sessionConnector.SuccessfulExecution.RemoveListener(OnSessionConnected);
-                _sessionConnector.FailedExecution.RemoveListener(OnSessionFailed);
-                Destroy(_sessionConnector);
-            }
-            if (_multiplayerSession != null) Destroy(_multiplayerSession);
-        }
-
-        private readonly struct RoomSettings
-        {
-            public readonly string RoomId;
-            public readonly string RoomName;
-            public readonly int MaxPlayers;
-            public readonly int MaxCollectors;
-            public readonly int MaxDisruptors;
-            public readonly int MaxRounds;
-            public readonly int CoinMultiplier;
-
-            public RoomSettings(string roomId, string roomName, int maxPlayers, int maxCollectors, int maxDisruptors, int maxRounds, int coinMultiplier)
-            {
-                RoomId = roomId;
-                RoomName = roomName;
-                MaxPlayers = maxPlayers;
-                MaxCollectors = maxCollectors;
-                MaxDisruptors = maxDisruptors;
-                MaxRounds = maxRounds;
-                CoinMultiplier = coinMultiplier;
-            }
+            _sessionService.Connected -= OnSessionConnected;
+            _sessionService.Failed -= OnSessionFailed;
+            _sessionService.Dispose();
         }
     }
 }

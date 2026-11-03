@@ -369,6 +369,14 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 5647310701077708372, guid: c75450dbbea6658479a29242d5738a32, type: 3}
+      propertyPath: _spawnParent
+      value: 
+      objectReference: {fileID: 281453645}
+    - target: {fileID: 5647310701077708372, guid: c75450dbbea6658479a29242d5738a32, type: 3}
+      propertyPath: _spawnPrefabReference.m_AssetGUID
+      value: 419af0feaf3e681488458f05965cc734
+      objectReference: {fileID: 0}
     - target: {fileID: 7962691504447793113, guid: c75450dbbea6658479a29242d5738a32, type: 3}
       propertyPath: m_Name
       value: Coin_Spawner
@@ -378,6 +386,11 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: c75450dbbea6658479a29242d5738a32, type: 3}
+--- !u!4 &281453645 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 5017932587519461218, guid: c75450dbbea6658479a29242d5738a32, type: 3}
+  m_PrefabInstance: {fileID: 281453644}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &281889802
 GameObject:
   m_ObjectHideFlags: 0
