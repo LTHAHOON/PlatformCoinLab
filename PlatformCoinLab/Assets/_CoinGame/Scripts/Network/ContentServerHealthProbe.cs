@@ -36,6 +36,10 @@ namespace CoinGame.Network
             {
                 return false;
             }
+            catch (Exception)
+            {
+                return false;
+            }
         }
 
         private sealed class LocalhostCertificateHandler : CertificateHandler

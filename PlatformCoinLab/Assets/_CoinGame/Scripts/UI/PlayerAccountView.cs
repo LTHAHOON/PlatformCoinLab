@@ -8,8 +8,6 @@ namespace CoinGame.UI
     {
         [SerializeField]
         private TMP_Text _userNameText;
-        [SerializeField]
-        private TMP_Text _onlineStatusText;
 
         private readonly StringBuilder _sb = new();
 
@@ -22,26 +20,6 @@ namespace CoinGame.UI
 
             _sb.Append(userName);
             _userNameText.SetText(_sb);
-            _sb.Clear();
-        }
-
-        public void SetOnlineStatusText(bool isOnline)
-        {
-            if (_onlineStatusText == null)
-            {
-                return;
-            }
-
-            _sb.Append("Online Status: ");
-            if (isOnline)
-            {
-                _sb.Append("<color=Green>Online</color>");
-            }
-            else
-            {
-                _sb.Append("<color=red>Offline</color>");
-            }
-            _onlineStatusText.SetText(_sb);
             _sb.Clear();
         }
     }

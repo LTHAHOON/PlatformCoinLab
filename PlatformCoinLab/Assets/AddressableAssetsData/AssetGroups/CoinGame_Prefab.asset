@@ -10,9 +10,9 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: bbb281ee3bf0b054c82ac2347e9e782c, type: 3}
-  m_Name: CourseStage
+  m_Name: CoinGame_Prefab
   m_EditorClassIdentifier: Unity.Addressables.Editor::UnityEditor.AddressableAssets.Settings.AddressableAssetGroup
-  m_GroupName: CourseStage
+  m_GroupName: CoinGame_Prefab
   m_GUID: 81254a3fa78fdf947801f15c65aba4f9
   m_SerializeEntries:
   - m_GUID: 419af0feaf3e681488458f05965cc734

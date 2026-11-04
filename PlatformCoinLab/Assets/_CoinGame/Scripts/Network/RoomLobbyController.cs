@@ -11,8 +11,6 @@ namespace CoinGame.Network
     public sealed class RoomLobbyController : MonoBehaviour
     {
         private const int DefaultMaxPlayers = 2;
-        private const int MaxSupportedPlayers = 8;
-
         public static RoomLobbyController Instance { get; private set; }
 
         [SerializeField]
@@ -34,7 +32,7 @@ namespace CoinGame.Network
         private bool _gameStarting;
         private bool _roomActionInProgress;
         private bool _isShuttingDown;
-        private ContentServerHealthProbe _contentServerHealthProbe;
+        private RoomLobbyContentService _contentService;
         private int _maxCollectors = 1;
         private int _maxDisruptors = 1;
         private int _maxRounds = 5;
@@ -76,7 +74,7 @@ namespace CoinGame.Network
             _sessionService = new RoomSessionService();
             _sessionService.Connected += OnSessionConnected;
             _sessionService.Failed += OnSessionFailed;
-            _contentServerHealthProbe = new ContentServerHealthProbe(_contentServerHealthUrl);
+            _contentService = new RoomLobbyContentService(_contentServerHealthUrl);
             NetworkManager networkManager = NetworkManager.Singleton;
             if (networkManager != null)
             {
@@ -177,6 +175,14 @@ namespace CoinGame.Network
             CreateRoomAsync().Forget();
         }
 
+        private void ApplySettings(RoomSettings settings)
+        {
+            _maxCollectors = settings.MaxCollectors;
+            _maxDisruptors = settings.MaxDisruptors;
+            _maxRounds = settings.MaxRounds;
+            _coinMultiplier = settings.CoinMultiplier;
+        }
+
         private void JoinRoom()
         {
             JoinRoomAsync().Forget();
@@ -197,13 +203,14 @@ namespace CoinGame.Network
                     return;
                 }
 
-                if (!await IsContentServerAvailableAsync())
+                if (!await _contentService.IsAvailableAsync(destroyCancellationToken))
                 {
                     return;
                 }
 
                 if (TryReadRoomSettings(out RoomSettings settings))
                 {
+                    ApplySettings(settings);
                     ConnectSessionAsync(settings, true).Forget();
                 }
             }
@@ -235,7 +242,7 @@ namespace CoinGame.Network
                     return;
                 }
 
-                if (!await IsContentServerAvailableAsync())
+                if (!await _contentService.IsAvailableAsync(destroyCancellationToken))
                 {
                     return;
                 }
@@ -260,17 +267,6 @@ namespace CoinGame.Network
             _roomActionInProgress = true;
             return true;
         }
-
-        private async UniTask<bool> IsContentServerAvailableAsync()
-        {
-            bool available = await _contentServerHealthProbe.IsAvailableAsync(destroyCancellationToken);
-            if (!available)
-            {
-                _view?.SetStatus("The content server is not running. Please start the server and try again.");
-            }
-            return available;
-        }
-
         private async UniTask ConnectSessionAsync(RoomSettings settings, bool createOrJoin)
         {
             if (!_servicesReady || _sessionReady)
@@ -442,60 +438,9 @@ namespace CoinGame.Network
                 GameManager.Instance.StartRound();
             }
         }
-
         private bool TryReadRoomSettings(out RoomSettings settings)
         {
-            settings = default;
-            if (!_servicesReady || _view == null)
-            {
-                _view?.SetStatus("Please wait for services to initialize.");
-                return false;
-            }
-
-            string roomId = _view.RoomId;
-            string roomName = _view.RoomName;
-            if (string.IsNullOrWhiteSpace(roomId) || string.IsNullOrWhiteSpace(roomName))
-            {
-                _view.SetStatus("Enter a room name and Room ID.");
-                return false;
-            }
-            if (!int.TryParse(_view.MaxPlayers, out int maxPlayers) || maxPlayers < 1 || maxPlayers > MaxSupportedPlayers)
-            {
-                _view.SetStatus($"Max Players must be between 1 and {MaxSupportedPlayers}.");
-                return false;
-            }
-            if (!int.TryParse(_view.MaxCollectors, out int maxCollectors) || maxCollectors < 0 || maxCollectors > maxPlayers)
-            {
-                _view.SetStatus("Check Max Collectors.");
-                return false;
-            }
-            if (!int.TryParse(_view.MaxDisruptors, out int maxDisruptors) || maxDisruptors < 0 || maxDisruptors > maxPlayers)
-            {
-                _view.SetStatus("Check Max Disruptors.");
-                return false;
-            }
-            if (maxCollectors + maxDisruptors != maxPlayers)
-            {
-                _view.SetStatus("Max Collectors + Max Disruptors must equal Max Players.");
-                return false;
-            }
-            if (!int.TryParse(_view.MaxRounds, out int maxRounds) || maxRounds < 1 || maxRounds > 20)
-            {
-                _view.SetStatus("Max Rounds must be between 1 and 20.");
-                return false;
-            }
-            if (!int.TryParse(_view.CoinMultiplier, out int coinMultiplier) || coinMultiplier < 1 || coinMultiplier > 5)
-            {
-                _view.SetStatus("Coin multiplier must be between 1 and 5.");
-                return false;
-            }
-
-            _maxCollectors = maxCollectors;
-            _maxDisruptors = maxDisruptors;
-            _maxRounds = maxRounds;
-            _coinMultiplier = coinMultiplier;
-            settings = new RoomSettings(roomId, roomName, maxPlayers, maxCollectors, maxDisruptors, maxRounds, coinMultiplier);
-            return true;
+            return RoomSettingsValidator.TryRead(_view, out settings);
         }
 
         private void OnDisable()

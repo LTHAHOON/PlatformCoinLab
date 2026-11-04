@@ -9,7 +9,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 5017932587519461218}
-  - component: {fileID: 5647310701077708372}
+  - component: {fileID: 623106275313536270}
   m_Layer: 0
   m_Name: Coin_Spawner
   m_TagString: Untagged
@@ -32,7 +32,7 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &5647310701077708372
+--- !u!114 &623106275313536270
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -41,20 +41,25 @@ MonoBehaviour:
   m_GameObject: {fileID: 7962691504447793113}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 909104e2877743f4fb7c9deae0c55123, type: 3}
+  m_Script: {fileID: 11500000, guid: a4284646527b4f01be095720b8c8fdcf, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Spawner
-  _spawnType: 1
-  _spawnPrefab: {fileID: 4443462814033396138, guid: 419af0feaf3e681488458f05965cc734, type: 3}
+  m_EditorClassIdentifier: Assembly-CSharp::CoinGame.Utilities.NetworkSpawner
+  _spawnPrefabReference:
+    m_AssetGUID: 419af0feaf3e681488458f05965cc734
+    m_SubObjectName: 
+    m_SubObjectType: 
+    m_SubObjectGUID: 
+    m_EditorAssetChanged: 0
+  _legacySpawnPrefab: {fileID: 0}
   _spawnParent: {fileID: 0}
-  _onAwakeSpawn: 0
+  _onAwakeSpawn: 1
   _syncSpawnCountWithStageSession: 1
   _isDefaultPlayerSpawner: 0
   _isLoop: 0
   _spawnCount: 35
   _spawnFirstDelay: 0.03
   _spawnDelay: 7
-  _spawnArea: {x: 13, y: 0, z: 13}
+  _spawnArea: {x: 35, y: 0, z: 25}
   _drawArea: 1
   _checkRadius: 0.5
   _drawCheckRadius: 1

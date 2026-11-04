@@ -12,5 +12,5 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 93a05184783fc4b418a91ba5a01e9de6, type: 3}
   m_Name: PlayerMove_VectorMinMaxData
   m_EditorClassIdentifier: Assembly-CSharp::CoinGame.Utilities.VectorMinMaxData
-  _minVector: {x: -7.5, y: 0, z: -10}
-  _maxVector: {x: 7.5, y: 0, z: 10}
+  _minVector: {x: -12.5, y: 0, z: -12.5}
+  _maxVector: {x: 12.5, y: 0, z: 12.5}

@@ -41,8 +41,6 @@ namespace CoinGame.Player
 
             if (_playerAccountView != null)
             {
-                OnlineStatusChanged -= _playerAccountView.SetOnlineStatusText;
-                OnlineStatusChanged += _playerAccountView.SetOnlineStatusText;
                 _playerAccountView.SetUserNameText(_id.ToString());
             }
             else
@@ -55,11 +53,6 @@ namespace CoinGame.Player
 
         private void OnDestroy()
         {
-            if (_playerAccountView != null)
-            {
-                OnlineStatusChanged -= _playerAccountView.SetOnlineStatusText;
-            }
-
             if (_instance == this)
             {
                 _instance = null;

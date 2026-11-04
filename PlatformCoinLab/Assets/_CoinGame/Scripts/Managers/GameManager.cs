@@ -11,6 +11,7 @@ namespace CoinGame.Managers
     using CoinGame.Stage;
     using CoinGame.Utilities;
     using CoinGame.Network;
+    using UnityEngine.AddressableAssets;
 
     [Serializable]
     public enum GameScene : short
@@ -24,7 +25,7 @@ namespace CoinGame.Managers
         public const float RoundBannerFadeInDuration = 0.35f;
 
         [SerializeField]
-        private StageConfig _stageConfig;
+        private AssetReferenceT<StageConfig> _stageConfigRef;
         [SerializeField]
         private SceneReference _inGameSceneRef;
         [SerializeField]
@@ -34,6 +35,7 @@ namespace CoinGame.Managers
         [SerializeField]
         private NetworkRoundState _networkRoundState;
 
+        private StageConfig _stageConfig;
         private StageSession _stageSession;
         private int _curRound = 1;
         private float _remainingTime;
@@ -48,8 +50,9 @@ namespace CoinGame.Managers
         public event Action<StageSession, bool> OnStageSessionChanged;
         public event Action<float> OnStageTimerChanged;
 
-        private void Awake()
+        private async UniTaskVoid Awake()
         {
+            _stageConfig = await _stageConfigRef.LoadAssetAsync();
             if(!_stageConfig)
             {
                 Debug.LogError("Error: StageConfig를 넣으십시오.");

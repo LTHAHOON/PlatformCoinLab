@@ -12,7 +12,7 @@ namespace CoinGame.Network
         public static NetworkConnector Instance { get; private set; }
 
         [SerializeField]
-        private Spawner _defaultPlayerSpawner;
+        private NetworkSpawner _defaultPlayerSpawner;
         [SerializeField]
         private bool _autoConnectOnStart = true;
 

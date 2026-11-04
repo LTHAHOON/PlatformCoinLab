@@ -12,6 +12,7 @@ namespace CoinGame.Network
 {
     using CoinGame.Utilities;
     using Unity.Netcode.Components;
+    using UnityEngine.AddressableAssets;
 
     [RequireComponent(typeof(CharacterController), typeof(NetworkTransform), typeof(NetworkPlayerStats))]
     public class NetworkPlayerController : NetworkBehaviour
@@ -19,8 +20,12 @@ namespace CoinGame.Network
         [SerializeField]
         private float _moveSpeed = 4f;
         [SerializeField]
-        private VectorMinMaxData _playerPosMinMaxData;
+        private AssetReferenceT<VectorMinMaxData> _playerPosMinMaxDataRef;
+        [SerializeField]
+        private AssetReferenceT<RoleAbilityConfig> _roleAbilityConfigRef;
 
+        private VectorMinMaxData _playerPosMinMaxData;
+        private RoleAbilityConfig _roleAbilityConfig;
         private NetworkPlayerStats _networkPlayerStats;
         private CharacterController _controller;
         private PlayerInput _playerInput;
@@ -60,11 +65,16 @@ namespace CoinGame.Network
             _controller.enabled = wasEnabled;
             NetworkRoundState.Instance?.ReportPositionedRpc();
         }
-        [SerializeField]
-        private RoleAbilityConfig _roleAbilityConfig;
-
         public override void OnNetworkSpawn()
         {
+            _playerPosMinMaxDataRef.LoadAssetAsync().Completed += (handle) =>
+            {
+                _playerPosMinMaxData = handle.Result;
+            };
+            _roleAbilityConfigRef.LoadAssetAsync().Completed += (handle) =>
+            {
+                _roleAbilityConfig = handle.Result;
+            };
             _playerRenderers = GetComponentsInChildren<Renderer>();
             _playerPropertyBlock ??= new MaterialPropertyBlock();
             _networkPlayerStats = GetComponent<NetworkPlayerStats>();

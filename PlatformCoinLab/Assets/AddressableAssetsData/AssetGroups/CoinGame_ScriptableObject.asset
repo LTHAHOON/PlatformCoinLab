@@ -1,0 +1,38 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bbb281ee3bf0b054c82ac2347e9e782c, type: 3}
+  m_Name: CoinGame_ScriptableObject
+  m_EditorClassIdentifier: Unity.Addressables.Editor::UnityEditor.AddressableAssets.Settings.AddressableAssetGroup
+  m_GroupName: CoinGame_ScriptableObject
+  m_GUID: 261fda2a107e349499427fea9ff19bfe
+  m_SerializeEntries:
+  - m_GUID: 1c2e27d6c3ae4d2d9aa4a4b809951f3a
+    m_Address: Role Ability Config
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: b65b34205923623489a6006f23252fdf
+    m_Address: PlayerMove_VectorMinMaxData
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: e002d90c4f4ad974ab62cbbf25df11c3
+    m_Address: Stage Config
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  m_ReadOnly: 0
+  m_Settings: {fileID: 11400000, guid: 07a49db2446faef4aab6e4be37f87228, type: 2}
+  m_SchemaSet:
+    m_Schemas:
+    - {fileID: 11400000, guid: 9622a7dac92421b4eb499811a2ac237a, type: 2}
+    - {fileID: 11400000, guid: 73a82eed1ec98dd44a6ca0a289e00b36, type: 2}
