@@ -24,6 +24,13 @@
       "dependencies": {},
       "hash": "a77a1b4a89824fb6df293099de3060daf2a432c1"
     },
+    "com.pudinkiller.vfx-mesh-lab": {
+      "version": "https://github.com/PudinKiller/VFXMeshLab.git#main",
+      "depth": 0,
+      "source": "git",
+      "dependencies": {},
+      "hash": "10a0c1a148a7c0149544442cbd2fab7c93004185"
+    },
     "com.unity.addressables": {
       "version": "2.11.2",
       "depth": 0,

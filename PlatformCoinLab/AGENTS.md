@@ -61,6 +61,14 @@
 - 여러 독립적인 Unity 작업은 가능한 경우 `batch_execute`로 묶고, 결과는 씬 상태·콘솔·필요한 스크린샷으로 검증한다.
 - 프로젝트 에디터 버전과 설치된 패키지 API를 기준으로 작업하며, Unity MCP 템플릿의 예시는 현재 프로젝트에서 확인한 뒤 적용한다.
 
+## VFX Mesh Lab 사용 규칙
+
+- VFX Mesh Lab은 `https://github.com/PudinKiller/VFXMeshLab`의 Unity 6 URP 에디터 패키지이며 `Packages/manifest.json`의 `com.pudinkiller.vfx-mesh-lab` Git 의존성으로 설치한다.
+- Unity에서 `Tools > VFX Mesh Lab`을 열고 Shape 또는 내장 Template을 선택한 뒤, 프로파일·Modifier·UV0·Vertex Data를 설정하고 `Shaded Wireframe` 또는 `UV Checker`로 검증한다.
+- Capsule형 Shield는 Sphere 또는 Hemisphere Shape를 기본으로 사용하고, 충분한 longitude/latitude 해상도와 `Flat Shading`을 적용해 삼각형 조각 경계를 만든다. `Generate New`로 표준 Mesh 에셋을 생성하고 기존 참조가 있는 경우 `Update Existing`만 사용한다.
+- 셰이더에 필요한 마스크·시간 오프셋·랜덤 변형은 Vertex Color 또는 UV1~UV3의 Packed Vector4로 저장할 수 있다. Rim은 법선과 시선 방향의 Fresnel 계산으로 만들고, Sin 기반 애니메이션은 시간·채널별 위상 오프셋을 사용해 조각별 스케일 또는 발광을 분리한다.
+- VFX Mesh Lab은 에디터 전용 패키지이며 생성된 Mesh는 런타임에 패키지 의존성이 없다. 메시 생성 전 토폴로지 경고와 삼각형 수를 확인하고, 생성·수정 후 Unity Console 오류와 프리팹 참조를 검증한다.
+
 ## Additional code style
 
 - Keep [SerializeField] on its own line directly above the member field.
