@@ -30,8 +30,9 @@ Material:
     - _CellGap: 0.0705
     - _Opacity: 0.65
     - _PulseAmplitude: 1
+    - _PulseScale: 0.14
     - _PulseSpeed: 2
-    - _RimPower: 6.93
+    - _RimPower: 5.81
     m_Colors:
     - _BaseColor: {r: 0.514151, g: 0.62912285, b: 1, a: 1}
     - _EdgeColor: {r: 0, g: 0.29716974, b: 0.3962264, a: 1}

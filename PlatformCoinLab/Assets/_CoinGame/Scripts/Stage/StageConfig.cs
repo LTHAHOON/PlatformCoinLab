@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using UnityEngine;
 
 namespace CoinGame.Stage
@@ -8,10 +8,10 @@ namespace CoinGame.Stage
     {
         [SerializeField]
         [Min(1)] 
-        private int BaseCoinCount = 5;
+        private int BaseCoinCount = 10;
         [SerializeField]
         [Min(0)] 
-        private int CoinIncreasePerRound = 5;
+        private int CoinIncreasePerRound = 3;
         [SerializeField]
         [Min(0)] 
         private float BaseTimeLimit = 120f;
@@ -21,6 +21,9 @@ namespace CoinGame.Stage
         [SerializeField]
         [Min(1)] 
         private float MinimumTimeLimit = 30f;
+        [SerializeField]
+        [Min(0f)]
+        private float TimeoutDamagePerMissingCoin = 1f;
 
         public int GetRequiredCoins(int round)
         {
@@ -39,5 +42,13 @@ namespace CoinGame.Stage
             float timeLimit = Mathf.Max(MinimumTimeLimit, BaseTimeLimit - (round - 1) * TimeDecreasePerRound);
             return timeLimit;
         }
+
+        public int GetTimeoutPenalty(int missingCoins)
+        {
+            return (int)Math.Max(0, Math.Ceiling(missingCoins * TimeoutDamagePerMissingCoin));
+        }
     }
 }
+
+
+

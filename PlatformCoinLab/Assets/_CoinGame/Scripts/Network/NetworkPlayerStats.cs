@@ -1,8 +1,12 @@
-using Unity.Netcode;
+﻿using Unity.Netcode;
 using UnityEngine;
 using CoinGame.UI;
 using CoinGame.Utilities;
 using CoinGame.Player;
+using CoinGame.Gameplay.Combat;
+using CoinGame.Gameplay.Player;
+using CoinGame.Stage;
+using CoinGame.Managers;
 
 namespace CoinGame.Network
 {
@@ -18,6 +22,13 @@ namespace CoinGame.Network
         private readonly NetworkVariable<int> _successfulSteals = new(0);
         private readonly NetworkVariable<int> _disruptionScore = new(0);
         private readonly NetworkVariable<int> _matchPlayerCount = new(0);
+        private readonly NetworkVariable<int> _health = new(100);
+        private readonly NetworkVariable<int> _maxHealth = new(100);
+        private readonly NetworkVariable<PlayerLifeState> _lifeState = new(PlayerLifeState.Alive);
+        private readonly NetworkVariable<double> _reviveReadyAt = new(0d);
+        private double _respawnAt;
+        [SerializeField]
+        private PlayerStatsConfig _config;
         private PlayerStatsView _playerStatsView;
         private bool _scoreEventsBound;
         private ulong _coinLockSourceClientId = ulong.MaxValue;
@@ -28,6 +39,11 @@ namespace CoinGame.Network
         public bool IsBeingPushed => NetworkManager.Singleton != null && NetworkManager.Singleton.ServerTime.Time < _pushedUntil.Value;
         public int Score => _curScore.Value;
         public int DisruptionScore => _disruptionScore.Value;
+        public int Health => _health.Value;
+        public int MaxHealth => _maxHealth.Value;
+        public PlayerLifeState LifeState => _lifeState.Value;
+        public bool IsAlive => _lifeState.Value == PlayerLifeState.Alive;
+        public double ReviveReadyAt => _reviveReadyAt.Value;
 
         public override void OnNetworkSpawn()
         {
@@ -52,6 +68,7 @@ namespace CoinGame.Network
 
         private void Update()
         {
+            UpdateLifeServer();
             if (IsOwner && !_playerStatsView)
             {
                 TryBindStatsView();
@@ -99,7 +116,7 @@ namespace CoinGame.Network
         {
             if (addAmount <= 0 || addAmount > MaxAddScoreAmount)
             {
-                Debug.LogWarning($"잘못된 점수 증가량: {addAmount}");
+                Debug.LogWarning($"?섎せ???먯닔 利앷??? {addAmount}");
                 return;
             }
 
@@ -112,7 +129,7 @@ namespace CoinGame.Network
         {
             if (curScore < 0 || curScore > MaxSetScoreAmount)
             {
-                Debug.LogWarning($"잘못된 점수 설정값: {curScore}");
+                Debug.LogWarning($"?섎せ???먯닔 ?ㅼ젙媛? {curScore}");
                 return;
             }
             _curScore.Value = curScore;
@@ -120,6 +137,30 @@ namespace CoinGame.Network
 
         public void OnScoreChanged(int previousValue, int newValue)
         {
+        }
+
+        public void ApplyDamageServer(DamageInfo info)
+        {
+            if (!IsServer || !IsAlive || info.Amount <= 0) return;
+            _health.Value = Mathf.Max(0, _health.Value - info.Amount);
+            if (_health.Value > 0) return;
+            _lifeState.Value = PlayerLifeState.Dead;
+            _reviveReadyAt.Value = NetworkManager.ServerTime.Time + (_config != null ? _config.ReviveReadyDelay : 3f);
+            if (Role == PlayerRole.Collector)
+            {
+                _lifeState.Value = PlayerLifeState.Spectating;
+                NetworkRoundState.Instance?.NotifyPlayerDeathServer();
+                return;
+            }
+            _respawnAt = NetworkManager.ServerTime.Time + (_config != null ? _config.DisruptorRespawnDelay : 5f);
+        }
+
+        private void UpdateLifeServer()
+        {
+            if (!IsServer || _lifeState.Value != PlayerLifeState.Dead || NetworkManager.ServerTime.Time < _respawnAt) return;
+            _health.Value = _maxHealth.Value;
+            _lifeState.Value = PlayerLifeState.Alive;
+            NetworkRoundState.Instance?.RelocatePlayerServer(this);
         }
 
         public void SelectRole(PlayerRole role)
@@ -264,5 +305,7 @@ namespace CoinGame.Network
         }
     }
 }
+
+
 
 

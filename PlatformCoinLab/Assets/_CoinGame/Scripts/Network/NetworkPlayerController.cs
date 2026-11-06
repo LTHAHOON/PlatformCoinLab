@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using Unity.Netcode;
@@ -7,6 +7,8 @@ using UnityEngine.InputSystem;
 using CoinGame.Managers;
 using CoinGame.Player;
 using CoinGame.Stage;
+using CoinGame.Input;
+using CoinGame.Gameplay.Player;
 
 namespace CoinGame.Network
 {
@@ -33,12 +35,17 @@ namespace CoinGame.Network
         private InputAction _attackAction;
         private InputAction _interactAction;
         private InputAction _crouchAction;
+        private PlayerInputStateProvider _inputProvider;
         private CancellationTokenSource _moveCts;
         private float _pushCooldownUntil;
         private float _lockCooldownUntil;
         private float _stealCooldownUntil;
         private Renderer[] _playerRenderers;
         private MaterialPropertyBlock _playerPropertyBlock;
+        private Camera _followCamera;
+        private Vector3 _cameraOffset;
+        private Quaternion _cameraRotation;
+        private bool _cameraInitialized;
 
         [Rpc(SendTo.Everyone, InvokePermission = RpcInvokePermission.Server)]
         public void RelocateForGameRpc(Vector3 position)
@@ -56,7 +63,7 @@ namespace CoinGame.Network
             }
             if(!_controller)
             {
-                Debug.LogError("ERROR: CharacterController을 찾을 수 없습니다.");
+                Debug.LogError("ERROR: CharacterController??李얠쓣 ???놁뒿?덈떎.");
                 return;
             }
             bool wasEnabled = _controller.enabled;
@@ -77,7 +84,7 @@ namespace CoinGame.Network
             };
             _playerRenderers = GetComponentsInChildren<Renderer>();
             _playerPropertyBlock ??= new MaterialPropertyBlock();
-            _networkPlayerStats = GetComponent<NetworkPlayerStats>();
+            _networkPlayerStats = GetComponent<NetworkPlayerStats>();`n            _inputProvider = GetComponent<PlayerInputStateProvider>();
             if (_networkPlayerStats == null)
             {
                 Debug.LogError("NetworkPlayerController requires a NetworkPlayerStats component.", this);
@@ -92,26 +99,34 @@ namespace CoinGame.Network
                 _controller = GetComponent<CharacterController>();
                 if (!_controller)
                 {
-                    Debug.LogError("ERROR: CharacterController을 찾을 수 없습니다.");
+                    Debug.LogError("ERROR: CharacterController??李얠쓣 ???놁뒿?덈떎.");
                     return;
                 }
+            }
+            if (!_inputProvider)
+            {
+                _inputProvider = FindAnyObjectByType<PlayerInputStateProvider>();
             }
             if (!_playerInput)
             {
                 _playerInput = FindAnyObjectByType<PlayerInput>();
-                if (!_playerInput)
+                if (!_inputProvider)
+            {
+                _inputProvider = FindAnyObjectByType<PlayerInputStateProvider>();
+            }
+            if (!_playerInput)
                 {
-                    Debug.LogError("ERROR: PlayerInput을 찾을 수 없습니다.");
+                    Debug.LogError("ERROR: PlayerInput??李얠쓣 ???놁뒿?덈떎.");
                     return;
                 }
-                InputActionMap playerMap = _playerInput.actions.FindActionMap("Player");
+                InputActionMap playerMap = _playerInput.actions.FindActionMap("Gameplay");
                 _moveAction = playerMap.FindAction("Move");
                 _attackAction = playerMap.FindAction("Attack");
                 _interactAction = playerMap.FindAction("Interact");
                 _crouchAction = playerMap.FindAction("Crouch");
                 if (_moveAction == null)
                 {
-                    Debug.LogError("ERROR: PlayerInput에서 Player/Move 액션을 찾을 수 없습니다.");
+                    Debug.LogError("ERROR: PlayerInput?먯꽌 Player/Move ?≪뀡??李얠쓣 ???놁뒿?덈떎.");
                     return;
                 }
             }
@@ -153,6 +168,29 @@ namespace CoinGame.Network
             }
         }
 
+        private void LateUpdate()
+        {
+            if (!IsOwner || !IsSpawned)
+            {
+                return;
+            }
+
+            _followCamera ??= Camera.main;
+            if (_followCamera == null)
+            {
+                return;
+            }
+
+            if (!_cameraInitialized)
+            {
+                _cameraOffset = _followCamera.transform.position - transform.position;
+                _cameraRotation = _followCamera.transform.rotation;
+                _cameraInitialized = true;
+            }
+
+            _followCamera.transform.SetPositionAndRotation(transform.position + _cameraOffset, _cameraRotation);
+        }
+
         public override void OnNetworkDespawn()
         {
             if (!IsOwner)
@@ -190,19 +228,19 @@ namespace CoinGame.Network
                     {
                         return;
                     }
-                    if (_networkPlayerStats.Role == PlayerRole.Disruptor)
+                    if (_networkPlayerStats.Role == PlayerRole.Disruptor && _networkPlayerStats.IsAlive)
                     {
-                        if (_attackAction != null && _attackAction.WasPressedThisFrame() && Time.time >= _pushCooldownUntil)
+                        if (_inputProvider != null && _inputProvider.Current.Push && Time.time >= _pushCooldownUntil)
                         {
                             _pushCooldownUntil = Time.time + PushCooldown;
                             UsePushRpc(transform.position, transform.forward);
                         }
-                        if (_interactAction != null && _interactAction.WasPressedThisFrame() && Time.time >= _lockCooldownUntil)
+                        if (_inputProvider != null && _inputProvider.Current.Skill && Time.time >= _lockCooldownUntil)
                         {
                             _lockCooldownUntil = Time.time + LockCooldown;
                             UseLockRpc(transform.position);
                         }
-                        if (_crouchAction != null && _crouchAction.WasPressedThisFrame() && Time.time >= _stealCooldownUntil)
+                        if (_inputProvider != null && _inputProvider.Current.Interact && Time.time >= _stealCooldownUntil)
                         {
                             _stealCooldownUntil = Time.time + StealCooldown;
                             UseStealRpc(transform.position);
@@ -320,13 +358,13 @@ namespace CoinGame.Network
                 while (true)
                 {
                     token.ThrowIfCancellationRequested();
-                    if (GameManager.Instance != null && !GameManager.Instance.CanPlayersMove)
+                    if (GameManager.Instance != null && !GameManager.Instance.CanPlayersMove || _networkPlayerStats != null && !_networkPlayerStats.IsAlive)
                     {
                         await UniTask.Yield(PlayerLoopTiming.EarlyUpdate, token);
                         continue;
                     }
 
-                    Vector2 moveInput = _moveAction.ReadValue<Vector2>();
+                    Vector2 moveInput = _inputProvider != null ? _inputProvider.Current.Move : Vector2.zero;
                     if (moveInput.sqrMagnitude < 0.0001f && Gamepad.current != null)
                     {
                         moveInput = Gamepad.current.leftStick.ReadValue();
@@ -361,3 +399,4 @@ namespace CoinGame.Network
         private int StealAmount => _roleAbilityConfig ? _roleAbilityConfig.StealAmount : 1;
     }
 }
+

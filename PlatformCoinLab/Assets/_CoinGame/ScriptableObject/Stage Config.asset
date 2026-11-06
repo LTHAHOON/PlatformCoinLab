@@ -12,8 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a1120a51430be7a488205e52d9e7cfee, type: 3}
   m_Name: Stage Config
   m_EditorClassIdentifier: Assembly-CSharp::CoinGame.Stage.StageConfig
-  BaseCoinCount: 20
-  CoinIncreasePerRound: 10
+  BaseCoinCount: 10
+  CoinIncreasePerRound: 3
   BaseTimeLimit: 100
   TimeDecreasePerRound: 5
   MinimumTimeLimit: 3

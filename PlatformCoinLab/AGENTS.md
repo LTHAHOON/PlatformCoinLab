@@ -10,6 +10,14 @@
 - 일반적인 구현 선택은 기존 코드에 맞춰 진행한다. 요구사항에 따라 결과가 크게 달라지는 경우에만 핵심 질문을 한다.
 - 완료 시 변경 내용, 검증 결과, 남은 확인 사항을 간결하게 보고한다. 실행하지 못한 검증은 명시한다.
 
+## 기획 및 구현 원칙
+
+- 기획 기준 문서는 `CoinGame_GDD.md`이며, 작업을 시작할 때 항상 먼저 참고한다.
+- 기획 문서에서 `[확정]`으로 표시된 항목은 변경하지 않는다.
+- 수치는 코드에 하드코딩하지 않고 `ScriptableObject`로 분리한다.
+- 작은 단위로 구현하고 각 단계에서 컴파일 가능한 상태를 유지한다.
+- 한 번에 큰 리팩터링을 진행하지 않는다.
+
 ## 프로젝트 정보
 
 - Unity C# 프로젝트다. 에디터 버전은 ProjectSettings/ProjectVersion.txt를 기준으로 한다.
@@ -68,6 +76,8 @@
 - Capsule형 Shield는 Sphere 또는 Hemisphere Shape를 기본으로 사용하고, 충분한 longitude/latitude 해상도와 `Flat Shading`을 적용해 삼각형 조각 경계를 만든다. `Generate New`로 표준 Mesh 에셋을 생성하고 기존 참조가 있는 경우 `Update Existing`만 사용한다.
 - 셰이더에 필요한 마스크·시간 오프셋·랜덤 변형은 Vertex Color 또는 UV1~UV3의 Packed Vector4로 저장할 수 있다. Rim은 법선과 시선 방향의 Fresnel 계산으로 만들고, Sin 기반 애니메이션은 시간·채널별 위상 오프셋을 사용해 조각별 스케일 또는 발광을 분리한다.
 - VFX Mesh Lab은 에디터 전용 패키지이며 생성된 Mesh는 런타임에 패키지 의존성이 없다. 메시 생성 전 토폴로지 경고와 삼각형 수를 확인하고, 생성·수정 후 Unity Console 오류와 프리팹 참조를 검증한다.
+- Shield 제작 레시피는 Sphere Shape(세로 스케일을 늘려 Capsule 비율)와 높은 longitude/latitude, `Flat Shading`, Spherical UV0를 사용한다. UV1의 Random 또는 Radial Distance를 위상 오프셋으로 저장하면 셰이더에서 조각별 Sin 펄스를 분리할 수 있다. 생성 결과는 `Assets/AgentVFX/Generated/ShieldCapsule/ShieldCapsule_Flat.asset`에 저장하고 `M_ShieldTriangles` 머티리얼을 연결한다.
+- 셰이더는 삼각형 셀 경계의 `Cell Gap`과 Fresnel `Rim Power`를 함께 조절하며, `_PulseSpeed`, `_PulseAmplitude`, `_PulseScale`로 시간 기반 팽창·수축을 조절한다. 프리팹 참조를 바꿀 때는 `Update Existing` 또는 Unity Prefab 저장으로 GUID를 보존한다.
 
 ## Additional code style
 
@@ -89,3 +99,28 @@
 기존 `tester` 역할은 `qa`로 확장·이관했다. 저장소에 별도 Tester 설정 파일은 존재하지 않았으므로 삭제하지 않았고, 기존 역할 규칙의 의미는 QA 프롬프트에 보존했다.
 
 독립적인 읽기·분석 업무는 가능한 경우 병렬로 위임하되 동시 실행은 최대 3~4개로 제한한다. server는 네트워크·백엔드 구조와 데이터 흐름을 먼저 읽기 전용으로 조사하고, gameplay와 서버 권한 게임 로직·상태 동기화를 조율하며, ui에는 로그인·로비·매치메이킹 API와 연결 상태·오류 규격을 제공하고, vfx에는 서버 이벤트와 시각 효과 분리 규격을 제공한다. reviewer는 서버 코드의 보안·동시성·데이터 무결성을 검토하고, qa는 지연·패킷 손실·재접속·API·부하·회귀 검증을 담당한다. 같은 Unity Editor 인스턴스 또는 씬·프리팹·ProjectSettings를 여러 역할이 동시에 변경하지 않는다. Unity MCP의 씬·프리팹·ProjectSettings 변경은 Main Agent가 순차 조율하고 실행 전 승인을 받는다. Library/Temp/Logs/obj는 수정하지 않는다. 모든 역할은 한국어로 결과를 보고한다.
+
+## 네트워크 구조 요약
+
+- 네트워크 솔루션은 Unity Netcode for GameObjects 2.13.3이며 Unity Transport를 사용한다.
+- 방 생성·참가는 Unity Services Multiplayer Session과 익명 인증을 사용하고, 세션 생성 시 RelayNetworkOptions를 적용한다.
+- 호스트는 `StartHost()`, 클라이언트는 `StartClient()`로 연결한다.
+- `NetworkManager.NetworkConfig.EnableSceneManagement`는 비활성화되어 있다. 씬 전환은 `GameManager`가 로컬로 수행하고 `NetworkRoundState`의 준비·씬 로드·플레이어 배치 상태로 동기화한다.
+- 플레이어는 서버의 `NetworkSpawner`가 `Player.prefab`을 `SpawnAsPlayerObject(clientId)`로 생성한다.
+- `Player.prefab`은 `NetworkObject`, `NetworkTransform`, `NetworkPlayerController`, `NetworkPlayerStats`, `CharacterController`로 구성된다.
+- 이동 입력은 소유자 클라이언트가 `Player` Action Map에서 직접 읽고 `CharacterController`로 이동한다. 위치와 Y축 회전은 `NetworkTransform`으로 동기화한다. 현재 입력 벡터를 서버로 보내는 `PlayerInputState` 구조체는 없다.
+- 코인 충돌과 라운드 판정은 서버에서 처리한다. `NetworkCoinController`가 서버에서 코인을 수집하고 `NetworkRoundState`가 잔여 코인·라운드·제한 시간을 `NetworkVariable`로 동기화한다.
+- 역할 선택과 방해 능력 사용은 RPC로 서버에 요청하고, 서버가 역할 정원·대상·효과를 검증한다.
+- 현재 네트워크 상태에는 체력·피해·사망·부활·무기·투사체가 구현되어 있지 않다. GDD 구현 시 기존 NGO·Relay·스폰·라운드 구조를 재사용하고, 신규 게임 판정은 기존 서버 권한 모델에 맞춘다.
+- 주요 네트워크 스크립트는 `NetworkConnector`, `RoomSessionService`, `RoomLobbyController`, `RoomSettings`, `RoomSettingsValidator`, `RoomStartCountdown`, `NetworkRoundState`, `NetworkPlayerController`, `NetworkPlayerStats`, `NetworkCoinController`, `NetworkSpawner`, `NetworkGameObjectPool`이다.
+- 주요 씬은 `Persistent_CoinGameScene`과 `InGame_CoinGameScene`이다. 전자는 `NetworkManager`, 로비, `NetworkConnector`, 플레이어 스포너, `GameManager`를 포함하고, 후자는 코인 스포너, HUD, 라운드 UI, 게임플레이 환경을 포함한다.
+- 주요 네트워크 프리팹은 `Player.prefab`, `Coin.prefab`, `Coin_Spawner.prefab`, `NetworkRoundState.prefab`이다.
+- GDD의 `Gameplay` Action Map, `PlayerInputState`, 체력·사망·부활, 수집가 전용 코인 수집, 무기·공격·투사체는 현재 구조와 차이가 있으므로 구현 전에 기존 `Player` 입력 체계와 권한 경계를 조정해야 한다.
+
+## M1 완료 상태
+
+- 기존 `NetworkCoinController`가 서버에서 `NetworkPlayerStats.Role`을 확인해 Collector만 코인을 수집하도록 수정했다. Disruptor의 접촉은 코인, 점수, 잔여 코인에 영향을 주지 않는다.
+- `StageConfig`의 기존 `BaseCoinCount`/`CoinIncreasePerRound`와 `GetRequiredCoins`/`GetSpawnCoinCount` 분리는 유지하고, 기본값을 10/3으로 맞췄다. 로비의 코인 배율 기능은 유지하며 기본값을 1로 사용한다.
+- `StageView`는 서버의 target/remaining 상태를 바탕으로 수집 진행도를 `n/m`으로 표시한다. 클리어와 시간 초과 판정은 `NetworkRoundState` 서버 권한 흐름을 유지한다.
+- `M1Prototype`은 네트워크가 수신 대기 중이면 자동 비활성화되어 `M1Coin` 로컬 경로와 네트워크 코인 경로가 동시에 실행되지 않는다.
+- `NetworkPlayerController`의 기존 XZ 이동과 `PlayerMove_VectorMinMaxData` 제한은 유지하고, 로컬 플레이어를 기준으로 기존 Main Camera 오프셋을 추적한다.

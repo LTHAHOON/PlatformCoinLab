@@ -31,7 +31,7 @@ namespace CoinGame.Network
         private readonly NetworkVariable<int> _remainingCoins = new(0);
         private readonly NetworkVariable<int> _spawnCoins = new(0);
         private readonly NetworkVariable<int> _remainingSeconds = new(0);
-        private readonly NetworkVariable<int> _coinMultiplier = new(2);
+        private readonly NetworkVariable<int> _coinMultiplier = new(1);
         private readonly NetworkVariable<bool> _roundActive = new(false);
         private readonly NetworkVariable<bool> _collectorWon = new(false);
         private readonly NetworkVariable<int> _resultVersion = new(0);

@@ -66,7 +66,7 @@ namespace CoinGame.Network
                     {
                         continue;
                     }
-                    if (playerStats.Role is not (CoinGame.Player.PlayerRole.Collector or CoinGame.Player.PlayerRole.Disruptor))
+                    if (playerStats.Role != CoinGame.Player.PlayerRole.Collector)
                     {
                         continue;
                     }

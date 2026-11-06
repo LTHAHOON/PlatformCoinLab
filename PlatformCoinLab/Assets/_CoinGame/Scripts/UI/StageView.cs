@@ -112,17 +112,19 @@ namespace CoinGame.UI
                 }
             }
 
-            SetRemainingCoinText(stageSession.RemainingCoins);
+            SetRemainingCoinText(stageSession.CollectedCoins, stageSession.RequiredCoins);
         }
 
-        public void SetRemainingCoinText(int remainingCoin)
+        public void SetRemainingCoinText(int collectedCoins, int requiredCoins)
         {
             if (_remainingCoinText == null)
             {
                 return;
             }
 
-            _sb.Append(remainingCoin);
+            _sb.Append(Mathf.Clamp(collectedCoins, 0, requiredCoins));
+            _sb.Append('/');
+            _sb.Append(Mathf.Max(0, requiredCoins));
             _remainingCoinText.SetText(_sb);
             _sb.Clear();
         }

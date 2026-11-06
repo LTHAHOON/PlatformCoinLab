@@ -36,7 +36,7 @@ namespace CoinGame.Network
         private int _maxCollectors = 1;
         private int _maxDisruptors = 1;
         private int _maxRounds = 5;
-        private int _coinMultiplier = 2;
+        private int _coinMultiplier = 1;
 
         public int MaxCollectors => _maxCollectors;
         public int MaxDisruptors => _maxDisruptors;
@@ -249,7 +249,7 @@ namespace CoinGame.Network
 
                 // Hide the create/join form immediately while the client is connecting.
                 _view?.SetPanelVisible(false);
-                ConnectSessionAsync(new RoomSettings(roomId, string.Empty, DefaultMaxPlayers, 1, 1, 5, 2), false).Forget();
+                ConnectSessionAsync(new RoomSettings(roomId, string.Empty, DefaultMaxPlayers, 1, 1, 5, 1), false).Forget();
             }
             finally
             {

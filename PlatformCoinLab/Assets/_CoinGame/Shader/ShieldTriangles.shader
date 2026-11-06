@@ -8,6 +8,7 @@ Shader "CoinGame/VFX/ShieldTriangles"
         _CellGap ("Cell Gap", Range(0.005, 0.15)) = 0.035
         _PulseSpeed ("Pulse Speed", Float) = 2
         _PulseAmplitude ("Pulse Amplitude", Range(0, 1)) = 0.35
+        _PulseScale ("Pulse Scale", Range(0, 0.3)) = 0.12
         _RimPower ("Rim Power", Range(0.5, 8)) = 3
         _Opacity ("Opacity", Range(0, 1)) = 0.65
     }
@@ -32,6 +33,7 @@ Shader "CoinGame/VFX/ShieldTriangles"
             float _CellGap;
             float _PulseSpeed;
             float _PulseAmplitude;
+            float _PulseScale;
             float _RimPower;
             float _Opacity;
             CBUFFER_END
@@ -60,6 +62,7 @@ Shader "CoinGame/VFX/ShieldTriangles"
                 float2 cell = floor(input.uv * _CellDensity);
                 float phase = Hash21(cell) * 6.2831853;
                 float pulse = sin(_Time.y * _PulseSpeed + phase) * 0.5 + 0.5;
+                input.positionOS.xyz *= 1.0 + (pulse - 0.5) * _PulseScale;
                 input.positionOS.xyz += input.normalOS * ((pulse - 0.5) * _PulseAmplitude * 0.035);
                 VertexPositionInputs positionInputs = GetVertexPositionInputs(input.positionOS.xyz);
                 VertexNormalInputs normalInputs = GetVertexNormalInputs(input.normalOS);
