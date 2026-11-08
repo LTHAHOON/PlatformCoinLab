@@ -1,7 +1,7 @@
 ﻿# M2 구현 진행 메모
 
 작성일: 2026-11-06
-상태: 진행 중
+상태: M2 프로토타입 씬 구성 및 C# 컴파일 완료, 최종 테스트 재실행 대기
 
 ## 사용자 승인
 
@@ -105,3 +105,27 @@
 - 기존 방해자 능력 구현(`UsePushRpc`, `UseLockRpc`, `UseStealRpc`)은 선택지 A에 따라 삭제하거나 교체하지 말 것
 - `NetworkSpawner.TryRelocatePlayers()`의 기존 전체 플레이어 재배치 흐름은 라운드 전환에 계속 사용하고, 사망 리스폰은 별도 단일 플레이어 안전 지점 흐름으로 추가할 것
 - C# 스타일 지침상 `[SerializeField]`는 필드와 분리된 줄에 두고, 중괄호는 다음 줄에 둘 것
+
+## M2 구현 완료 기록
+
+- `NetworkPlayerController`의 입력 provider 연결과 잘못 삽입된 문법을 복구했다.
+- `NetworkPlayerStats`는 서버에서 최대 체력 초기화, 피해·사망·부활 상태를 처리한다.
+- `NetworkRoundState`는 Collector 전원 사망, 마지막 라운드 승패, 시간 초과 피해, `MatchWinner` 동기화를 처리한다.
+- `NetworkSpawner`에 단일 플레이어 안전 지점 재배치를 추가하고 기존 전체 재배치는 유지했다.
+- `RoomSettingsValidator`에 2인 이상 방의 Collector/Disruptor 양쪽 역할 조건을 추가했다.
+- `PlayerStatsConfig` 스크립트와 에셋의 GUID 줄바꿈 오류를 복구했다.
+- `dotnet build Assembly-CSharp.csproj --no-restore` 결과: 오류 0개. 기존 Toon Shaders Pro 코드의 경고 2개가 있다.
+- Unity MCP에서 기존 `Player.prefab`이 `BrokenPrefabAsset`임을 확인하고, 기존 GUID를 유지한 정상 프리팹으로 재생성했다.
+- `Player.prefab`에 `NetworkObject`·`NetworkTransform`·`NetworkPlayerController`·`NetworkPlayerStats`·`CharacterController`·`PlayerInput`·`PlayerInputStateProvider`를 연결했다.
+- `Player Stats Config.asset`, `CoinGame_Actions.inputactions`, 이동 제한 데이터, 역할 능력 설정 참조를 프리팹에 연결했다.
+- Unity PlayMode 3개, EditMode 3개를 모두 통과했다.
+- Unity Play Mode 진입·종료 스모크 테스트에서 Console 오류 0개를 확인했다.
+- `RelocateForGameRpc`는 서버 권한 `NetworkTransform.Teleport`만 실행하고 클라이언트는 위치 완료 보고만 하도록 수정했다.
+- `DefaultNetworkPrefabs.asset`의 깨진 Player 중복 등록을 정리해 `NetworkPrefab cannot be null` 오류를 제거했다.
+- `GameManager`가 Persistent additive 실행 시 InGame의 테스트 Camera/EventSystem을 비활성화하고 Persistent 객체를 재사용하도록 확장했다.
+- `M2PrototypeBootstrap`을 추가해 InGame 씬 단독 실행 시 Persistent 씬을 additive로 로드한다.
+- InGame 씬의 `M1_Prototype` 실행은 비활성화했으며, `M1Prototype`과 `M1StageConfig` 자산은 기존 기능 보존을 위해 삭제하지 않았다.
+- InGame 단독 PlayMode 스모크에서 Persistent 씬 additive 로드와 Persistent Camera/EventSystem 재사용을 확인했다.
+- `dotnet build Assembly-CSharp.csproj --no-restore` 결과: 오류 0개, 기존 Toon Shaders Pro 경고 2개.
+- 최종 Unity 테스트 재실행은 스크립트 재컴파일 후 MCP 세션이 끊겨 대기 중이다.
+- 호스트 1 + 클라이언트 1 실제 연결 테스트는 별도 실행 인스턴스가 필요해 수동 확인 항목으로 남겼다.

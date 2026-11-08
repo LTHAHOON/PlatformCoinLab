@@ -7,6 +7,9 @@ using UnityEngine;
 using CoinGame.Stage;
 using CoinGame.Player;
 using CoinGame.Managers;
+using CoinGame.Gameplay.Combat;
+using CoinGame.Gameplay.Stage;
+using CoinGame.Utilities;
 
 namespace CoinGame.Network
 {
@@ -34,6 +37,7 @@ namespace CoinGame.Network
         private readonly NetworkVariable<int> _coinMultiplier = new(1);
         private readonly NetworkVariable<bool> _roundActive = new(false);
         private readonly NetworkVariable<bool> _collectorWon = new(false);
+        private readonly NetworkVariable<MatchWinner> _matchWinner = new(MatchWinner.None);
         private readonly NetworkVariable<int> _resultVersion = new(0);
         private readonly NetworkVariable<double> _lobbyStartTime = new(0d);
         private readonly NetworkVariable<bool> _loadGame = new(false);
@@ -61,6 +65,7 @@ namespace CoinGame.Network
         public bool IsRoundActive => _roundActive.Value;
         public double LobbyStartTime => _lobbyStartTime.Value;
         public bool LoadGame => _loadGame.Value;
+        public MatchWinner MatchWinner => _matchWinner.Value;
 
         public event Action<int, int, int, float, bool> StateChanged;
         public event Action<bool> RoundFinished;
@@ -154,6 +159,7 @@ namespace CoinGame.Network
             _remainingSeconds.Value = Mathf.Max(0, _remainingSeconds.Value - 1);
             if (_remainingSeconds.Value <= 0)
             {
+                ApplyTimeoutPenaltyServer();
                 FinishRoundServer(false).Forget();
             }
         }
@@ -307,8 +313,11 @@ namespace CoinGame.Network
 
                 foreach (NetworkClient client in NetworkManager.Singleton.ConnectedClientsList)
                 {
-                    client.PlayerObject?.GetComponent<NetworkPlayerStats>()?.ResetRoundDisruptorStatsServer();
+                    NetworkPlayerStats stats = client.PlayerObject?.GetComponent<NetworkPlayerStats>();
+                    stats?.ResetRoundDisruptorStatsServer();
+                    stats?.ResetRoundLifeServer();
                 }
+                _matchWinner.Value = MatchWinner.None;
                 _targetCoins.Value = _stageConfig.GetRequiredCoins(round);
                 _remainingCoins.Value = _targetCoins.Value;
                 _spawnCoins.Value = _stageConfig.GetSpawnCoinCount(round, _coinMultiplier.Value);
@@ -351,6 +360,64 @@ namespace CoinGame.Network
             }
         }
 
+        public void NotifyPlayerDeathServer()
+        {
+            if (!IsServer || !IsRoundActive || CountAliveCollectorsServer() > 0)
+            {
+                return;
+            }
+
+            FinishMatchServer(MatchWinner.Disruptor);
+        }
+
+        public void RelocatePlayerServer(NetworkPlayerStats stats)
+        {
+            if (!IsServer || stats == null || NetworkManager.Singleton == null || stats.NetworkObject == null)
+            {
+                return;
+            }
+
+            NetworkSpawner spawner = FindAnyObjectByType<NetworkSpawner>();
+            NetworkPlayerController player = stats.GetComponent<NetworkPlayerController>();
+            spawner?.TryRelocatePlayer(player);
+        }
+
+        private int CountAliveCollectorsServer()
+        {
+            int alive = 0;
+            foreach (NetworkClient client in NetworkManager.Singleton.ConnectedClientsList)
+            {
+                NetworkPlayerStats stats = client.PlayerObject?.GetComponent<NetworkPlayerStats>();
+                if (stats != null && stats.Role == PlayerRole.Collector && stats.IsAlive)
+                {
+                    alive++;
+                }
+            }
+
+            return alive;
+        }
+
+        private void ApplyTimeoutPenaltyServer()
+        {
+            int penalty = _stageConfig != null
+                ? _stageConfig.GetTimeoutPenalty(_remainingCoins.Value)
+                : 0;
+            if (penalty <= 0)
+            {
+                return;
+            }
+
+            foreach (NetworkClient client in NetworkManager.Singleton.ConnectedClientsList)
+            {
+                NetworkPlayerStats stats = client.PlayerObject?.GetComponent<NetworkPlayerStats>();
+                if (stats != null && stats.Role == PlayerRole.Collector)
+                {
+                    stats.ApplyDamageServer(new DamageInfo(
+                        ulong.MaxValue, penalty, DamageType.Timeout, Vector3.zero));
+                }
+            }
+        }
+
         private async UniTaskVoid FinishRoundServer(bool collectorWon)
         {
             if (!IsServer || !_roundActive.Value)
@@ -359,7 +426,15 @@ namespace CoinGame.Network
             }
 
             _roundActive.Value = false;
-            _collectorWon.Value = collectorWon;
+            bool finalCollectorWon = collectorWon;
+            if (_round.Value >= _maxRounds.Value)
+            {
+                finalCollectorWon = CountAliveCollectorsServer() > 0;
+                _matchWinner.Value = finalCollectorWon
+                    ? MatchWinner.Collector
+                    : MatchWinner.Disruptor;
+            }
+            _collectorWon.Value = finalCollectorWon;
             _resultVersion.Value++;
             NotifyStateChanged();
 
@@ -368,6 +443,20 @@ namespace CoinGame.Network
                 await UniTask.Delay(TimeSpan.FromSeconds(2f), cancellationToken: destroyCancellationToken);
                 StartRoundServer();
             }
+        }
+
+        private void FinishMatchServer(MatchWinner winner)
+        {
+            if (!IsServer || !_roundActive.Value)
+            {
+                return;
+            }
+
+            _roundActive.Value = false;
+            _collectorWon.Value = winner == MatchWinner.Collector;
+            _matchWinner.Value = winner;
+            _resultVersion.Value++;
+            NotifyStateChanged();
         }
 
         public void AssignMissingRolesServer(int maxCollectors, int maxDisruptors)

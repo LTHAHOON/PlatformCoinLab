@@ -170,6 +170,49 @@ namespace CoinGame.Utilities
             return true;
         }
 
+        public bool TryRelocatePlayer(NetworkPlayerController player)
+        {
+            if (NetworkManager.Singleton == null || !NetworkManager.Singleton.IsServer || player == null)
+            {
+                return false;
+            }
+
+            CharacterController controller = player.GetComponent<CharacterController>();
+            if (controller == null)
+            {
+                return false;
+            }
+
+            float radius = controller.radius * Mathf.Max(player.transform.lossyScale.x, player.transform.lossyScale.z);
+            for (int attempt = 0; attempt < MaxIterations * 4; attempt++)
+            {
+                Vector3 candidate = transform.position + new Vector3(
+                    UnityEngine.Random.Range(-_spawnArea.x / 2f, _spawnArea.x / 2f), 0f,
+                    UnityEngine.Random.Range(-_spawnArea.z / 2f, _spawnArea.z / 2f));
+                float halfHeight = Mathf.Max(radius, controller.height * player.transform.lossyScale.y / 2f);
+                Vector3 center = candidate + Vector3.Scale(controller.center, player.transform.lossyScale);
+                Vector3 offset = Vector3.up * (halfHeight - radius);
+                bool blocked = false;
+                foreach (Collider hit in Physics.OverlapCapsule(
+                    center - offset, center + offset, radius, _blockingLayerMask, QueryTriggerInteraction.Ignore))
+                {
+                    if (hit.transform.root != player.transform.root)
+                    {
+                        blocked = true;
+                        break;
+                    }
+                }
+
+                if (!blocked)
+                {
+                    player.RelocateForGameRpc(candidate);
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
         public void SpawnPlayer(ulong clientId)
         {
             if (_spawnPrefab == null)

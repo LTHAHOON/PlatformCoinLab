@@ -22,6 +22,8 @@ namespace CoinGame.Network
         [SerializeField]
         private float _moveSpeed = 4f;
         [SerializeField]
+        private bool _followPlayerCamera = false;
+        [SerializeField]
         private AssetReferenceT<VectorMinMaxData> _playerPosMinMaxDataRef;
         [SerializeField]
         private AssetReferenceT<RoleAbilityConfig> _roleAbilityConfigRef;
@@ -50,7 +52,7 @@ namespace CoinGame.Network
         [Rpc(SendTo.Everyone, InvokePermission = RpcInvokePermission.Server)]
         public void RelocateForGameRpc(Vector3 position)
         {
-            if (!IsOwner || !IsSpawned)
+            if (!IsSpawned)
             {
                 return;
             }
@@ -61,15 +63,25 @@ namespace CoinGame.Network
                 Debug.LogError("NetworkPlayerController requires a NetworkTransform to relocate the player.", this);
                 return;
             }
-            if(!_controller)
+
+            if (!IsOwner)
             {
-                Debug.LogError("ERROR: CharacterController??李얠쓣 ???놁뒿?덈떎.");
                 return;
             }
-            bool wasEnabled = _controller.enabled;
-            _controller.enabled = false;
+
+            bool wasEnabled = _controller != null && _controller.enabled;
+            if (_controller != null)
+            {
+                _controller.enabled = false;
+            }
+
             networkTransform.Teleport(position, transform.rotation, transform.localScale);
-            _controller.enabled = wasEnabled;
+
+            if (_controller != null)
+            {
+                _controller.enabled = wasEnabled;
+            }
+
             NetworkRoundState.Instance?.ReportPositionedRpc();
         }
         public override void OnNetworkSpawn()
@@ -84,7 +96,8 @@ namespace CoinGame.Network
             };
             _playerRenderers = GetComponentsInChildren<Renderer>();
             _playerPropertyBlock ??= new MaterialPropertyBlock();
-            _networkPlayerStats = GetComponent<NetworkPlayerStats>();`n            _inputProvider = GetComponent<PlayerInputStateProvider>();
+            _networkPlayerStats = GetComponent<NetworkPlayerStats>();
+            _inputProvider = GetComponent<PlayerInputStateProvider>();
             if (_networkPlayerStats == null)
             {
                 Debug.LogError("NetworkPlayerController requires a NetworkPlayerStats component.", this);
@@ -105,30 +118,27 @@ namespace CoinGame.Network
             }
             if (!_inputProvider)
             {
-                _inputProvider = FindAnyObjectByType<PlayerInputStateProvider>();
+                _inputProvider = GetComponent<PlayerInputStateProvider>();
             }
             if (!_playerInput)
             {
-                _playerInput = FindAnyObjectByType<PlayerInput>();
-                if (!_inputProvider)
-            {
-                _inputProvider = FindAnyObjectByType<PlayerInputStateProvider>();
+                _playerInput = GetComponent<PlayerInput>();
             }
             if (!_playerInput)
-                {
-                    Debug.LogError("ERROR: PlayerInput??李얠쓣 ???놁뒿?덈떎.");
-                    return;
-                }
-                InputActionMap playerMap = _playerInput.actions.FindActionMap("Gameplay");
-                _moveAction = playerMap.FindAction("Move");
-                _attackAction = playerMap.FindAction("Attack");
-                _interactAction = playerMap.FindAction("Interact");
-                _crouchAction = playerMap.FindAction("Crouch");
-                if (_moveAction == null)
-                {
-                    Debug.LogError("ERROR: PlayerInput?먯꽌 Player/Move ?≪뀡??李얠쓣 ???놁뒿?덈떎.");
-                    return;
-                }
+            {
+                Debug.LogError("ERROR: PlayerInput??李얠쓣 ???놁뒿?덈떎.");
+                return;
+            }
+
+            InputActionMap playerMap = _playerInput.actions.FindActionMap("Gameplay");
+            _moveAction = playerMap?.FindAction("Move");
+            _attackAction = playerMap?.FindAction("Attack");
+            _interactAction = playerMap?.FindAction("Interact");
+            _crouchAction = playerMap?.FindAction("Crouch");
+            if (_moveAction == null)
+            {
+                Debug.LogError("ERROR: PlayerInput?먯꽌 Gameplay/Move ?≪뀡??李얠쓣 ???놁뒿?덈떎.");
+                return;
             }
             if (_moveCts is null)
             {
@@ -170,12 +180,16 @@ namespace CoinGame.Network
 
         private void LateUpdate()
         {
-            if (!IsOwner || !IsSpawned)
+            if (!_followPlayerCamera || !IsOwner || !IsSpawned || GameManager.Instance == null || !GameManager.Instance.IsInGameSceneLoaded)
             {
                 return;
             }
 
-            _followCamera ??= Camera.main;
+            if (_followCamera == null || !_followCamera.isActiveAndEnabled)
+            {
+                _followCamera = Camera.main;
+                _cameraInitialized = false;
+            }
             if (_followCamera == null)
             {
                 return;
@@ -359,6 +373,11 @@ namespace CoinGame.Network
                 {
                     token.ThrowIfCancellationRequested();
                     if (GameManager.Instance != null && !GameManager.Instance.CanPlayersMove || _networkPlayerStats != null && !_networkPlayerStats.IsAlive)
+                    {
+                        await UniTask.Yield(PlayerLoopTiming.EarlyUpdate, token);
+                        continue;
+                    }
+                    if (_playerPosMinMaxData == null)
                     {
                         await UniTask.Yield(PlayerLoopTiming.EarlyUpdate, token);
                         continue;

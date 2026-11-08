@@ -124,3 +124,23 @@
 - `StageView`는 서버의 target/remaining 상태를 바탕으로 수집 진행도를 `n/m`으로 표시한다. 클리어와 시간 초과 판정은 `NetworkRoundState` 서버 권한 흐름을 유지한다.
 - `M1Prototype`은 네트워크가 수신 대기 중이면 자동 비활성화되어 `M1Coin` 로컬 경로와 네트워크 코인 경로가 동시에 실행되지 않는다.
 - `NetworkPlayerController`의 기존 XZ 이동과 `PlayerMove_VectorMinMaxData` 제한은 유지하고, 로컬 플레이어를 기준으로 기존 Main Camera 오프셋을 추적한다.
+
+## M2 진행 상태
+
+- 서버 권한 체력·피해·사망·부활 흐름을 기존 `NetworkPlayerStats`에 확장했다.
+- `NetworkRoundState`에 Collector 전원 사망 승리, 마지막 라운드 생존자 승패, 시간 초과 페널티, `MatchWinner` 동기화를 확장했다.
+- 기존 `NetworkSpawner.TryRelocatePlayers()`는 유지하고 단일 플레이어 안전 지점 재배치를 추가했다.
+- 기존 방해자 능력(`UsePushRpc`, `UseLockRpc`, `UseStealRpc`)과 소유자 이동·`NetworkTransform`을 유지했다.
+- 2인 방에서 Collector와 Disruptor가 모두 존재하도록 `RoomSettingsValidator` 검증을 보완했다.
+- `PlayerStatsConfig`의 `.meta`와 ScriptableObject `m_Script` GUID를 복구했다.
+- `Assembly-CSharp.csproj` 컴파일 검증은 오류 0개·경고 0개다.
+- Unity MCP에서 기존 `Player.prefab`의 `BrokenPrefabAsset` 상태를 확인하고 기존 GUID를 유지한 정상 프리팹으로 복구했다.
+- Unity PlayMode 3개와 EditMode 3개를 모두 통과했고, Play Mode 진입·종료 스모크 테스트에서 Console 오류 0개를 확인했다.
+- `RelocateForGameRpc`에서 서버만 `NetworkTransform.Teleport`을 호출하도록 수정해 non-authoritative Teleport 예외를 제거했다.
+- `DefaultNetworkPrefabs.asset`의 깨진 Player 중복 등록을 정리했고, Play Mode 재실행에서 Console 오류 0개를 확인했다.
+- `GameManager`가 Persistent additive 실행 시 InGame Camera/EventSystem을 비활성화하고 Persistent 객체를 재사용하도록 확장했다.
+- `M2PrototypeBootstrap`을 추가해 InGame 단독 실행 시 Persistent 씬을 additive로 로드한다.
+- InGame의 M1 프로토타입 실행은 분리했지만 `M1Prototype`과 `M1StageConfig` 자산은 보존했다.
+- InGame 단독 PlayMode 스모크에서 Persistent additive 로드와 Persistent Camera/EventSystem 재사용을 확인했다.
+- 최종 Unity 테스트 재실행은 스크립트 재컴파일 후 MCP 세션이 끊겨 대기 중이며, C# 빌드는 오류 0개다.
+- 호스트 1 + 클라이언트 1 실제 연결 테스트는 별도 실행 인스턴스가 필요해 수동 검증 절차로 남아 있다.

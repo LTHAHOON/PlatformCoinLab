@@ -49,6 +49,12 @@ namespace CoinGame.Network
         {
             if (IsServer)
             {
+                int maxHealth = _config != null ? _config.MaxHealth : 100;
+                _maxHealth.Value = maxHealth;
+                _health.Value = maxHealth;
+                _lifeState.Value = PlayerLifeState.Alive;
+                _reviveReadyAt.Value = 0d;
+                _respawnAt = 0d;
                 RefreshMatchPlayerCount();
             }
 
@@ -141,26 +147,42 @@ namespace CoinGame.Network
 
         public void ApplyDamageServer(DamageInfo info)
         {
-            if (!IsServer || !IsAlive || info.Amount <= 0) return;
+            if (!IsServer || NetworkManager.Singleton == null || !IsAlive || info.Amount <= 0)
+            {
+                return;
+            }
             _health.Value = Mathf.Max(0, _health.Value - info.Amount);
             if (_health.Value > 0) return;
             _lifeState.Value = PlayerLifeState.Dead;
-            _reviveReadyAt.Value = NetworkManager.ServerTime.Time + (_config != null ? _config.ReviveReadyDelay : 3f);
+            _reviveReadyAt.Value = NetworkManager.Singleton.ServerTime.Time + (_config != null ? _config.ReviveReadyDelay : 3f);
             if (Role == PlayerRole.Collector)
             {
                 _lifeState.Value = PlayerLifeState.Spectating;
                 NetworkRoundState.Instance?.NotifyPlayerDeathServer();
                 return;
             }
-            _respawnAt = NetworkManager.ServerTime.Time + (_config != null ? _config.DisruptorRespawnDelay : 5f);
+            _respawnAt = NetworkManager.Singleton.ServerTime.Time + (_config != null ? _config.DisruptorRespawnDelay : 5f);
         }
 
         private void UpdateLifeServer()
         {
-            if (!IsServer || _lifeState.Value != PlayerLifeState.Dead || NetworkManager.ServerTime.Time < _respawnAt) return;
+            if (!IsServer || _lifeState.Value != PlayerLifeState.Dead || NetworkManager.Singleton.ServerTime.Time < _respawnAt) return;
             _health.Value = _maxHealth.Value;
             _lifeState.Value = PlayerLifeState.Alive;
             NetworkRoundState.Instance?.RelocatePlayerServer(this);
+        }
+
+        public void ResetRoundLifeServer()
+        {
+            if (!IsServer)
+            {
+                return;
+            }
+
+            _health.Value = _maxHealth.Value;
+            _lifeState.Value = PlayerLifeState.Alive;
+            _reviveReadyAt.Value = 0d;
+            _respawnAt = 0d;
         }
 
         public void SelectRole(PlayerRole role)

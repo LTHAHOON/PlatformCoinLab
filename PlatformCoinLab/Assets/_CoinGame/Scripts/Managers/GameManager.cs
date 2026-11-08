@@ -242,6 +242,10 @@ namespace CoinGame.Managers
             SceneReference sceneRefToLoad = GetSceneReference(gameScene);
             if (SceneManager.GetSceneByPath(sceneRefToLoad.ScenePath).isLoaded)
             {
+                if (gameScene == GameScene.InGame)
+                {
+                    ConfigureInGameSceneServices();
+                }
                 return;
             }
             AsyncOperation loadOperation = SceneManager.LoadSceneAsync(sceneRefToLoad.ScenePath, LoadSceneMode.Additive);
@@ -252,6 +256,48 @@ namespace CoinGame.Managers
             }
 
             await loadOperation;
+            if (gameScene == GameScene.InGame)
+            {
+                ConfigureInGameSceneServices();
+            }
+        }
+
+        public void ConfigureInGameSceneServices()
+        {
+            if (_inGameSceneRef == null || string.IsNullOrEmpty(_inGameSceneRef.ScenePath))
+            {
+                return;
+            }
+
+            Scene inGameScene = SceneManager.GetSceneByPath(_inGameSceneRef.ScenePath);
+            if (!inGameScene.isLoaded)
+            {
+                return;
+            }
+
+            bool persistentLoaded = _outGameSceneRef != null &&
+                SceneManager.GetSceneByPath(_outGameSceneRef.ScenePath).isLoaded;
+            if (!persistentLoaded)
+            {
+                return;
+            }
+
+            Scene persistentScene = SceneManager.GetSceneByPath(_outGameSceneRef.ScenePath);
+            foreach (GameObject root in persistentScene.GetRootGameObjects())
+            {
+                if (root.name == "Main Camera")
+                {
+                    root.SetActive(false);
+                }
+            }
+
+            foreach (GameObject root in inGameScene.GetRootGameObjects())
+            {
+                if (root.name == "EventSystem")
+                {
+                    root.SetActive(false);
+                }
+            }
         }
 
         public async UniTask UnloadSceneAsync(GameScene gameScene)
@@ -270,6 +316,32 @@ namespace CoinGame.Managers
             }
 
             await unloadOperation;
+            if (gameScene == GameScene.InGame)
+            {
+                RestoreOutGameSceneServices();
+            }
+        }
+
+        private void RestoreOutGameSceneServices()
+        {
+            if (_outGameSceneRef == null || string.IsNullOrEmpty(_outGameSceneRef.ScenePath))
+            {
+                return;
+            }
+
+            Scene persistentScene = SceneManager.GetSceneByPath(_outGameSceneRef.ScenePath);
+            if (!persistentScene.isLoaded)
+            {
+                return;
+            }
+
+            foreach (GameObject root in persistentScene.GetRootGameObjects())
+            {
+                if (root.name == "Main Camera")
+                {
+                    root.SetActive(true);
+                }
+            }
         }
 
         private SceneReference GetSceneReference(GameScene gameScene)
@@ -347,7 +419,7 @@ namespace CoinGame.Managers
             ? _networkRoundState.IsRoundActive
             : _isRoundStarted && !_isRoundStarting);
 
-        private bool IsInGameSceneLoaded => _inGameSceneRef != null &&
+        public bool IsInGameSceneLoaded => _inGameSceneRef != null &&
             !string.IsNullOrEmpty(_inGameSceneRef.ScenePath) &&
             SceneManager.GetSceneByPath(_inGameSceneRef.ScenePath).isLoaded;
     }
