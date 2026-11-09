@@ -331,6 +331,7 @@ GameObject:
   m_Component:
   - component: {fileID: 135226579}
   - component: {fileID: 135226578}
+  - component: {fileID: 135226580}
   m_Layer: 0
   m_Name: M2_PrototypeBootstrap
   m_TagString: Untagged
@@ -350,6 +351,24 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 69f8485a86169b844942f477cab085d5, type: 3}
   m_Name:
   m_EditorClassIdentifier: Assembly-CSharp::CoinGame.Gameplay.M2PrototypeBootstrap
+--- !u!114 &135226580
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 135226577}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7d9a9f1645e14c2f9e7b7b0c2f0f4a71, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::CoinGame.Network.DevQuickStart
+  _enabled: 1
+  _roomId: coin-dev-quickstart
+  _roomName: Coin Dev Quick Start
+  _maxRounds: 5
+  _retrySeconds: 3
+  _logAuthentication: 1
 --- !u!4 &135226579
 Transform:
   m_ObjectHideFlags: 0

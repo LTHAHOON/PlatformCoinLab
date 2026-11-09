@@ -2,6 +2,7 @@ using Cysharp.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using CoinGame.Managers;
+using CoinGame.Network;
 
 namespace CoinGame.Gameplay
 {
@@ -17,9 +18,15 @@ namespace CoinGame.Gameplay
                 return;
             }
 
+            DevQuickStart quickStart = GetComponent<DevQuickStart>();
+
             await SceneManager.LoadSceneAsync(PersistentScenePath, LoadSceneMode.Additive);
             GameManager gameManager = FindAnyObjectByType<GameManager>();
             gameManager?.ConfigureInGameSceneServices();
+            if (quickStart != null)
+            {
+                quickStart.Begin();
+            }
         }
     }
 }

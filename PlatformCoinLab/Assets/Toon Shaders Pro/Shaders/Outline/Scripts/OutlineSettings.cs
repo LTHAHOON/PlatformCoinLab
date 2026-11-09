@@ -5,14 +5,9 @@ using UnityEngine.Rendering.Universal;
 
 namespace ToonShadersPro.URP
 {
-    [System.Serializable, VolumeComponentMenu("Toon Shaders Pro/Outlines")]
+    [System.Serializable, VolumeComponentMenu("Toon Shaders Pro/Outlines"), DisplayInfo(name = "Outlines")]
     public sealed class OutlineSettings : VolumeComponent, IPostProcessComponent
     {
-        public OutlineSettings()
-        {
-            displayName = "Outlines";
-        }
-
         [Tooltip("Choose where to insert this pass in URP's render loop.\n" +
             "\nURP's internal post processing includes effects like bloom and color-correction, which may impact the appearance of the outlines.\n" +
             "\nFor example, with the Before setting, high-intensity HDR colors will be impacted by Bloom.")]

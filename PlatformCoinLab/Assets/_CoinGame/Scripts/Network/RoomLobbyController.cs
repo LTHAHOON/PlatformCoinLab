@@ -44,6 +44,8 @@ namespace CoinGame.Network
         public int CoinMultiplier => _coinMultiplier;
         public bool IsHost => _isHost;
         public bool IsSessionReady => _sessionReady;
+        public bool IsRoomActionInProgress => _roomActionInProgress;
+        public static bool IsDevelopmentQuickStartActive { get; set; }
         public int SessionPlayerCount => _session?.PlayerCount ?? 0;
         public int SessionMaxPlayers => _session?.MaxPlayers ?? 0;
         public bool IsRoomFull
@@ -109,15 +111,67 @@ namespace CoinGame.Network
         private void Start()
         {
             PrepareLobbySceneAsync().Forget();
-            InitializeServicesAsync().Forget();
+            InitializeServicesAsync(
+                IsDevelopmentQuickStartActive ? DevQuickStart.DevelopmentAuthProfile : null,
+                IsDevelopmentQuickStartActive && DevQuickStart.LogAuthentication).Forget();
         }
 
         private async UniTask PrepareLobbySceneAsync()
         {
             await UniTask.Yield(PlayerLoopTiming.Update);
+            if (IsDevelopmentQuickStartActive)
+            {
+                return;
+            }
+
             if (GameManager.Instance != null)
             {
                 await GameManager.Instance.UnloadSceneAsync(GameScene.InGame);
+            }
+        }
+
+        public async UniTask<bool> StartDevelopmentSessionAsync(RoomSettings settings, bool createOrJoin)
+        {
+            if (!TryBeginRoomAction())
+            {
+                return false;
+            }
+
+            try
+            {
+                await UniTask.WaitUntil(() => _servicesReady, cancellationToken: destroyCancellationToken);
+                if (!await _contentService.IsAvailableAsync(destroyCancellationToken))
+                {
+                    _roomActionInProgress = false;
+                    return false;
+                }
+
+                ApplySettings(settings);
+                _view?.SetPanelVisible(false);
+                ConnectSessionAsync(settings, createOrJoin).Forget();
+                return true;
+            }
+            catch (OperationCanceledException)
+            {
+                _roomActionInProgress = false;
+                return false;
+            }
+        }
+
+        public void HideLobbyUi()
+        {
+            _view?.SetPanelVisible(false);
+            if (_outGameCanvas != null)
+            {
+                _outGameCanvas.gameObject.SetActive(false);
+            }
+        }
+
+        public void ShutdownDevelopmentSession()
+        {
+            if (IsDevelopmentQuickStartActive)
+            {
+                _sessionService?.DisposeAsync().Forget();
             }
         }
 
@@ -159,9 +213,10 @@ namespace CoinGame.Network
             }
         }
 
-        private async UniTask InitializeServicesAsync()
+        private async UniTask InitializeServicesAsync(string authenticationProfile, bool logPlayerId)
         {
-            await _sessionService.InitializeServicesAsync(destroyCancellationToken);
+            await _sessionService.InitializeServicesAsync(
+                destroyCancellationToken, authenticationProfile, logPlayerId);
             _servicesReady = _sessionService.IsServicesReady;
             if (_servicesReady)
             {

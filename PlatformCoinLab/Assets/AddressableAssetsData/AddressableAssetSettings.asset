@@ -15,7 +15,7 @@ MonoBehaviour:
   m_DefaultGroup: 435311f4a406a5d4a850c4cfc42b4914
   m_currentHash:
     serializedVersion: 2
-    Hash: 11918ff03e605a59818b06f15d6fa414
+    Hash: 0165619f22037b3f1b860d43b3b59d23
   m_ExtractTypeTreeData: 0
   m_DisableWriteTypeTree: 0
   m_OptimizeCatalogSize: 0
@@ -88,7 +88,7 @@ MonoBehaviour:
         m_Value: '[UnityEngine.AddressableAssets.Addressables.BuildPath]/[BuildTarget]'
     - m_InheritedParent: 
       m_Id: 1614e5b48c5fb964298c5b05a678711a
-      m_ProfileName: RemoteProfile
+      m_ProfileName: CoinGame_Profile
       m_Values:
       - m_Id: 5766eab1c2d1ec74e8991e92a0b776e5
         m_Value: 'https://localhost:5443/[BuildTarget]'
@@ -132,4 +132,4 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 5afb6607e330ca34580bd67753361fd8, type: 2}
   - {fileID: 11400000, guid: caad724ffcf182e4a85188a788f079a2, type: 2}
   - {fileID: 11400000, guid: cdadfca6609d0b64da3e4c2bebec966b, type: 2}
-  m_ActiveProfileId: 708fd48023fbeab4abfddb6561a6a13f
+  m_ActiveProfileId: 1614e5b48c5fb964298c5b05a678711a

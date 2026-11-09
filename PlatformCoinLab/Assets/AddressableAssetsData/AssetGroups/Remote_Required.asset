@@ -10,26 +10,11 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: bbb281ee3bf0b054c82ac2347e9e782c, type: 3}
-  m_Name: CoinGame_ScriptableObject
+  m_Name: Remote_Required
   m_EditorClassIdentifier: Unity.Addressables.Editor::UnityEditor.AddressableAssets.Settings.AddressableAssetGroup
-  m_GroupName: CoinGame_ScriptableObject
+  m_GroupName: Remote_Required
   m_GUID: 261fda2a107e349499427fea9ff19bfe
-  m_SerializeEntries:
-  - m_GUID: 1c2e27d6c3ae4d2d9aa4a4b809951f3a
-    m_Address: Role Ability Config
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: b65b34205923623489a6006f23252fdf
-    m_Address: PlayerMove_VectorMinMaxData
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: e002d90c4f4ad974ab62cbbf25df11c3
-    m_Address: Stage Config
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
+  m_SerializeEntries: []
   m_ReadOnly: 0
   m_Settings: {fileID: 11400000, guid: 07a49db2446faef4aab6e4be37f87228, type: 2}
   m_SchemaSet:

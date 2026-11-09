@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using Unity.Netcode;
@@ -15,6 +16,9 @@ namespace CoinGame.Network
     {
         private SessionConnector _sessionConnector;
         private MultiplayerSession _multiplayerSession;
+        private bool _isConnecting;
+        private bool _isDisposing;
+        private string _requestedSessionId;
 
         public ISession Session { get; private set; }
         public bool IsServicesReady { get; private set; }
@@ -24,13 +28,27 @@ namespace CoinGame.Network
         public event Action<ISession> Connected;
         public event Action<string> Failed;
 
-        public async UniTask InitializeServicesAsync(CancellationToken cancellationToken)
+        public async UniTask InitializeServicesAsync(
+            CancellationToken cancellationToken, string authenticationProfile = null, bool logPlayerId = false)
         {
             try
             {
+                if (!string.IsNullOrWhiteSpace(authenticationProfile) &&
+                    AuthenticationService.Instance.IsSignedIn)
+                {
+                    AuthenticationService.Instance.SignOut();
+                }
+
                 if (UnityServices.State != ServicesInitializationState.Initialized)
                 {
-                    await UnityServices.InitializeAsync();
+                    InitializationOptions options = string.IsNullOrWhiteSpace(authenticationProfile)
+                        ? null
+                        : new InitializationOptions().SetProfile(authenticationProfile);
+                    await UnityServices.InitializeAsync(options);
+                }
+                else if (!string.IsNullOrWhiteSpace(authenticationProfile))
+                {
+                    AuthenticationService.Instance.SwitchProfile(authenticationProfile);
                 }
                 cancellationToken.ThrowIfCancellationRequested();
 
@@ -39,6 +57,11 @@ namespace CoinGame.Network
                     await AuthenticationService.Instance.SignInAnonymouslyAsync();
                 }
                 cancellationToken.ThrowIfCancellationRequested();
+
+                if (logPlayerId)
+                {
+                    Debug.Log($"[DevQuickStart] Auth profile='{authenticationProfile}', PlayerId='{AuthenticationService.Instance.PlayerId}'.");
+                }
 
                 IsServicesReady = true;
             }
@@ -53,14 +76,17 @@ namespace CoinGame.Network
 
         public async UniTask ConnectAsync(RoomSettings settings, bool createOrJoin, CancellationToken cancellationToken)
         {
-            if (!IsServicesReady || IsSessionReady)
+            if (!IsServicesReady || IsSessionReady || _isConnecting)
             {
                 return;
             }
 
+            _isConnecting = true;
+            _requestedSessionId = settings.RoomId;
             try
             {
                 await ResetNetworkManagerAsync(cancellationToken);
+                await CleanupRegisteredSessionsAsync();
                 DisposeConnector();
 
                 _multiplayerSession = ScriptableObject.CreateInstance<MultiplayerSession>();
@@ -103,6 +129,10 @@ namespace CoinGame.Network
             {
                 OnSessionFailed($"Room connection failed: {exception.Message}");
             }
+            finally
+            {
+                _isConnecting = false;
+            }
         }
 
         private async UniTask ResetNetworkManagerAsync(CancellationToken cancellationToken)
@@ -117,6 +147,33 @@ namespace CoinGame.Network
             await UniTask.WaitUntil(() => !networkManager.IsListening, cancellationToken: cancellationToken);
         }
 
+        private async UniTask CleanupRegisteredSessionsAsync()
+        {
+            if (MultiplayerService.Instance == null || MultiplayerService.Instance.Sessions.Count == 0)
+            {
+                return;
+            }
+
+            List<ISession> sessions = new(MultiplayerService.Instance.Sessions.Values);
+            foreach (ISession session in sessions)
+            {
+                try
+                {
+                    await session.LeaveAsync();
+                }
+                catch (Exception exception)
+                {
+                    Debug.LogWarning($"Failed to clean up stale session: {exception.Message}");
+                }
+            }
+
+            for (int i = 0; i < 50 && MultiplayerService.Instance != null &&
+                MultiplayerService.Instance.Sessions.Count > 0; i++)
+            {
+                await UniTask.Delay(100);
+            }
+        }
+
         private void OnSessionConnected(ISession session)
         {
             Session = session;
@@ -125,6 +182,17 @@ namespace CoinGame.Network
 
         private void OnSessionFailed(string message)
         {
+            if (message.Contains("already a member", StringComparison.OrdinalIgnoreCase))
+            {
+                ISession existingSession = MultiplayerService.Instance?.Sessions.Values
+                    .FirstOrDefault(session => session.Id == _requestedSessionId);
+                if (existingSession != null)
+                {
+                    OnSessionConnected(existingSession);
+                    return;
+                }
+            }
+
             Session = null;
             Failed?.Invoke(message);
         }
@@ -145,25 +213,44 @@ namespace CoinGame.Network
             }
         }
 
-        public void Dispose()
+        public async UniTask DisposeAsync()
         {
+            if (_isDisposing)
+            {
+                return;
+            }
+
+            _isDisposing = true;
             ISession session = Session;
             Session = null;
+            _isConnecting = false;
             if (session != null)
             {
-                if (session.IsHost)
+                try
                 {
-                    _ = session.AsHost().DeleteAsync();
+                    if (session.IsHost)
+                    {
+                        await session.AsHost().DeleteAsync();
+                    }
+                    else
+                    {
+                        await session.LeaveAsync();
+                    }
                 }
-                else
+                catch (Exception exception)
                 {
-                    _ = session.LeaveAsync();
+                    Debug.LogWarning($"Failed to close development session: {exception.Message}");
                 }
             }
 
             DisposeConnector();
             Connected = null;
             Failed = null;
+        }
+
+        public void Dispose()
+        {
+            DisposeAsync().Forget();
         }
     }
 }

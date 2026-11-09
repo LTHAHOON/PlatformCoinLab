@@ -10,18 +10,33 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: bbb281ee3bf0b054c82ac2347e9e782c, type: 3}
-  m_Name: CoinGame_Prefab
+  m_Name: Local_Core
   m_EditorClassIdentifier: Unity.Addressables.Editor::UnityEditor.AddressableAssets.Settings.AddressableAssetGroup
-  m_GroupName: CoinGame_Prefab
+  m_GroupName: Local_Core
   m_GUID: 81254a3fa78fdf947801f15c65aba4f9
   m_SerializeEntries:
+  - m_GUID: 1c2e27d6c3ae4d2d9aa4a4b809951f3a
+    m_Address: Role Ability Config
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 419af0feaf3e681488458f05965cc734
     m_Address: Coin
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: b65b34205923623489a6006f23252fdf
+    m_Address: PlayerMove_VectorMinMaxData
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: d64d0af4d0985ef47a0a441c5ae15808
     m_Address: Player
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: e002d90c4f4ad974ab62cbbf25df11c3
+    m_Address: Stage Config
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0

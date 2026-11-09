@@ -21,10 +21,13 @@ namespace CoinGame.Utilities
             SerializedProperty scenePathProperty =  property.FindPropertyRelative("_scenePath");
 
             SceneAsset sceneAsset = (SceneAsset)sceneAssetProperty.objectReferenceValue;
+            PropertyField sceneAssetPropertyField = new(sceneAssetProperty, property.displayName);
             scenePathProperty.stringValue = AssetDatabase.GetAssetPath(sceneAsset);
+            PropertyField scenePathPropertyField = new(scenePathProperty, property.displayName + " Path");
+            scenePathPropertyField.SetEnabled(false);
             property.serializedObject.ApplyModifiedProperties();
-            root.Add(new PropertyField(sceneAssetProperty));
-            root.Add(new PropertyField(scenePathProperty));
+            root.Add(sceneAssetPropertyField);
+            root.Add(scenePathPropertyField);
             root.RegisterCallback<SerializedPropertyChangeEvent>(evt => {
                 if(evt.changedProperty.propertyPath != sceneAssetProperty.propertyPath)
                 {

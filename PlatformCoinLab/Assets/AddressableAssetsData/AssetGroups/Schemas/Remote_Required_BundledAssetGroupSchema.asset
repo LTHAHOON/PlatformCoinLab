@@ -10,7 +10,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: e5d17a21594effb4e9591490b009e7aa, type: 3}
-  m_Name: CoinGame_ScriptableObject_BundledAssetGroupSchema
+  m_Name: Remote_Required_BundledAssetGroupSchema
   m_EditorClassIdentifier: Unity.Addressables.Editor::UnityEditor.AddressableAssets.Settings.GroupSchemas.BundledAssetGroupSchema
   m_Group: {fileID: 11400000, guid: 5769e0000793d8f4c920cfeff0ac808f, type: 2}
   m_InternalBundleIdMode: 1
@@ -35,9 +35,9 @@ MonoBehaviour:
   m_RedirectLimit: -1
   m_RetryCount: 0
   m_BuildPath:
-    m_Id: e996f747e245a2a40b2afd53e59cbc48
+    m_Id: b686a805c0bf5a344a5c1e25152ec1a0
   m_LoadPath:
-    m_Id: bff69e61d04171b4fa569ec85a7f2de2
+    m_Id: 5766eab1c2d1ec74e8991e92a0b776e5
   m_BundleMode: 0
   m_AssetBundleProviderType:
     m_AssemblyName: Unity.ResourceManager, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
