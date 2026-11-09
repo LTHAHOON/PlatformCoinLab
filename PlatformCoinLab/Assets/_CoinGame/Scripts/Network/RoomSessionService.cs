@@ -33,12 +33,6 @@ namespace CoinGame.Network
         {
             try
             {
-                if (!string.IsNullOrWhiteSpace(authenticationProfile) &&
-                    AuthenticationService.Instance.IsSignedIn)
-                {
-                    AuthenticationService.Instance.SignOut();
-                }
-
                 if (UnityServices.State != ServicesInitializationState.Initialized)
                 {
                     InitializationOptions options = string.IsNullOrWhiteSpace(authenticationProfile)
@@ -48,6 +42,10 @@ namespace CoinGame.Network
                 }
                 else if (!string.IsNullOrWhiteSpace(authenticationProfile))
                 {
+                    if (AuthenticationService.Instance.IsSignedIn)
+                    {
+                        AuthenticationService.Instance.SignOut();
+                    }
                     AuthenticationService.Instance.SwitchProfile(authenticationProfile);
                 }
                 cancellationToken.ThrowIfCancellationRequested();
@@ -70,6 +68,7 @@ namespace CoinGame.Network
             }
             catch (Exception exception)
             {
+                Debug.LogError($"[RoomSessionService] Service initialization failed: {exception}");
                 Failed?.Invoke($"Service initialization failed: {exception.Message}");
             }
         }

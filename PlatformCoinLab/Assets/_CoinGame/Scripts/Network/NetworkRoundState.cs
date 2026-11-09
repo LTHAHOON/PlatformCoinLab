@@ -53,6 +53,7 @@ namespace CoinGame.Network
         private CancellationTokenSource _roundCts;
         private double _nextTickTime;
         private float _roundStartDelay = 1f;
+        private float _lobbyCountdownSeconds = 10f;
         private bool _isRoundStarting;
 
         public int Round => _round.Value;
@@ -164,7 +165,11 @@ namespace CoinGame.Network
             }
         }
 
-        public void ConfigureLobbyServer(int expectedPlayers, int collectors, int disruptors)
+        public void ConfigureLobbyServer(
+            int expectedPlayers,
+            int collectors,
+            int disruptors,
+            float lobbyCountdownSeconds = 10f)
         {
             if (!IsServer)
             {
@@ -174,6 +179,7 @@ namespace CoinGame.Network
             _expectedPlayers = expectedPlayers;
             _configuredCollectors = collectors;
             _configuredDisruptors = disruptors;
+            _lobbyCountdownSeconds = Mathf.Max(0f, lobbyCountdownSeconds);
         }
 
         [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
@@ -232,7 +238,7 @@ namespace CoinGame.Network
 
             if (_lobbyStartTime.Value <= 0d)
             {
-                _lobbyStartTime.Value = NetworkManager.ServerTime.Time + 10d;
+                _lobbyStartTime.Value = NetworkManager.ServerTime.Time + _lobbyCountdownSeconds;
                 return;
             }
 

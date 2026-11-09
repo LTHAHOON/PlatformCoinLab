@@ -32,6 +32,7 @@ namespace CoinGame.Network
         private bool _gameStarting;
         private bool _roomActionInProgress;
         private bool _isShuttingDown;
+        private bool _lifecycleInitialized;
         private RoomLobbyContentService _contentService;
         private int _maxCollectors = 1;
         private int _maxDisruptors = 1;
@@ -110,6 +111,17 @@ namespace CoinGame.Network
 
         private void Start()
         {
+            InitializeRuntime();
+        }
+
+        public void InitializeRuntime()
+        {
+            if (_lifecycleInitialized)
+            {
+                return;
+            }
+
+            _lifecycleInitialized = true;
             PrepareLobbySceneAsync().Forget();
             InitializeServicesAsync(
                 IsDevelopmentQuickStartActive ? DevQuickStart.DevelopmentAuthProfile : null,
@@ -190,7 +202,8 @@ namespace CoinGame.Network
                     state.ConfigureLobbyServer(
                         SessionMaxPlayers > 0 ? SessionMaxPlayers : DefaultMaxPlayers,
                         _maxCollectors,
-                        _maxDisruptors);
+                        _maxDisruptors,
+                        IsDevelopmentQuickStartActive ? 0f : 10f);
                 }
 
                 if (state.LoadGame)
@@ -384,7 +397,8 @@ namespace CoinGame.Network
                     NetworkRoundState.Instance.ConfigureLobbyServer(
                         SessionMaxPlayers > 0 ? SessionMaxPlayers : DefaultMaxPlayers,
                         _maxCollectors,
-                        _maxDisruptors);
+                        _maxDisruptors,
+                        IsDevelopmentQuickStartActive ? 0f : 10f);
                 }
                 NetworkRoundState.Instance.ReportReadyRpc();
             }

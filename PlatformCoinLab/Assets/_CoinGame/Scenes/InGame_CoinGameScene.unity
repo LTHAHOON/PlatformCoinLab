@@ -349,26 +349,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 69f8485a86169b844942f477cab085d5, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CoinGame.Gameplay.M2PrototypeBootstrap
---- !u!114 &135226580
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 135226577}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7d9a9f1645e14c2f9e7b7b0c2f0f4a71, type: 3}
-  m_Name:
-  m_EditorClassIdentifier: Assembly-CSharp::CoinGame.Network.DevQuickStart
-  _enabled: 1
-  _roomId: coin-dev-quickstart
-  _roomName: Coin Dev Quick Start
-  _maxRounds: 5
-  _retrySeconds: 3
-  _logAuthentication: 1
 --- !u!4 &135226579
 Transform:
   m_ObjectHideFlags: 0
@@ -384,6 +366,25 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &135226580
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 135226577}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7d9a9f1645e14c2f9e7b7b0c2f0f4a71, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CoinGame.Network.DevQuickStart
+  _enabled: 1
+  _soloTestMode: 0
+  _roomId: coin-dev-quickstart
+  _roomName: Coin Dev Quick Start
+  _maxRounds: 5
+  _retrySeconds: 3
+  _logAuthentication: 1
 --- !u!1001 &281453644
 PrefabInstance:
   m_ObjectHideFlags: 0

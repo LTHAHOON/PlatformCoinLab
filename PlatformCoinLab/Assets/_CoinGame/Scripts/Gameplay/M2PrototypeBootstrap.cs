@@ -23,6 +23,8 @@ namespace CoinGame.Gameplay
             await SceneManager.LoadSceneAsync(PersistentScenePath, LoadSceneMode.Additive);
             GameManager gameManager = FindAnyObjectByType<GameManager>();
             gameManager?.ConfigureInGameSceneServices();
+            RoomLobbyController lobby = FindAnyObjectByType<RoomLobbyController>();
+            lobby?.InitializeRuntime();
             if (quickStart != null)
             {
                 quickStart.Begin();

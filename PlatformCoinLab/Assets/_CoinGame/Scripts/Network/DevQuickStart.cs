@@ -19,6 +19,8 @@ namespace CoinGame.Network
         [SerializeField]
         private bool _enabled = true;
         [SerializeField]
+        private bool _soloTestMode = true;
+        [SerializeField]
         private string _roomId = "coin-dev-quickstart";
         [SerializeField]
         private string _roomName = "Coin Dev Quick Start";
@@ -95,8 +97,12 @@ namespace CoinGame.Network
                     () => RoomLobbyController.Instance != null,
                     cancellationToken: token);
 
+                int maxPlayers = _soloTestMode ? 1 : 2;
+                int maxDisruptors = _soloTestMode ? 0 : 1;
+                string roomId = _soloTestMode ? $"{_roomId}-solo" : _roomId;
                 RoomSettings settings = new(
-                    _roomId, _roomName, 2, 1, 1, Mathf.Clamp(_maxRounds, 1, 20), 1);
+                    roomId, _roomName, maxPlayers, 1, maxDisruptors,
+                    Mathf.Clamp(_maxRounds, 1, 20), 1);
                 bool createOrJoin = Unity.Multiplayer.PlayMode.CurrentPlayer.IsMainEditor;
                 RoomLobbyController controller = RoomLobbyController.Instance;
                 controller.HideLobbyUi();
@@ -114,14 +120,14 @@ namespace CoinGame.Network
                     await UniTask.Delay(TimeSpan.FromSeconds(waitSeconds), cancellationToken: token);
                 }
 
-                await SelectRoleWhenReadyAsync(createOrJoin, token);
+                await SelectRoleWhenReadyAsync(createOrJoin, _soloTestMode, token);
             }
             catch (OperationCanceledException)
             {
             }
         }
 
-        private async UniTask SelectRoleWhenReadyAsync(bool isHost, CancellationToken token)
+        private async UniTask SelectRoleWhenReadyAsync(bool isHost, bool soloTestMode, CancellationToken token)
         {
             await UniTask.WaitUntil(
                 () => NetworkManager.Singleton != null && NetworkManager.Singleton.IsConnectedClient,
@@ -134,7 +140,10 @@ namespace CoinGame.Network
                 .GetLocalPlayerObject().GetComponent<NetworkPlayerStats>();
             if (stats != null)
             {
-                stats.SelectRole(isHost ? PlayerRole.Collector : PlayerRole.Disruptor);
+                PlayerRole role = soloTestMode || isHost
+                    ? PlayerRole.Collector
+                    : PlayerRole.Disruptor;
+                stats.SelectRole(role);
             }
         }
 
