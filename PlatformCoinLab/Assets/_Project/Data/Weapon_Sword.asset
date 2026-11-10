@@ -1,0 +1,28 @@
+﻿%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8270488e12915634db934baa7b620403, type: 3}
+  m_Name: Weapon_Sword
+  m_EditorClassIdentifier: CoinGame.Gameplay.Combat::WeaponData
+  Kind: 2
+  Damage: 20
+  AttackInterval: 0.6
+  Range: 1.5
+  ProjectileSpeed: 0
+  MagazineSize: 0
+  ReserveAmmo: 0
+  ArcAngle: 70
+  CrateDamage: 2
+
+  HandScale: {x: 1, y: 1, z: 1}
+  HandOffset: {x: 0, y: 0, z: 0}
+  HandRotation: {x: 0, y: 0, z: 0}
+  MuzzleOffset: {x: 0, y: 0, z: 0.55}

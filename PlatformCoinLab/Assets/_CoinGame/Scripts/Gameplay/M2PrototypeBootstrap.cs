@@ -21,6 +21,9 @@ namespace CoinGame.Gameplay
             DevQuickStart quickStart = GetComponent<DevQuickStart>();
 
             await SceneManager.LoadSceneAsync(PersistentScenePath, LoadSceneMode.Additive);
+            await UniTask.WaitUntil(
+                () => GameManager.Instance != null,
+                cancellationToken: destroyCancellationToken);
             GameManager gameManager = FindAnyObjectByType<GameManager>();
             gameManager?.ConfigureInGameSceneServices();
             RoomLobbyController lobby = FindAnyObjectByType<RoomLobbyController>();

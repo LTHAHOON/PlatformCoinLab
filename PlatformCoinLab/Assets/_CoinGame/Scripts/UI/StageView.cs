@@ -45,16 +45,7 @@ namespace CoinGame.UI
 
         private void OnEnable()
         {
-            if (GameManager.Instance == null)
-            {
-                return;
-            }
-
-            GameManager.Instance.OnStageSessionChanged += SetStageView;
-            GameManager.Instance.OnStageTimerChanged += SetTimerText;
-            SetStageView(GameManager.Instance.CurrentStageSession, true);
-            SetTimerText(GameManager.Instance.RemainingTime);
-            _isBound = true;
+            TryBindGameManager();
         }
 
         private void OnDisable()
@@ -71,6 +62,7 @@ namespace CoinGame.UI
 
         private void Update()
         {
+            TryBindGameManager();
             if (Time.unscaledTime >= _nextLocalStatsLookup)
             {
                 _nextLocalStatsLookup = Time.unscaledTime + 0.25f;
@@ -98,6 +90,20 @@ namespace CoinGame.UI
                 _nextScoreboardRefresh = Time.unscaledTime + 0.25f;
                 RefreshScoreboard();
             }
+        }
+
+        private void TryBindGameManager()
+        {
+            if (_isBound || GameManager.Instance == null)
+            {
+                return;
+            }
+
+            GameManager.Instance.OnStageSessionChanged += SetStageView;
+            GameManager.Instance.OnStageTimerChanged += SetTimerText;
+            SetStageView(GameManager.Instance.CurrentStageSession, true);
+            SetTimerText(GameManager.Instance.RemainingTime);
+            _isBound = true;
         }
 
         private void SetStageView(StageSession stageSession, bool isStart)

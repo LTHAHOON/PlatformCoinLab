@@ -144,3 +144,20 @@
 - InGame 단독 PlayMode 스모크에서 Persistent additive 로드와 Persistent Camera/EventSystem 재사용을 확인했다.
 - 최종 Unity 테스트 재실행은 스크립트 재컴파일 후 MCP 세션이 끊겨 대기 중이며, C# 빌드는 오류 0개다.
 - 호스트 1 + 클라이언트 1 실제 연결 테스트는 별도 실행 인스턴스가 필요해 수동 검증 절차로 남아 있다.
+
+## M3 완료 상태
+
+- `NetworkInventory`가 서버 권한 무기 슬롯 2개, 현재 무기, 탄창/예비 탄약, 부스트/부활 보유를 동기화한다.
+- `WeaponData`, `WeaponBase`, `Gun`, `Sword`를 추가했다. 기본 총은 데미지 12/탄창 12/간격 0.3초, 검은 데미지 20/간격 0.6초/사거리 1.5m다.
+- `NetworkCombat`가 K/R/Q/E 입력을 서버 RPC로 전달하고, 서버가 쿨타임·탄약·팀킬·명중·피해를 판정한다. 투사체 런타임 경로는 `NetworkProjectile`과 `NetworkGameObjectPool`을 사용한다.
+- `NetworkPlayerStats`에 피격 무적 0.3초, 경직 0.1초, 수동 부활 3초, 부활 후 2초 무적, 은신, 이동 부스트, 아이템 습득 불가 상태를 확장했다.
+- `NetworkCrate`, `NetworkCrateSpawner`, `NetworkItemPickup`, `ItemData`를 추가했다. 상자 HP와 가중치 드롭, 보유 제한 초과 시 미획득 규칙을 서버에서 처리한다.
+- 방해자 `L`은 기존 코인 잠금과 GDD 아이템 습득 불가를 함께 적용하며, 습득 불가 지속 5초/쿨타임 10초로 설정했다. `O` 밀치기 기본값은 쿨타임 3초/스턴 0.4초로 맞췄다.
+- `M3DebugTools`를 Player 프리팹에 연결했다. Development Build에서 F1~F9로 총/검/탄약/부스트/부활/무적/은신/체력 회복/랜덤 아이템을 지급한다.
+- 패키지 원본은 수정하지 않고 `Assets/_Project/Prefabs/M3`에 BTM 아이템 복사본, Low Poly Guns 기반 총 외형, 기본 Cube 검 외형, Capsule 투사체를 만들었다.
+- Player 프리팹에 `WeaponSocket/Muzzle`을 추가하고 현재 무기 `NetworkVariable`에 따라 각 클라이언트가 총/검 외형을 로컬 장착한다.
+- 기존 InGame `Crate_Spawner`를 재사용해 `Crate.prefab`을 연결했다. 씬 관리 비활성화 환경에서 클라이언트 스폰 오류가 발생하지 않도록 스포너의 씬 `NetworkObject`는 제거하고 서버 대기 후 상자를 생성한다.
+- `DefaultNetworkPrefabs.asset`에 드롭 아이템 7종과 Capsule 투사체를 등록하고, `Crate.prefab`에 ItemData 가중치 드롭 테이블을 연결했다.
+- 상자 드롭 픽업은 Variant의 `GlobalObjectHash=0` 문제를 피하도록 정규 `NetworkItemPickup.prefab`으로 변환해 등록했고, `Crate.prefab`의 `_pickupPrefab`과 드롭 테이블 참조를 재연결했다.
+- `M3HudView`와 `NetworkWorldHealthBar`를 추가해 체력/무기/탄약/퀵슬롯/상태/부활 대기/스킬 쿨타임과 월드 체력 바를 최소 표시한다. 키 바인딩은 변경하지 않았다.
+- `WeaponData`와 `ItemData`에 손 장착·드롭 스케일/오프셋 및 픽업 반경 보정값을 추가하고, BTM 아이템은 기본 드롭 스케일 0.22와 월드 픽업 반경 0.3을 사용한다.

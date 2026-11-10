@@ -55,6 +55,7 @@ namespace CoinGame.Network
         private float _roundStartDelay = 1f;
         private float _lobbyCountdownSeconds = 10f;
         private bool _isRoundStarting;
+        private float _nextQuickLog;
 
         public int Round => _round.Value;
         public int MaxRounds => _maxRounds.Value;
@@ -113,6 +114,12 @@ namespace CoinGame.Network
             if (!IsServer || NetworkManager.Singleton == null)
             {
                 return;
+            }
+
+            if (RoomLobbyController.IsDevelopmentQuickStartActive && Time.unscaledTime >= _nextQuickLog)
+            {
+                _nextQuickLog = Time.unscaledTime + 1f;
+                Debug.Log($"[QuickRound] phase={_clientSyncPhase}, load={_loadGame.Value}, ready={_phaseReadyClients.Count}, clients={NetworkManager.Singleton.ConnectedClientsIds.Count}, round={_round.Value}, active={_roundActive.Value}", this);
             }
 
             if (!_loadGame.Value)
@@ -278,6 +285,10 @@ namespace CoinGame.Network
         {
             if (!IsServer || _stageConfig == null || _roundActive.Value || _isRoundStarting)
             {
+                if (RoomLobbyController.IsDevelopmentQuickStartActive)
+                {
+                    Debug.LogWarning($"[QuickRound] StartRoundServer skipped: server={IsServer}, stageConfig={_stageConfig != null}, active={_roundActive.Value}, starting={_isRoundStarting}", this);
+                }
                 return;
             }
 

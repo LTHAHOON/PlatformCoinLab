@@ -6,7 +6,7 @@ namespace CoinGame.Stage
     public class RoleAbilityConfig : ScriptableObject
     {
         [Min(0.1f)]
-        public float PushCooldown = 2f;
+        public float PushCooldown = 3f;
         [Min(0.1f)]
         public float LockCooldown = 8f;
         [Min(0.1f)]
@@ -16,7 +16,11 @@ namespace CoinGame.Stage
         [Min(0f)]
         public float PushForce = 5f;
         [Min(0.1f)]
-        public float PushStunDuration = 1f;
+        public float PushStunDuration = 0.4f;
+        [Min(0.1f)]
+        public float ItemBlockDuration = 5f;
+        [Min(0.1f)]
+        public float ItemBlockCooldown = 10f;
         [Min(1)]
         public int StealAmount = 1;
     }

@@ -24,6 +24,10 @@ namespace CoinGame.Stage
         [SerializeField]
         [Min(0f)]
         private float TimeoutDamagePerMissingCoin = 1f;
+        [SerializeField]
+        [Min(0)] private int CrateMinimum = 2;
+        [SerializeField]
+        [Min(0)] private int CrateMaximum = 4;
 
         public int GetRequiredCoins(int round)
         {
@@ -47,6 +51,8 @@ namespace CoinGame.Stage
         {
             return (int)Math.Max(0, Math.Ceiling(missingCoins * TimeoutDamagePerMissingCoin));
         }
+
+        public int GetCrateCount() { return UnityEngine.Random.Range(CrateMinimum, Mathf.Max(CrateMinimum, CrateMaximum) + 1); }
     }
 }
 

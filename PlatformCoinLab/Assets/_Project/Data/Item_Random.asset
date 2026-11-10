@@ -1,0 +1,22 @@
+﻿%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 94ec0b903e09bf04e8a5e411b83ebaf3, type: 3}
+  m_Name: Item_Random
+  m_EditorClassIdentifier: CoinGame.Gameplay.Items::ItemData
+  Kind: 8
+  Weight: 7
+  Amount: 0
+  Duration: 0
+  Weapon: {fileID: 0}
+
+  DropScale: 0.22
+  PickupRadius: 0.3

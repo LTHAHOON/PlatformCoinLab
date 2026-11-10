@@ -153,6 +153,11 @@ namespace CoinGame.Utilities
             }
         }
 
+        private void Update()
+        {
+            TryBindStageSession();
+        }
+
         private void TryBindStageSession()
         {
             if (!_syncSpawnCountWithStageSession || _stageSessionBound || GameManager.Instance == null)
@@ -162,6 +167,10 @@ namespace CoinGame.Utilities
 
             GameManager.Instance.OnStageSessionChanged += OnStageSessionChanged;
             _stageSessionBound = true;
+            if (GameManager.Instance.IsRoundStarted && GameManager.Instance.CurrentStageSession.Round > 0)
+            {
+                OnStageSessionChanged(GameManager.Instance.CurrentStageSession, true);
+            }
         }
 
         private void OnDisable()

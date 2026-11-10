@@ -17,6 +17,7 @@ namespace CoinGame.Network
     using UnityEngine.AddressableAssets;
 
     [RequireComponent(typeof(CharacterController), typeof(NetworkTransform), typeof(NetworkPlayerStats))]
+    [RequireComponent(typeof(NetworkInventory), typeof(NetworkCombat))]
     public class NetworkPlayerController : NetworkBehaviour
     {
         [SerializeField]
@@ -31,6 +32,8 @@ namespace CoinGame.Network
         private VectorMinMaxData _playerPosMinMaxData;
         private RoleAbilityConfig _roleAbilityConfig;
         private NetworkPlayerStats _networkPlayerStats;
+        private NetworkCombat _combat;
+        private NetworkInventory _inventory;
         private CharacterController _controller;
         private PlayerInput _playerInput;
         private InputAction _moveAction;
@@ -97,6 +100,8 @@ namespace CoinGame.Network
             _playerRenderers = GetComponentsInChildren<Renderer>();
             _playerPropertyBlock ??= new MaterialPropertyBlock();
             _networkPlayerStats = GetComponent<NetworkPlayerStats>();
+            _combat = GetComponent<NetworkCombat>();
+            _inventory = GetComponent<NetworkInventory>();
             _inputProvider = GetComponent<PlayerInputStateProvider>();
             if (_networkPlayerStats == null)
             {
@@ -172,10 +177,19 @@ namespace CoinGame.Network
 
             foreach (Renderer renderer in _playerRenderers)
             {
+                bool hidden = _networkPlayerStats.IsStealthed && !IsFriendlyLocalPlayer();
+                renderer.enabled = !hidden;
                 _playerPropertyBlock.SetColor("_BaseColor", roleColor);
                 _playerPropertyBlock.SetColor("_Color", roleColor);
                 renderer.SetPropertyBlock(_playerPropertyBlock);
             }
+        }
+
+        private bool IsFriendlyLocalPlayer()
+        {
+            NetworkObject local = NetworkManager.Singleton?.SpawnManager.GetLocalPlayerObject();
+            NetworkPlayerStats localStats = local != null ? local.GetComponent<NetworkPlayerStats>() : null;
+            return localStats != null && localStats.Role == _networkPlayerStats.Role;
         }
 
         private void LateUpdate()
@@ -244,6 +258,11 @@ namespace CoinGame.Network
                     }
                     if (_networkPlayerStats.Role == PlayerRole.Disruptor && _networkPlayerStats.IsAlive)
                     {
+                        if (_inputProvider != null && _inputProvider.Current.Attack) _combat.RequestAttack();
+                        if (_inputProvider != null && _inputProvider.Current.Reload) _combat.RequestReload();
+                        if (_inputProvider != null && _inputProvider.Current.WeaponPrevious) _combat.RequestSwitch(-1);
+                        if (_inputProvider != null && _inputProvider.Current.WeaponNext) _combat.RequestSwitch(1);
+                        if (_inputProvider != null && _inputProvider.Current.Boost) BoostRpc();
                         if (_inputProvider != null && _inputProvider.Current.Push && Time.time >= _pushCooldownUntil)
                         {
                             _pushCooldownUntil = Time.time + PushCooldown;
@@ -251,7 +270,7 @@ namespace CoinGame.Network
                         }
                         if (_inputProvider != null && _inputProvider.Current.Skill && Time.time >= _lockCooldownUntil)
                         {
-                            _lockCooldownUntil = Time.time + LockCooldown;
+                            _lockCooldownUntil = Time.time + Mathf.Max(LockCooldown, ItemBlockCooldown);
                             UseLockRpc(transform.position);
                         }
                         if (_inputProvider != null && _inputProvider.Current.Interact && Time.time >= _stealCooldownUntil)
@@ -260,6 +279,15 @@ namespace CoinGame.Network
                             UseStealRpc(transform.position);
                         }
                     }
+                    else if (_networkPlayerStats.IsAlive)
+                    {
+                        if (_inputProvider != null && _inputProvider.Current.Attack) _combat.RequestAttack();
+                        if (_inputProvider != null && _inputProvider.Current.Reload) _combat.RequestReload();
+                        if (_inputProvider != null && _inputProvider.Current.WeaponPrevious) _combat.RequestSwitch(-1);
+                        if (_inputProvider != null && _inputProvider.Current.WeaponNext) _combat.RequestSwitch(1);
+                        if (_inputProvider != null && _inputProvider.Current.Boost) BoostRpc();
+                    }
+                    if (_inputProvider != null && _inputProvider.Current.Revive) ReviveRpc();
 
                     await UniTask.Yield(PlayerLoopTiming.Update, token);
                 }
@@ -311,9 +339,20 @@ namespace CoinGame.Network
                 if (_networkPlayerStats.Role == PlayerRole.Disruptor && targetStats.Role == PlayerRole.Collector)
                 {
                     targetStats.SetCoinLockServer(NetworkManager.Singleton.ServerTime.Time + LockDuration, _networkPlayerStats);
+                    targetStats.SetItemBlockedServer(NetworkManager.Singleton.ServerTime.Time + ItemBlockDuration);
                 }
             }
         }
+
+        [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Owner)]
+        private void BoostRpc()
+        {
+            if (!IsServer || _inventory == null || !_inventory.ConsumeBoostServer()) return;
+            _networkPlayerStats.SetBoostServer(NetworkManager.Singleton.ServerTime.Time + 3d);
+        }
+
+        [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Owner)]
+        private void ReviveRpc() { _networkPlayerStats.TryReviveServer(); }
 
         [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Owner)]
         private void UseStealRpc(Vector3 origin)
@@ -372,7 +411,7 @@ namespace CoinGame.Network
                 while (true)
                 {
                     token.ThrowIfCancellationRequested();
-                    if (GameManager.Instance != null && !GameManager.Instance.CanPlayersMove || _networkPlayerStats != null && !_networkPlayerStats.IsAlive)
+                    if (GameManager.Instance != null && !GameManager.Instance.CanPlayersMove || _networkPlayerStats != null && (!_networkPlayerStats.IsAlive || _networkPlayerStats.IsStunned))
                     {
                         await UniTask.Yield(PlayerLoopTiming.EarlyUpdate, token);
                         continue;
@@ -392,7 +431,9 @@ namespace CoinGame.Network
                     Vector3 moveDir = new(moveInput.x, 0f, moveInput.y);
                     if (moveDir.sqrMagnitude > 0.0001f)
                     {
-                        Vector3 moveDelta = _moveSpeed * Time.deltaTime * moveDir.normalized;
+                        if (_combat != null) _combat.AimDirection = moveDir.normalized;
+                        float speed = _moveSpeed * (_networkPlayerStats != null && _networkPlayerStats.IsBoosted ? 1.5f : 1f);
+                        Vector3 moveDelta = speed * Time.deltaTime * moveDir.normalized;
                         Vector3 curPlayerPos = _controller.transform.position;
                         Vector3 targetPlayerPos = curPlayerPos + moveDelta;
                         targetPlayerPos = targetPlayerPos.Clamp(_playerPosMinMaxData.MinVector, _playerPosMinMaxData.MaxVetor);
@@ -416,6 +457,10 @@ namespace CoinGame.Network
         private float PushForce => _roleAbilityConfig ? _roleAbilityConfig.PushForce : 5f;
         private float PushStunDuration => _roleAbilityConfig ? _roleAbilityConfig.PushStunDuration : 1f;
         private int StealAmount => _roleAbilityConfig ? _roleAbilityConfig.StealAmount : 1;
+        private float ItemBlockDuration => _roleAbilityConfig ? _roleAbilityConfig.ItemBlockDuration : 5f;
+        private float ItemBlockCooldown => _roleAbilityConfig ? _roleAbilityConfig.ItemBlockCooldown : 10f;
+        public float PushCooldownRemaining => Mathf.Max(0f, _pushCooldownUntil - Time.time);
+        public float SkillCooldownRemaining => Mathf.Max(0f, _lockCooldownUntil - Time.time);
     }
 }
 

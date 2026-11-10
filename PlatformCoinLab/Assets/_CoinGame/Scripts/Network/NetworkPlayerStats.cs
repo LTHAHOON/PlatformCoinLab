@@ -1,4 +1,5 @@
 ﻿using Unity.Netcode;
+using System;
 using UnityEngine;
 using CoinGame.UI;
 using CoinGame.Utilities;
@@ -6,6 +7,7 @@ using CoinGame.Player;
 using CoinGame.Gameplay.Combat;
 using CoinGame.Gameplay.Player;
 using CoinGame.Stage;
+using CoinGame.Gameplay.Items;
 using CoinGame.Managers;
 
 namespace CoinGame.Network
@@ -26,6 +28,11 @@ namespace CoinGame.Network
         private readonly NetworkVariable<int> _maxHealth = new(100);
         private readonly NetworkVariable<PlayerLifeState> _lifeState = new(PlayerLifeState.Alive);
         private readonly NetworkVariable<double> _reviveReadyAt = new(0d);
+        private readonly NetworkVariable<double> _invulnerableUntil = new(0d);
+        private readonly NetworkVariable<double> _stunnedUntil = new(0d);
+        private readonly NetworkVariable<double> _stealthUntil = new(0d);
+        private readonly NetworkVariable<double> _itemBlockedUntil = new(0d);
+        private readonly NetworkVariable<double> _boostUntil = new(0d);
         private double _respawnAt;
         [SerializeField]
         private PlayerStatsConfig _config;
@@ -44,6 +51,17 @@ namespace CoinGame.Network
         public PlayerLifeState LifeState => _lifeState.Value;
         public bool IsAlive => _lifeState.Value == PlayerLifeState.Alive;
         public double ReviveReadyAt => _reviveReadyAt.Value;
+        public bool IsInvulnerable => NetworkManager.Singleton != null && NetworkManager.Singleton.ServerTime.Time < _invulnerableUntil.Value;
+        public bool IsStunned => NetworkManager.Singleton != null && NetworkManager.Singleton.ServerTime.Time < _stunnedUntil.Value;
+        public bool IsStealthed => NetworkManager.Singleton != null && NetworkManager.Singleton.ServerTime.Time < _stealthUntil.Value;
+        public bool IsItemBlocked => NetworkManager.Singleton != null && NetworkManager.Singleton.ServerTime.Time < _itemBlockedUntil.Value;
+        public bool IsBoosted => NetworkManager.Singleton != null && NetworkManager.Singleton.ServerTime.Time < _boostUntil.Value;
+        public double InvulnerableRemaining => Remaining(_invulnerableUntil.Value);
+        public double StealthRemaining => Remaining(_stealthUntil.Value);
+        public double ItemBlockedRemaining => Remaining(_itemBlockedUntil.Value);
+        public double BoostRemaining => Remaining(_boostUntil.Value);
+        public event Action HudStateChanged;
+        private int _lastHudSignature = int.MinValue;
 
         public override void OnNetworkSpawn()
         {
@@ -75,10 +93,21 @@ namespace CoinGame.Network
         private void Update()
         {
             UpdateLifeServer();
+            int signature = HashCode.Combine(_health.Value, _lifeState.Value, IsInvulnerable, IsStealthed, IsItemBlocked, IsBoosted);
+            if (signature != _lastHudSignature)
+            {
+                _lastHudSignature = signature;
+                HudStateChanged?.Invoke();
+            }
             if (IsOwner && !_playerStatsView)
             {
                 TryBindStatsView();
             }
+        }
+
+        private double Remaining(double until)
+        {
+            return NetworkManager.Singleton == null ? 0d : Math.Max(0d, until - NetworkManager.Singleton.ServerTime.Time);
         }
 
         private void TryBindStatsView()
@@ -147,10 +176,18 @@ namespace CoinGame.Network
 
         public void ApplyDamageServer(DamageInfo info)
         {
-            if (!IsServer || NetworkManager.Singleton == null || !IsAlive || info.Amount <= 0)
+            if (!IsServer || NetworkManager.Singleton == null || !IsAlive || IsInvulnerable || info.Amount <= 0)
             {
                 return;
             }
+            if (NetworkManager.Singleton.ConnectedClients.TryGetValue(info.Attacker, out NetworkClient attacker) &&
+                attacker.PlayerObject != null && attacker.PlayerObject.TryGetComponent(out NetworkPlayerStats source) &&
+                source.Role == Role)
+            {
+                return;
+            }
+            _stunnedUntil.Value = Mathf.Max((float)_stunnedUntil.Value, (float)(NetworkManager.Singleton.ServerTime.Time + 0.1d));
+            _invulnerableUntil.Value = Mathf.Max((float)_invulnerableUntil.Value, (float)(NetworkManager.Singleton.ServerTime.Time + 0.3d));
             _health.Value = Mathf.Max(0, _health.Value - info.Amount);
             if (_health.Value > 0) return;
             _lifeState.Value = PlayerLifeState.Dead;
@@ -163,6 +200,74 @@ namespace CoinGame.Network
             }
             _respawnAt = NetworkManager.Singleton.ServerTime.Time + (_config != null ? _config.DisruptorRespawnDelay : 5f);
         }
+
+        public bool TryReviveServer()
+        {
+            if (!IsServer || Role != PlayerRole.Collector || _lifeState.Value != PlayerLifeState.Spectating ||
+                NetworkManager.Singleton.ServerTime.Time > _reviveReadyAt.Value)
+            {
+                return false;
+            }
+            NetworkInventory inventory = GetComponent<NetworkInventory>();
+            if (inventory == null || !inventory.ConsumeReviveServer()) return false;
+            _health.Value = Mathf.Max(1, _maxHealth.Value / 2);
+            _lifeState.Value = PlayerLifeState.Alive;
+            _invulnerableUntil.Value = NetworkManager.Singleton.ServerTime.Time + 2d;
+            return true;
+        }
+
+        public bool TryAcquireItemServer(ItemData item)
+        {
+            if (!IsServer || item == null || IsItemBlocked || !IsAlive) return false;
+            NetworkInventory inventory = GetComponent<NetworkInventory>();
+            if (inventory == null) return false;
+            switch (item.Kind)
+            {
+                case ItemKind.Ammo: inventory.AddAmmoServer(item.Amount); return true;
+                case ItemKind.Gun: inventory.SetWeaponServer(Gameplay.Combat.WeaponKind.Gun); return true;
+                case ItemKind.Sword: inventory.SetWeaponServer(Gameplay.Combat.WeaponKind.Sword); return true;
+                case ItemKind.Boost: return inventory.GiveBoostServer();
+                case ItemKind.Revive: return inventory.GiveReviveServer();
+                case ItemKind.Health: _health.Value = Mathf.Min(_maxHealth.Value, _health.Value + Mathf.Max(1, _maxHealth.Value * 30 / 100)); return true;
+                case ItemKind.Invulnerable: _invulnerableUntil.Value = NetworkManager.Singleton.ServerTime.Time + Mathf.Max(0.1f, item.Duration); return true;
+                case ItemKind.Stealth: _stealthUntil.Value = NetworkManager.Singleton.ServerTime.Time + Mathf.Max(0.1f, item.Duration); return true;
+                case ItemKind.Random: return AcquireRandomServer(inventory);
+                default: return false;
+            }
+        }
+
+        private bool AcquireRandomServer(NetworkInventory inventory)
+        {
+            ItemKind kind = (ItemKind)UnityEngine.Random.Range((int)ItemKind.Ammo, (int)ItemKind.Revive + 1);
+            switch (kind)
+            {
+                case ItemKind.Ammo: inventory.AddAmmoServer(24); return true;
+                case ItemKind.Gun: inventory.SetWeaponServer(Gameplay.Combat.WeaponKind.Gun); return true;
+                case ItemKind.Sword: inventory.SetWeaponServer(Gameplay.Combat.WeaponKind.Sword); return true;
+                case ItemKind.Boost: return inventory.GiveBoostServer();
+                case ItemKind.Revive: return inventory.GiveReviveServer();
+                case ItemKind.Health: _health.Value = Mathf.Min(_maxHealth.Value, _health.Value + _maxHealth.Value * 30 / 100); return true;
+                case ItemKind.Invulnerable: _invulnerableUntil.Value = NetworkManager.Singleton.ServerTime.Time + 4d; return true;
+                case ItemKind.Stealth: _stealthUntil.Value = NetworkManager.Singleton.ServerTime.Time + 5d; return true;
+                default: return false;
+            }
+        }
+
+        public void RestoreHealthServer(int percent)
+        {
+            if (IsServer) _health.Value = Mathf.Min(_maxHealth.Value, _health.Value + _maxHealth.Value * Mathf.Clamp(percent, 1, 100) / 100);
+        }
+
+        public void GiveRandomDebugServer()
+        {
+            if (IsServer) AcquireRandomServer(GetComponent<NetworkInventory>());
+        }
+
+        public void SetItemBlockedServer(double until) { if (IsServer) _itemBlockedUntil.Value = Mathf.Max((float)_itemBlockedUntil.Value, (float)until); }
+        public void SetInvulnerableServer(double until) { if (IsServer) _invulnerableUntil.Value = Mathf.Max((float)_invulnerableUntil.Value, (float)until); }
+        public void ClearStealthServer() { if (IsServer) _stealthUntil.Value = 0d; }
+        public void SetStealthServer(double until) { if (IsServer) _stealthUntil.Value = Mathf.Max((float)_stealthUntil.Value, (float)until); }
+        public void SetBoostServer(double until) { if (IsServer) _boostUntil.Value = Mathf.Max((float)_boostUntil.Value, (float)until); }
 
         private void UpdateLifeServer()
         {

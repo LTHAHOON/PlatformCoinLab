@@ -11,9 +11,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0dbf9e2c1a72453d8f7f19472d0d7f0d, type: 3}
   m_Enabled: 1
   m_EditorClassIdentifier: CoinGame.Stage::RoleAbilityConfig
-  PushCooldown: 2
+  PushCooldown: 3
   LockCooldown: 8
   StealCooldown: 10
   CoinLockDuration: 3
   PushForce: 5
+  PushStunDuration: 0.4
+  ItemBlockDuration: 5
+  ItemBlockCooldown: 10
   StealAmount: 1
