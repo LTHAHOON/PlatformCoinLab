@@ -19,6 +19,10 @@ namespace CoinGame.Network
         private GameObject _visual;
         private WeaponKind _visualKind;
         private double _nextAttack;
+        private readonly NetworkVariable<int> _attackVersion = new(0);
+        private readonly NetworkVariable<int> _reloadVersion = new(0);
+        public int AttackVersion => _attackVersion.Value;
+        public int ReloadVersion => _reloadVersion.Value;
         public Vector3 AimDirection { get; set; } = Vector3.forward;
         private void Awake()
         {
@@ -71,9 +75,10 @@ namespace CoinGame.Network
             if (direction.sqrMagnitude < 0.01f) direction = transform.forward;
             direction.Normalize();
             if (kind == WeaponKind.Sword) HitSword(direction, data); else HitGun(direction, data);
+            _attackVersion.Value++;
             _stats.ClearStealthServer();
         }
-        [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Owner)] private void ReloadRpc() { _inventory.ReloadServer(_gun != null ? _gun.MagazineSize : 12); }
+        [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Owner)] private void ReloadRpc() { _inventory.ReloadServer(_gun != null ? _gun.MagazineSize : 12); _reloadVersion.Value++; }
         [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Owner)] private void SwitchRpc(int delta) { _inventory.SwitchServer(delta); }
         private void HitGun(Vector3 direction, WeaponData data)
         {

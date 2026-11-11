@@ -270,7 +270,7 @@ namespace CoinGame.Utilities
             }
         }
 
-        protected async UniTask<Vector3> GetSpawnPosition(CancellationToken token)
+        protected virtual async UniTask<Vector3> GetSpawnPosition(CancellationToken token)
         {
             for (int i = 0; i < MaxIterations; i++)
             {

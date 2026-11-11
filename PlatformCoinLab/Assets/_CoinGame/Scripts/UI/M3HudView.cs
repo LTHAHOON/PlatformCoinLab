@@ -49,7 +49,7 @@ namespace CoinGame.UI
         }
         private void Build()
         {
-            RectTransform panel = MakePanel("M3_HUD", new Vector2(24f, -24f), new Vector2(0f, 1f), new Vector2(0f, 1f));
+            RectTransform panel = MakePanel("M3_HUD", new Vector2(24f, -96f), new Vector2(0f, 1f), new Vector2(0f, 1f));
             _health = MakeSlider(panel, "HealthBar", new Vector2(180f, 18f));
             _healthText = MakeText(panel, "HealthText", "HP", 16);
             _weaponText = MakeText(panel, "WeaponText", "Weapon", 16);

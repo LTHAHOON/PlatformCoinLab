@@ -529,6 +529,10 @@ namespace CoinGame.Network
         {
             _isShuttingDown = true;
             if (Instance == this) Instance = null;
+            if (_sessionService == null)
+            {
+                return;
+            }
             _sessionService.Connected -= OnSessionConnected;
             _sessionService.Failed -= OnSessionFailed;
             _sessionService.Dispose();

@@ -5,6 +5,7 @@ using Cysharp.Threading.Tasks;
 using Unity.Netcode;
 using UnityEngine;
 using CoinGame.Network;
+using System.Linq;
 
 namespace CoinGame.Utilities
 {
@@ -15,6 +16,53 @@ namespace CoinGame.Utilities
         private NetworkObject _spawnNetworkParent;
         private bool _poolHandlerRegistered;
         private Dictionary<ulong, CancellationTokenSource> _playerSpawnTokens;
+        private readonly List<Vector3> _spawnedPositions = new();
+        private int _lastZoneRound = -1;
+
+        protected override async UniTask<Vector3> GetSpawnPosition(CancellationToken token)
+        {
+            int round = NetworkRoundState.Instance != null ? NetworkRoundState.Instance.Round : -1;
+            if (round != _lastZoneRound)
+            {
+                _lastZoneRound = round;
+                _spawnedPositions.Clear();
+            }
+            Collider[] zones = FindObjectsByType<BoxCollider>()
+                .Where(x => x.name.StartsWith("CoinZone", StringComparison.Ordinal))
+                .Cast<Collider>().ToArray();
+            if (zones.Length == 0) return await base.GetSpawnPosition(token);
+            for (int attempt = 0; attempt < MaxIterations; attempt++)
+            {
+                token.ThrowIfCancellationRequested();
+                Bounds bounds = zones[UnityEngine.Random.Range(0, zones.Length)].bounds;
+                Vector3 candidate = new(
+                    UnityEngine.Random.Range(bounds.min.x, bounds.max.x),
+                    bounds.max.y + 20f,
+                    UnityEngine.Random.Range(bounds.min.z, bounds.max.z));
+                int groundMask = LayerMask.GetMask("Ground", "Default");
+                if (!Physics.Raycast(candidate, Vector3.down, out RaycastHit ground, 50f, groundMask)) continue;
+                candidate = ground.point + Vector3.up * 0.8f;
+                if (IsBlocked(candidate)) continue;
+                if (_spawnedPositions.Any(x => (x - candidate).sqrMagnitude < 2.25f)) continue;
+                _spawnedPositions.Add(candidate);
+                return candidate;
+            }
+            Debug.LogWarning("Coin zone spawn retries exceeded; using zone center.", this);
+            return zones[0].bounds.center + Vector3.up * 0.8f;
+        }
+
+        private bool IsBlocked(Vector3 position)
+        {
+            int mask = _blockingLayerMask | LayerMask.GetMask("Default", "Ground");
+            foreach (Collider hit in Physics.OverlapSphere(position, _checkRadius, mask, QueryTriggerInteraction.Ignore))
+            {
+                string name = hit.name;
+                if (name.StartsWith("CoinZone", StringComparison.Ordinal) || name.StartsWith("CrateZone", StringComparison.Ordinal) || name == "Bounds") continue;
+                if (hit.gameObject.layer == LayerMask.NameToLayer("Ground")) continue;
+                return true;
+            }
+            return false;
+        }
 
         protected override void OnPrefabReady()
         {

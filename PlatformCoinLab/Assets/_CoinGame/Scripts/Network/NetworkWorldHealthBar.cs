@@ -12,7 +12,7 @@ namespace CoinGame.Network
         private void Awake()
         {
             _stats = GetComponent<NetworkPlayerStats>();
-            GameObject go = new("WorldHealthBar"); go.transform.SetParent(transform, false); go.transform.localPosition = Vector3.up * 1.35f;
+            GameObject go = new("WorldHealthBar"); go.transform.SetParent(transform, false); go.transform.localPosition = Vector3.up * 2.25f;
             _canvas = go.AddComponent<Canvas>(); _canvas.renderMode = RenderMode.WorldSpace; _canvas.transform.localScale = Vector3.one * 0.01f;
             GameObject bar = new("Bar"); bar.transform.SetParent(go.transform, false); _slider = bar.AddComponent<Slider>(); _slider.minValue = 0f; _slider.maxValue = 1f; _slider.targetGraphic = bar.AddComponent<Image>(); _slider.targetGraphic.color = Color.green; bar.GetComponent<RectTransform>().sizeDelta = new Vector2(100f, 10f);
         }
