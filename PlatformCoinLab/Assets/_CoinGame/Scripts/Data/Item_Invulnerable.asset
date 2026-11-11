@@ -1,4 +1,4 @@
-﻿%YAML 1.1
+%YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
 --- !u!114 &11400000
 MonoBehaviour:
@@ -17,6 +17,5 @@ MonoBehaviour:
   Amount: 0
   Duration: 4
   Weapon: {fileID: 0}
-
   DropScale: 0.22
   PickupRadius: 0.3

@@ -78,3 +78,13 @@
 8. StageView, M3HudView, 월드 체력바 스크린샷 확인
 9. Console 오류와 경고 재분류
 10. 확인 결과에 따라 남은 수정 진행
+
+## 재개 검증 기록 (2026-11-12)
+
+- Unity MCP 연결 상태와 InGame_CoinGameScene을 확인했다. 에디터는 Unity 6000.6.7f1, 비재생 상태에서 시작했다.
+- EditMode 3개와 PlayMode 3개를 재실행해 모두 통과했다.
+- InGame 단독 PlayMode 스모크에서 Persistent additive 흐름과 화면 출력을 확인했다. 첫 화면 캡처에서 M3 HUD와 StageView의 Score/Remaining Coin 영역이 겹치는 것을 확인했다.
+- M3HudView 패널을 좌상단 y=-96에서 y=-540으로 이동하고 패널 높이를 180에서 240으로 조정했다. 재생 후 캡처에서 Score/Remaining Coin과 M3 HUD가 분리된 것을 확인했다.
+- 수정 후 Unity 컴파일 오류는 0개였다. Console에서 프로젝트 코드 오류는 확인되지 않았고, 기존 Yurowm obsolete API 경고 1건이 남아 있다.
+- 씬 YAML과 프리팹에서 m_Script가 0 또는 zero GUID인 항목은 정적 검색으로 찾지 못했다. Missing Script의 GameObject별 Inspector 확정은 MCP 연결이 끊겨 완료하지 못했다.
+- Host 1 + Client 1 실제 연결, 두 플레이어 이동/전투/상자 상호작용, 종료 시 NGO NetworkSceneManager.Dispose 예외는 별도 실행 인스턴스와 MCP 재연결 후 확인이 필요하다.

@@ -49,7 +49,7 @@ namespace CoinGame.UI
         }
         private void Build()
         {
-            RectTransform panel = MakePanel("M3_HUD", new Vector2(24f, -96f), new Vector2(0f, 1f), new Vector2(0f, 1f));
+            RectTransform panel = MakePanel("M3_HUD", new Vector2(24f, -540f), new Vector2(0f, 1f), new Vector2(0f, 1f));
             _health = MakeSlider(panel, "HealthBar", new Vector2(180f, 18f));
             _healthText = MakeText(panel, "HealthText", "HP", 16);
             _weaponText = MakeText(panel, "WeaponText", "Weapon", 16);
@@ -84,7 +84,7 @@ namespace CoinGame.UI
         private RectTransform MakePanel(string name, Vector2 offset, Vector2 min, Vector2 max)
         {
             GameObject go = new(name); go.transform.SetParent(transform, false);
-            RectTransform rect = go.AddComponent<RectTransform>(); rect.anchorMin = min; rect.anchorMax = max; rect.pivot = new Vector2(0f, 1f); rect.anchoredPosition = offset; rect.sizeDelta = new Vector2(260f, 180f);
+            RectTransform rect = go.AddComponent<RectTransform>(); rect.anchorMin = min; rect.anchorMax = max; rect.pivot = new Vector2(0f, 1f); rect.anchoredPosition = offset; rect.sizeDelta = new Vector2(260f, 240f);
             return rect;
         }
         private TMP_Text MakeText(RectTransform parent, string name, string value, int size)
