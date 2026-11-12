@@ -41,14 +41,14 @@ namespace CoinGame.Network
         public event Action CreateRequested;
         public event Action JoinRequested;
 
-        public string RoomName => _roomNameInput != null ? _roomNameInput.text.Trim() : string.Empty;
-        public string RoomId => _roomIdInput != null ? _roomIdInput.text.Trim() : string.Empty;
-        public string JoinRoomId => _joinRoomIdInput != null ? _joinRoomIdInput.text.Trim() : string.Empty;
-        public string MaxPlayers => _maxPlayersInput != null ? _maxPlayersInput.text.Trim() : string.Empty;
-        public string MaxCollectors => _maxCollectorsInput != null ? _maxCollectorsInput.text.Trim() : string.Empty;
-        public string MaxDisruptors => _maxDisruptorsInput != null ? _maxDisruptorsInput.text.Trim() : string.Empty;
-        public string MaxRounds => _maxRoundsInput != null ? _maxRoundsInput.text.Trim() : string.Empty;
-        public string CoinMultiplier => _coinMultiplierInput != null ? _coinMultiplierInput.text.Trim() : string.Empty;
+        public string RoomName => ReadInput(_roomNameInput);
+        public string RoomId => ReadInput(_roomIdInput);
+        public string JoinRoomId => ReadInput(_joinRoomIdInput);
+        public string MaxPlayers => ReadInput(_maxPlayersInput);
+        public string MaxCollectors => ReadInput(_maxCollectorsInput);
+        public string MaxDisruptors => ReadInput(_maxDisruptorsInput);
+        public string MaxRounds => ReadInput(_maxRoundsInput);
+        public string CoinMultiplier => ReadInput(_coinMultiplierInput);
 
         public void Initialize()
         {
@@ -90,8 +90,15 @@ namespace CoinGame.Network
 
         public void SetButtonsInteractable(bool interactable)
         {
-            if (_createButton != null) _createButton.interactable = interactable;
-            if (_joinButton != null) _joinButton.interactable = interactable;
+            if (_createButton != null)
+            {
+                _createButton.interactable = interactable;
+            }
+
+            if (_joinButton != null)
+            {
+                _joinButton.interactable = interactable;
+            }
         }
 
         public void SetStatus(string message)
@@ -140,6 +147,16 @@ namespace CoinGame.Network
             {
                 _optionsPanel.SetActive(!_optionsPanel.activeSelf);
             }
+        }
+
+        private static string ReadInput(TMP_InputField input)
+        {
+            if (input == null)
+            {
+                return string.Empty;
+            }
+
+            return input.text.Trim();
         }
     }
 }

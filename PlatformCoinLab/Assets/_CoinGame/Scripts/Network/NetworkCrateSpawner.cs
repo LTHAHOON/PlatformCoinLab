@@ -6,7 +6,7 @@ using System.Linq;
 
 namespace CoinGame.Network
 {
-    public class NetworkCrateSpawner : MonoBehaviour
+    public sealed class NetworkCrateSpawner : MonoBehaviour
     {
         [SerializeField] private NetworkCrate _cratePrefab;
         [SerializeField] private StageConfig _stageConfig;
@@ -27,7 +27,11 @@ namespace CoinGame.Network
         }
         public void SpawnForRoundServer()
         {
-            if (NetworkManager.Singleton == null || !NetworkManager.Singleton.IsServer || _cratePrefab == null || _stageConfig == null) return;
+            if (NetworkManager.Singleton == null || !NetworkManager.Singleton.IsServer ||
+                _cratePrefab == null || _stageConfig == null)
+            {
+                return;
+            }
             int count = _stageConfig.GetCrateCount();
             for (int i = 0; i < count; i++)
             {

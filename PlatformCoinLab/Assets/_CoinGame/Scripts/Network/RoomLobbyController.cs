@@ -67,12 +67,6 @@ namespace CoinGame.Network
 
         private void Awake()
         {
-            if (Instance != null && Instance != this)
-            {
-                Destroy(gameObject);
-                return;
-            }
-
             Instance = this;
             _sessionService = new RoomSessionService();
             _sessionService.Connected += OnSessionConnected;
@@ -449,19 +443,23 @@ namespace CoinGame.Network
 
         private void ReadSessionProperties(ISession session)
         {
-            if (session.Properties.TryGetValue("collectors", out SessionProperty collectors) && int.TryParse(collectors.Value, out int maxCollectors))
+            if (session.Properties.TryGetValue("collectors", out SessionProperty collectors) &&
+                int.TryParse(collectors.Value, out int maxCollectors))
             {
                 _maxCollectors = maxCollectors;
             }
-            if (session.Properties.TryGetValue("disruptors", out SessionProperty disruptors) && int.TryParse(disruptors.Value, out int maxDisruptors))
+            if (session.Properties.TryGetValue("disruptors", out SessionProperty disruptors) &&
+                int.TryParse(disruptors.Value, out int maxDisruptors))
             {
                 _maxDisruptors = maxDisruptors;
             }
-            if (session.Properties.TryGetValue("maxRounds", out SessionProperty maxRounds) && int.TryParse(maxRounds.Value, out int rounds))
+            if (session.Properties.TryGetValue("maxRounds", out SessionProperty maxRounds) &&
+                int.TryParse(maxRounds.Value, out int rounds))
             {
                 _maxRounds = Mathf.Clamp(rounds, 1, 20);
             }
-            if (session.Properties.TryGetValue("coinMultiplier", out SessionProperty coinMultiplier) && int.TryParse(coinMultiplier.Value, out int multiplier))
+            if (session.Properties.TryGetValue("coinMultiplier", out SessionProperty coinMultiplier) &&
+                int.TryParse(coinMultiplier.Value, out int multiplier))
             {
                 _coinMultiplier = Mathf.Clamp(multiplier, 1, 5);
             }
@@ -501,11 +499,10 @@ namespace CoinGame.Network
             if (NetworkRoundState.Instance != null && NetworkRoundState.Instance.IsSpawned)
             {
                 NetworkRoundState.Instance.ReportSceneLoadedRpc();
+                return;
             }
-            else
-            {
-                GameManager.Instance.StartRound();
-            }
+
+            GameManager.Instance.StartRound();
         }
         private bool TryReadRoomSettings(out RoomSettings settings)
         {
@@ -528,7 +525,10 @@ namespace CoinGame.Network
         private void OnDestroy()
         {
             _isShuttingDown = true;
-            if (Instance == this) Instance = null;
+            if (Instance == this)
+            {
+                Instance = null;
+            }
             if (_sessionService == null)
             {
                 return;

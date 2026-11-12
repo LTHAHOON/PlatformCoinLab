@@ -107,7 +107,6 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 5301751908441363078}
-  - {fileID: 1422799046171333966}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!33 &8461547540226204374
@@ -125,7 +124,7 @@ MeshRenderer:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 8182628884086657673}
-  m_Enabled: 0
+  m_Enabled: 1
   m_CastShadows: 1
   m_ReceiveShadows: 1
   m_DynamicOccludee: 1
@@ -204,7 +203,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
-  GlobalObjectIdHash: 698505533
+  GlobalObjectIdHash: 1219676839
   InScenePlacedSourceGlobalObjectIdHash: 0
   m_InScenePlacedDisabledByDefault: 0
   DeferredDespawnTick: 0
@@ -420,65 +419,4 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2e2c7d3f1adf4b1f9a5f2f7c2d8e6a11, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CoinGame.Network.NetworkPlayerAnimator
---- !u!1001 &1422799046170939310
-PrefabInstance:
-  m_ObjectHideFlags: 0
-  serializedVersion: 2
-  m_Modification:
-    serializedVersion: 3
-    m_TransformParent: {fileID: 9078172422966532417}
-    m_Modifications:
-    - target: {fileID: 100096, guid: e9bc7b4a960928245b92671990d0feb4, type: 3}
-      propertyPath: m_Name
-      value: YurowmModel
-      objectReference: {fileID: 0}
-    - target: {fileID: 400096, guid: e9bc7b4a960928245b92671990d0feb4, type: 3}
-      propertyPath: m_LocalPosition.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 400096, guid: e9bc7b4a960928245b92671990d0feb4, type: 3}
-      propertyPath: m_LocalPosition.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 400096, guid: e9bc7b4a960928245b92671990d0feb4, type: 3}
-      propertyPath: m_LocalPosition.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 400096, guid: e9bc7b4a960928245b92671990d0feb4, type: 3}
-      propertyPath: m_LocalRotation.w
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 400096, guid: e9bc7b4a960928245b92671990d0feb4, type: 3}
-      propertyPath: m_LocalRotation.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 400096, guid: e9bc7b4a960928245b92671990d0feb4, type: 3}
-      propertyPath: m_LocalRotation.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 400096, guid: e9bc7b4a960928245b92671990d0feb4, type: 3}
-      propertyPath: m_LocalRotation.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 400096, guid: e9bc7b4a960928245b92671990d0feb4, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 400096, guid: e9bc7b4a960928245b92671990d0feb4, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 400096, guid: e9bc7b4a960928245b92671990d0feb4, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.z
-      value: 0
-      objectReference: {fileID: 0}
-    m_RemovedComponents: []
-    m_RemovedGameObjects: []
-    m_AddedGameObjects: []
-    m_AddedComponents: []
-  m_SourcePrefab: {fileID: 100100000, guid: e9bc7b4a960928245b92671990d0feb4, type: 3}
---- !u!4 &1422799046171333966 stripped
-Transform:
-  m_CorrespondingSourceObject: {fileID: 400096, guid: e9bc7b4a960928245b92671990d0feb4, type: 3}
-  m_PrefabInstance: {fileID: 1422799046170939310}
-  m_PrefabAsset: {fileID: 0}
+  ShowTopMostFoldoutHeaderGroup: 1

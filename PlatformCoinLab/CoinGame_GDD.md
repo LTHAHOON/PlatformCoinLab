@@ -699,3 +699,65 @@ flowchart TD
 - 새로 추가한 기능은 이 문서의 해당 섹션과 일치하게 README나 변경 로그에 기록할 것.
 - 마일스톤 순서(13장)를 따라 작은 단위로 구현하고, 매 단계가 **플레이 가능한 상태**로 유지되게 할 것.
 - 한 번에 큰 리팩터링을 하지 말 것. 각 단계가 끝나면 컴파일 오류 없이 씬이 실행되어야 함.
+
+## 16. 프로젝트 소개 문서 구성
+
+아래 표는 발표·제출용 프로젝트 소개 문서의 필수 구성이다. 구현 상태가 확인되지 않은 항목은 `미확인`으로 남기고, 검증이 끝난 뒤 결과와 근거를 갱신한다.
+
+| **구성요소** | **작성 내용** |
+|---|---|
+| 프로젝트 소개 | 게임 이름·장르·대상 플랫폼·핵심 플레이 |
+| 개발 정보 | 제작자·개발 기간·Unity 및 주요 패키지 버전 |
+| 실행 자료 | 대표 이미지·플레이 영상·실행 파일과 소스의 위치 |
+| 주요 구현 기능 | 기능의 목적·구현 방식·자료 구조와 처리 순서·핵심 코드 위치 |
+| 플랫폼 대응 | 플랫폼별 입력·화면·저장·생명주기·콘텐츠 처리와 실행 결과 |
+| 추가·개선한 부분 | 수업 구현과의 차이·필요한 이유·구현 방법·동작 결과 |
+| 문제 해결 사례 | 실제 문제와 재현 조건·원인·수정 내용·재검증 결과 |
+| 성능 개선 | 측정 환경·변경 내용·수정 전후 값·기능 유지 여부·측정 한계 |
+| 실행·복원 방법과 한계 | 시작 씬·조작법·콘텐츠 및 Player 빌드 순서·서버 실행 방법·알려진 문제·미확인 환경 |
+
+### 16.1 현재 프로젝트 기준 작성 내용
+
+- **프로젝트 소개**: `CoinGame`, 탑뷰 비대칭 캐주얼 슈팅 아케이드, PC/Android, Collector의 코인 수집과 Disruptor의 방해·전투가 핵심이다.
+- **개발 정보**: Unity 버전은 `ProjectSettings/ProjectVersion.txt`, 패키지 버전은 `Packages/manifest.json`과 `packages-lock.json`을 기준으로 기록한다. 제작자와 개발 기간은 확정 후 기입한다.
+- **실행 자료**: 대표 이미지는 `Assets/Screenshots/`, 소스는 `Assets/_CoinGame/`, 빌드 산출물과 플레이 영상은 실제 생성 경로를 확인한 뒤 기록한다.
+- **주요 구현 기능**: NGO 서버 권한 라운드·역할·체력·전투·인벤토리·아이템·Addressables 콘텐츠 흐름과 핵심 스크립트 경로를 기능별로 연결해 설명한다.
+- **플랫폼 대응**: PC 키보드/마우스와 Android 터치 입력, Safe Area·가로 화면, 저장·앱 중단/복귀, 효과음 재생, 플랫폼별 Player 실행 결과를 각각 기록한다.
+- **추가·개선한 부분**: M1~M3의 서버 권한 판정, 모바일 입력 추상화, 콘텐츠 서버 복구, JSON 기본값 처리처럼 수업 구현과 다른 부분은 이유·방법·동작 결과를 함께 남긴다.
+- **문제 해결 사례**: Addressables 로드 실패, HTTPS 파일 서버 연결 실패, JSON 손상, 씬 재진입·네트워크 재접속 등 실제 재현 가능한 사례만 기록한다.
+- **성능 개선**: 동일한 기기·빌드 설정에서 Profiler/Frame Timing/Memory Profiler 측정값을 수정 전후로 기록하고 GC Alloc·로딩·프레임 유지 여부와 측정 한계를 적는다.
+- **실행·복원 방법과 한계**: 시작 씬(`Persistent_CoinGameScene`), 조작법, Addressables 빌드·콘텐츠 서버 실행·Player 빌드 순서, 알려진 문제와 미확인 기기를 명시한다.
+
+### 16.2 필수 검증 체크리스트
+
+1. PC와 Android에서 시작→진행→종료→재시작, 일시정지→백그라운드→복귀, 저장→재실행을 확인한다.
+2. Addressables 성공·실패·재시도·해제를 확인하고, ASP.NET Core HTTPS 파일 서버 중단 후 복구를 확인한다.
+3. 유효·누락·손상·버전 불일치 JSON을 적용해 검증과 기본값 대체를 확인한다.
+4. Editor 스크립트가 Player 빌드에 포함되지 않는지 확인하고 실제 Player에서 플랫폼별 오류를 재현·수정·재검증한다.
+5. 최소 한 개의 대표 기기와 에디터 측정 환경에서 프로파일 결과를 저장하고 변경 전후 수치를 문서에 반영한다.
+
+### 16.3 구현된 공용 기반과 검증 상태
+
+- `StageLoader`는 Addressables 비동기 생성 실패 시 최대 재시도 후 오류를 안내하고, 성공·실패 핸들을 해제한다. `AddressableRetryLoader`는 일반 자산 로드에도 같은 재시도·해제 규칙을 제공한다.
+- `ContentServerHealthProbe`는 localhost HTTPS 인증서를 개발 환경에서 처리하고, `RoomLobbyContentService`에서 지수형 지연 재시도를 수행한다. 실제 ASP.NET Core 서버 중단·복구 결과는 아직 미확인이다.
+- `JsonSettingsStorage`는 버전 봉투, JSON 예외 처리, 검증 실패 시 안전한 읽기 실패 반환을 제공한다. 실제 게임 설정 적용 연결은 후속 작업이다.
+- `ApplicationLifecycleService`는 앱 중단·포커스 변경 때 저장을 호출하고 복귀 이벤트를 제공한다. `SafeAreaLayout`은 해상도·Safe Area 변경을 추적한다. 실제 Android 기기 확인은 미확인이다.
+- `SoundPlayer`는 AudioSource와 AudioClip을 분리해 효과음을 재생한다. 실제 사운드 에셋 연결과 볼륨 UX는 미확인이다.
+- `Assembly-CSharp.csproj` 빌드는 오류 0개, 기존 경고 2개로 통과했다. Unity Editor 컴파일·PC Player·Android Player·Profiler 수치는 아직 실행 전이다.
+## 17. 웹 플랫폼 지원 및 Lands 맵 제작 규칙 `[확정]`
+
+- 지원 플랫폼은 PC, Android와 Web을 포함한다. Web 빌드는 입력·화면 비율·Safe Area·저장·Addressables 원격 콘텐츠·HTTPS 파일 서버 경로를 WebGL 제약에 맞춰 검증한다.
+- Web에서 파일 시스템 직접 접근을 사용하지 않고 브라우저 저장소와 HTTP(S) 콘텐츠 경로를 사용한다. WebGL에서는 스레드·소켓·인증서 처리 차이를 고려해 실패 안내와 재시도 결과를 기록한다.
+
+### B. Lands 타일로 Ground를 만들고 소품을 섞어 맵 구성 `[확정]`
+
+`Location with environment` 프리팹은 통째로 사용하지 않고 참고용으로만 본다. `Assets/Palmov Island/Low Poly Atmospheric Locations Pack/Prefabs/Lands`의 Lands 프리팹을 `MapBuilderTool`로 2x2 배치한다. 타일 수·타일 크기·루트 스케일·시드·소품 수는 `MapBuilderTool` 설정값으로 바꿀 수 있다.
+
+- Ground는 평평한 플레이 영역을 우선하고, 타일 회전은 0/180도로 교차 적용해 반복감을 줄인다. 통합 Bounds와 외곽 벽을 사용해 이음새에서 CharacterController가 걸리지 않도록 한다.
+- `Environment`와 Plants/Stones 등 여러 프랍을 `Decor`에 시드 기반으로 배치한다. 중앙 통로·스폰·코인·상자 구역을 금지 영역으로 두고, 가장자리 소품은 `Obstacle`, 장식은 `Decor` 레이어를 사용한다.
+- 맵 프리팹은 `Assets/_CoinGame/Prefabs/Maps/Map_Lands_A/B/C.prefab`에 저장한다. 표준 자식은 `StartAnchor`, `ExitAnchor`, `PlayerSpawnPoints`, `CoinZones`, `CrateZones`, `Bounds`, `Decor`, `Ground`다. 기존 `Ground_01`은 삭제하지 않고 InGame 씬에서 비활성화한다.
+- 맵 높이와 상·하단 pitch는 동일하게 유지하고, `Bounds` 외곽 벽으로 맵 밖 이동을 막는다. A/B/C는 시드를 달리하고 라운드 수가 많으면 순환한다.
+- `CoinGame/Map Builder/Create Lands Maps`를 실행하면 프리팹을 재생성하고 현재 씬에는 `Map_Lands_A`만 연결한다. 생성 후 `CoinGame/Validate Active Map`으로 통로·구역·Bounds 도달 가능성을 확인한다.
+- 정적 Ground·소품은 Static으로 저장하고, 작은 장식은 충돌을 제거하거나 `Decor` 레이어를 사용한다. 투사체·픽업·코인 오버랩의 레이어 마스크는 `Ground`, `Obstacle`, `Decor` 구성을 기준으로 점검한다.
+
+현재 구현 상태: Map Builder와 A/B/C 프리팹 생성, InGame 씬의 Map_Lands_A 연결, Ground_01 비활성화, Ground/Obstacle/Decor 레이어 구성을 완료했다. 실제 고정 카메라 플레이 영역, 모바일·Web Player, 도달 가능성 자동 검증과 드로우콜 측정은 Unity 실행 검증이 필요하다.

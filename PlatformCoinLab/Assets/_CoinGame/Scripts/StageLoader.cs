@@ -8,9 +8,14 @@ namespace CoinGame
     {
         [SerializeField]
         private string address = "coin_Spawner";
+        [SerializeField]
+        private int maxRetries = 2;
+        [SerializeField]
+        private float retryDelay = 1f;
 
         private AsyncOperationHandle<GameObject> handle;
         private bool ownerDestroyed;
+        private int attempt;
 
         private void Start()
         {
@@ -33,6 +38,13 @@ namespace CoinGame
 
             if (operation.Status != AsyncOperationStatus.Succeeded)
             {
+                if (attempt < maxRetries)
+                {
+                    attempt++;
+                    Addressables.Release(operation);
+                    Invoke(nameof(LoadStage), retryDelay * attempt);
+                    return;
+                }
                 Debug.LogError("Failed to load stage: " + operation.OperationException);
                 ReleaseOwnedOperation();
                 return;

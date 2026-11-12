@@ -379,7 +379,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CoinGame.Network.DevQuickStart
   _enabled: 1
-  _soloTestMode: 0
+  _soloTestMode: 1
   _roomId: coin-dev-quickstart
   _roomName: Coin Dev Quick Start
   _maxRounds: 5
@@ -3735,29 +3735,13 @@ PrefabInstance:
       propertyPath: m_Name
       value: Map_Palmov_A
       objectReference: {fileID: 0}
-    - target: {fileID: 2668344040025719349, guid: 5f204c1a067009b4bb3072f7d9679606, type: 3}
-      propertyPath: m_StaticEditorFlags
-      value: 4294967295
-      objectReference: {fileID: 0}
-    - target: {fileID: 4756615765982495583, guid: 5f204c1a067009b4bb3072f7d9679606, type: 3}
-      propertyPath: m_LocalScale.x
-      value: 1.8
-      objectReference: {fileID: 0}
-    - target: {fileID: 4756615765982495583, guid: 5f204c1a067009b4bb3072f7d9679606, type: 3}
-      propertyPath: m_LocalScale.y
-      value: 1.8
-      objectReference: {fileID: 0}
-    - target: {fileID: 4756615765982495583, guid: 5f204c1a067009b4bb3072f7d9679606, type: 3}
-      propertyPath: m_LocalScale.z
-      value: 1.8
-      objectReference: {fileID: 0}
     - target: {fileID: 4756615765982495583, guid: 5f204c1a067009b4bb3072f7d9679606, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4756615765982495583, guid: 5f204c1a067009b4bb3072f7d9679606, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 0
+      value: -3.7
       objectReference: {fileID: 0}
     - target: {fileID: 4756615765982495583, guid: 5f204c1a067009b4bb3072f7d9679606, type: 3}
       propertyPath: m_LocalPosition.z
@@ -3790,10 +3774,6 @@ PrefabInstance:
     - target: {fileID: 4756615765982495583, guid: 5f204c1a067009b4bb3072f7d9679606, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 7547146736183423437, guid: 5f204c1a067009b4bb3072f7d9679606, type: 3}
-      propertyPath: m_StaticEditorFlags
-      value: 4294967295
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

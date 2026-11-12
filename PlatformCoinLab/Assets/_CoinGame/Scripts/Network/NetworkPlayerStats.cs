@@ -37,7 +37,6 @@ namespace CoinGame.Network
         [SerializeField]
         private PlayerStatsConfig _config;
         private PlayerStatsView _playerStatsView;
-        private bool _scoreEventsBound;
         private ulong _coinLockSourceClientId = ulong.MaxValue;
         private ulong _pushSourceClientId = ulong.MaxValue;
 
@@ -82,11 +81,6 @@ namespace CoinGame.Network
             }
 
             TryBindStatsView();
-            if (!_scoreEventsBound)
-            {
-                _curScore.OnValueChanged += OnScoreChanged;
-                _scoreEventsBound = true;
-            }
             PlayerPrefsStorage.GetOrInitPlayerSessionFloat(PlayerSessionKey.SCORE, 0f);
         }
 
@@ -140,9 +134,7 @@ namespace CoinGame.Network
                 _curScore.OnValueChanged -= _playerStatsView.SetScoreText;
             }
 
-            _curScore.OnValueChanged -= OnScoreChanged;
             _playerStatsView = null;
-            _scoreEventsBound = false;
         }
 
         private const int MaxAddScoreAmount = 10000;
@@ -168,10 +160,6 @@ namespace CoinGame.Network
                 return;
             }
             _curScore.Value = curScore;
-        }
-
-        public void OnScoreChanged(int previousValue, int newValue)
-        {
         }
 
         public void ApplyDamageServer(DamageInfo info)
@@ -255,19 +243,75 @@ namespace CoinGame.Network
 
         public void RestoreHealthServer(int percent)
         {
-            if (IsServer) _health.Value = Mathf.Min(_maxHealth.Value, _health.Value + _maxHealth.Value * Mathf.Clamp(percent, 1, 100) / 100);
+            if (!IsServer)
+            {
+                return;
+            }
+
+            _health.Value = Mathf.Min(
+                _maxHealth.Value,
+                _health.Value + _maxHealth.Value * Mathf.Clamp(percent, 1, 100) / 100);
         }
 
         public void GiveRandomDebugServer()
         {
-            if (IsServer) AcquireRandomServer(GetComponent<NetworkInventory>());
+            if (!IsServer)
+            {
+                return;
+            }
+
+            AcquireRandomServer(GetComponent<NetworkInventory>());
         }
 
-        public void SetItemBlockedServer(double until) { if (IsServer) _itemBlockedUntil.Value = Mathf.Max((float)_itemBlockedUntil.Value, (float)until); }
-        public void SetInvulnerableServer(double until) { if (IsServer) _invulnerableUntil.Value = Mathf.Max((float)_invulnerableUntil.Value, (float)until); }
-        public void ClearStealthServer() { if (IsServer) _stealthUntil.Value = 0d; }
-        public void SetStealthServer(double until) { if (IsServer) _stealthUntil.Value = Mathf.Max((float)_stealthUntil.Value, (float)until); }
-        public void SetBoostServer(double until) { if (IsServer) _boostUntil.Value = Mathf.Max((float)_boostUntil.Value, (float)until); }
+        public void SetItemBlockedServer(double until)
+        {
+            if (!IsServer)
+            {
+                return;
+            }
+
+            _itemBlockedUntil.Value = Mathf.Max((float)_itemBlockedUntil.Value, (float)until);
+        }
+
+        public void SetInvulnerableServer(double until)
+        {
+            if (!IsServer)
+            {
+                return;
+            }
+
+            _invulnerableUntil.Value = Mathf.Max((float)_invulnerableUntil.Value, (float)until);
+        }
+
+        public void ClearStealthServer()
+        {
+            if (!IsServer)
+            {
+                return;
+            }
+
+            _stealthUntil.Value = 0d;
+        }
+
+        public void SetStealthServer(double until)
+        {
+            if (!IsServer)
+            {
+                return;
+            }
+
+            _stealthUntil.Value = Mathf.Max((float)_stealthUntil.Value, (float)until);
+        }
+
+        public void SetBoostServer(double until)
+        {
+            if (!IsServer)
+            {
+                return;
+            }
+
+            _boostUntil.Value = Mathf.Max((float)_boostUntil.Value, (float)until);
+        }
 
         private void UpdateLifeServer()
         {

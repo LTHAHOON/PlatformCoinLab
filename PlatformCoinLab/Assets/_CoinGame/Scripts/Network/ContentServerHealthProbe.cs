@@ -42,6 +42,24 @@ namespace CoinGame.Network
             }
         }
 
+        public async UniTask<bool> IsAvailableWithRetryAsync(
+            CancellationToken cancellationToken, int retries = 2)
+        {
+            for (int attempt = 0; attempt <= retries; attempt++)
+            {
+                if (await IsAvailableAsync(cancellationToken))
+                {
+                    return true;
+                }
+                if (attempt < retries)
+                {
+                    await UniTask.Delay(TimeSpan.FromSeconds(attempt + 1),
+                        cancellationToken: cancellationToken);
+                }
+            }
+            return false;
+        }
+
         private sealed class LocalhostCertificateHandler : CertificateHandler
         {
             protected override bool ValidateCertificate(byte[] certificateData)

@@ -19,8 +19,11 @@ namespace CoinGame.Network
 
         public async UniTask<bool> IsAvailableAsync(System.Threading.CancellationToken token)
         {
-            if (!await UsesRemoteContentAsync(token)) return true;
-            return await _healthProbe.IsAvailableAsync(token);
+            if (!await UsesRemoteContentAsync(token))
+            {
+                return true;
+            }
+            return await _healthProbe.IsAvailableWithRetryAsync(token);
         }
 
         private static async UniTask<bool> UsesRemoteContentAsync(System.Threading.CancellationToken token)
