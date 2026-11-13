@@ -4,11 +4,12 @@ using System.Threading;
 using Cysharp.Threading.Tasks;
 using Unity.Netcode;
 using UnityEngine;
-using CoinGame.Network;
 using System.Linq;
 
 namespace CoinGame.Utilities
 {
+    using CoinGame.Network;
+
     // Kept as a component to preserve Netcode behavior and inherited serialized fields.
     public class NetworkSpawner : BaseSpawner
     {
@@ -338,7 +339,10 @@ namespace CoinGame.Utilities
                 NetworkManager.Singleton.PrefabHandler.RemoveHandler(_spawnPrefab);
             }
 
-            _networkObjectPool?.Dispose();
+            if (_networkObjectPool != null)
+            {
+                _networkObjectPool.Dispose();
+            }
             if (_playerSpawnTokens != null)
             {
                 foreach (CancellationTokenSource cts in _playerSpawnTokens.Values)

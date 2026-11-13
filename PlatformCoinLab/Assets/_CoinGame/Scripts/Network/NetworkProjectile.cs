@@ -1,11 +1,12 @@
 using Unity.Netcode;
 using UnityEngine;
-using CoinGame.Gameplay.Combat;
-using CoinGame.Utilities;
-using CoinGame.Player;
 
 namespace CoinGame.Network
 {
+    using CoinGame.Gameplay.Combat;
+    using CoinGame.Utilities;
+    using CoinGame.Player;
+
     public sealed class NetworkProjectile : NetworkBehaviour
     {
         private Vector3 _direction;

@@ -1,18 +1,19 @@
-﻿using System;
+using System;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.InputSystem;
-using CoinGame.Managers;
-using CoinGame.Player;
-using CoinGame.Stage;
-using CoinGame.Input;
-using CoinGame.Gameplay.Player;
 
 namespace CoinGame.Network
 {
+    using CoinGame.Managers;
+    using CoinGame.Player;
+    using CoinGame.Stage;
+    using CoinGame.Input;
+    using CoinGame.Gameplay.Player;
     using CoinGame.Utilities;
+
     using Unity.Netcode.Components;
     using UnityEngine.AddressableAssets;
 
@@ -85,7 +86,10 @@ namespace CoinGame.Network
                 _controller.enabled = wasEnabled;
             }
 
-            NetworkRoundState.Instance?.ReportPositionedRpc();
+            if (NetworkRoundState.Instance != null)
+            {
+                NetworkRoundState.Instance.ReportPositionedRpc();
+            }
         }
         public override void OnNetworkSpawn()
         {
@@ -117,7 +121,7 @@ namespace CoinGame.Network
                 _controller = GetComponent<CharacterController>();
                 if (!_controller)
                 {
-                    Debug.LogError("ERROR: CharacterController??李얠쓣 ???놁뒿?덈떎.");
+                    Debug.LogError("ERROR: CharacterController??嶺뚢돦堉??????怨룸????덈펲.");
                     return;
                 }
             }
@@ -131,18 +135,18 @@ namespace CoinGame.Network
             }
             if (!_playerInput)
             {
-                Debug.LogError("ERROR: PlayerInput??李얠쓣 ???놁뒿?덈떎.");
+                Debug.LogError("ERROR: PlayerInput??嶺뚢돦堉??????怨룸????덈펲.");
                 return;
             }
 
             InputActionMap playerMap = _playerInput.actions.FindActionMap("Gameplay");
-            _moveAction = playerMap?.FindAction("Move");
-            _attackAction = playerMap?.FindAction("Attack");
-            _interactAction = playerMap?.FindAction("Interact");
-            _crouchAction = playerMap?.FindAction("Crouch");
+            _moveAction = playerMap != null ? playerMap.FindAction("Move") : null;
+            _attackAction = playerMap != null ? playerMap.FindAction("Attack") : null;
+            _interactAction = playerMap != null ? playerMap.FindAction("Interact") : null;
+            _crouchAction = playerMap != null ? playerMap.FindAction("Crouch") : null;
             if (_moveAction == null)
             {
-                Debug.LogError("ERROR: PlayerInput?먯꽌 Gameplay/Move ?≪뀡??李얠쓣 ???놁뒿?덈떎.");
+                Debug.LogError("ERROR: PlayerInput?????Gameplay/Move ???떷??嶺뚢돦堉??????怨룸????덈펲.");
                 return;
             }
             if (_moveCts is null)
@@ -152,9 +156,18 @@ namespace CoinGame.Network
                 AbilityAsync(_moveCts.Token).Forget();
             }
             _moveAction.Enable();
-            _attackAction?.Enable();
-            _interactAction?.Enable();
-            _crouchAction?.Enable();
+            if (_attackAction != null)
+            {
+                _attackAction.Enable();
+            }
+            if (_interactAction != null)
+            {
+                _interactAction.Enable();
+            }
+            if (_crouchAction != null)
+            {
+                _crouchAction.Enable();
+            }
             _controller.enabled = true;
         }
 
@@ -187,7 +200,7 @@ namespace CoinGame.Network
 
         private bool IsFriendlyLocalPlayer()
         {
-            NetworkObject local = NetworkManager.Singleton?.SpawnManager.GetLocalPlayerObject();
+            NetworkObject local = NetworkManager.Singleton == null ? null : NetworkManager.Singleton.SpawnManager.GetLocalPlayerObject();
             NetworkPlayerStats localStats = local != null ? local.GetComponent<NetworkPlayerStats>() : null;
             return localStats != null && localStats.Role == _networkPlayerStats.Role;
         }
@@ -236,9 +249,18 @@ namespace CoinGame.Network
             {
                 _moveAction.Disable();
             }
-            _attackAction?.Disable();
-            _interactAction?.Disable();
-            _crouchAction?.Disable();
+            if (_attackAction != null)
+            {
+                _attackAction.Disable();
+            }
+            if (_interactAction != null)
+            {
+                _interactAction.Disable();
+            }
+            if (_crouchAction != null)
+            {
+                _crouchAction.Disable();
+            }
             if (_controller)
             {
                 _controller.enabled = false;
@@ -450,6 +472,7 @@ namespace CoinGame.Network
             }
         }
 
+
         private float PushCooldown => _roleAbilityConfig ? _roleAbilityConfig.PushCooldown : 2f;
         private float LockCooldown => _roleAbilityConfig ? _roleAbilityConfig.LockCooldown : 8f;
         private float StealCooldown => _roleAbilityConfig ? _roleAbilityConfig.StealCooldown : 10f;
@@ -461,6 +484,7 @@ namespace CoinGame.Network
         private float ItemBlockCooldown => _roleAbilityConfig ? _roleAbilityConfig.ItemBlockCooldown : 10f;
         public float PushCooldownRemaining => Mathf.Max(0f, _pushCooldownUntil - Time.time);
         public float SkillCooldownRemaining => Mathf.Max(0f, _lockCooldownUntil - Time.time);
+
     }
 }
 

@@ -1,20 +1,19 @@
 using Unity.Netcode;
 using UnityEngine;
 
-using CoinGame.Player;
-using CoinGame.Utilities;
-using CoinGame.UI;
 
 namespace CoinGame.Network
 {
+    using CoinGame.Player;
+    using CoinGame.Utilities;
+    using CoinGame.UI;
+
     public class NetworkConnector : MonoBehaviour
     {
         public static NetworkConnector Instance { get; private set; }
 
         [SerializeField]
         private NetworkSpawner _defaultPlayerSpawner;
-        [SerializeField]
-        private bool _autoConnectOnStart = true;
 
         public bool TryRelocatePlayers()
         {
@@ -66,25 +65,6 @@ namespace CoinGame.Network
                 gameObject.AddComponent<RoleSelectionUI>();
             }
             SubscribeNetworkCallbacks();
-            NetworkManager networkManager = NetworkManager.Singleton;
-            if (networkManager != null && networkManager.IsServer && _defaultPlayerSpawner != null)
-            {
-                foreach (ulong clientId in networkManager.ConnectedClientsIds)
-                {
-                    OnConnectedCallBack(clientId);
-                }
-            }
-            if (_autoConnectOnStart)
-            {
-                if (Unity.Multiplayer.PlayMode.CurrentPlayer.IsMainEditor)
-                {
-                    ConnectHost();
-                }
-                else
-                {
-                    ConnectClient();
-                }
-            }
         }
 
         private void SubscribeNetworkCallbacks()
@@ -121,7 +101,7 @@ namespace CoinGame.Network
             NetworkManager networkManager = NetworkManager.Singleton;
             if (networkManager == null || networkManager.IsListening || networkManager.IsClient)
             {
-                Debug.Log("서버가 이미 열려있거나 NetworkManager가 NULL입니다.");
+                Debug.Log("?쒕쾭媛 ?대? ?대젮?덇굅??NetworkManager媛 NULL?낅땲??");
                 return;
             }
 
@@ -130,7 +110,7 @@ namespace CoinGame.Network
             PlayerAccount.IsOnline = networkManager.StartHost();
             if (!PlayerAccount.IsOnline)
             {
-                Debug.Log("서버가 이미 열려있습니다.");
+                Debug.Log("?쒕쾭媛 ?대? ?대젮?덉뒿?덈떎.");
                 return;
             }
 
@@ -141,7 +121,7 @@ namespace CoinGame.Network
             NetworkManager networkManager = NetworkManager.Singleton;
             if (networkManager == null || networkManager.IsListening || networkManager.IsServer)
             {
-                Debug.Log("이미 클라이언트 접속한 상태이거나 서버가 열려있지 않은 상태이거나 서버 소유권을 가지고 있습니다.");
+                Debug.Log("?대? ?대씪?댁뼵???묒냽???곹깭?닿굅???쒕쾭媛 ?대젮?덉? ?딆? ?곹깭?닿굅???쒕쾭 ?뚯쑀沅뚯쓣 媛吏怨??덉뒿?덈떎.");
                 return;
             }
 
@@ -149,7 +129,7 @@ namespace CoinGame.Network
             PlayerAccount.IsOnline = networkManager.StartClient();
             if (!PlayerAccount.IsOnline)
             {
-                Debug.Log("서버가 열려있지 않습니다.");
+                Debug.Log("?쒕쾭媛 ?대젮?덉? ?딆뒿?덈떎.");
             }
         }
 
@@ -158,7 +138,7 @@ namespace CoinGame.Network
             NetworkManager networkManager = NetworkManager.Singleton;
             if (networkManager == null || !networkManager.IsListening || networkManager.IsServer)
             {
-                Debug.Log("클라이언트 접속하지 않은 상태입니다.");
+                Debug.Log("?대씪?댁뼵???묒냽?섏? ?딆? ?곹깭?낅땲??");
                 return;
             }
 

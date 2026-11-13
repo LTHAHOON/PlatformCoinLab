@@ -83,7 +83,6 @@ GameObject:
   - component: {fileID: 4617001185399210232}
   - component: {fileID: 4093882885751021256}
   - component: {fileID: 6291126183999740266}
-  - component: {fileID: 3058397829363203313}
   - component: {fileID: 5741512235617506555}
   - component: {fileID: 7000000000000000001}
   m_Layer: 0
@@ -381,20 +380,6 @@ MonoBehaviour:
   _gunVisualPrefab: {fileID: 4502283631023999317, guid: 1a45eb5dd56317a46bddc290aa539a04, type: 3}
   _swordVisualPrefab: {fileID: 5605500924825819634, guid: 7650cfbb3befd2e45b747f47d1c5073f, type: 3}
   _projectilePrefab: {fileID: 3123737544147706091, guid: e3cc66cae93b0b94ea1d7fe45e7ecdb8, type: 3}
---- !u!114 &3058397829363203313
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8182628884086657673}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 1fdf3311a9ffe0c43aae9c8e9d511ddf, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::CoinGame.Network.M3DebugTools
-  ShowTopMostFoldoutHeaderGroup: 1
-  _enabledInDevelopment: 1
 --- !u!114 &5741512235617506555
 MonoBehaviour:
   m_ObjectHideFlags: 0

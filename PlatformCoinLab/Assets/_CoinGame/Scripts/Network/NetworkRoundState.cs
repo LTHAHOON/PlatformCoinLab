@@ -4,15 +4,16 @@ using System.Threading;
 using Cysharp.Threading.Tasks;
 using Unity.Netcode;
 using UnityEngine;
-using CoinGame.Stage;
-using CoinGame.Player;
-using CoinGame.Managers;
-using CoinGame.Gameplay.Combat;
-using CoinGame.Gameplay.Stage;
-using CoinGame.Utilities;
 
 namespace CoinGame.Network
 {
+    using CoinGame.Stage;
+    using CoinGame.Player;
+    using CoinGame.Managers;
+    using CoinGame.Gameplay.Combat;
+    using CoinGame.Gameplay.Stage;
+    using CoinGame.Utilities;
+
     public sealed class NetworkRoundState : NetworkBehaviour
     {
         private enum ClientSyncPhase
@@ -57,17 +58,6 @@ namespace CoinGame.Network
         private bool _isRoundStarting;
         private float _nextQuickLog;
 
-        public int Round => _round.Value;
-        public int MaxRounds => _maxRounds.Value;
-        public int TargetCoins => _targetCoins.Value;
-        public int RemainingCoins => _remainingCoins.Value;
-        public int SpawnCoins => _spawnCoins.Value;
-        public int RemainingSeconds => _remainingSeconds.Value;
-        public int CoinMultiplier => _coinMultiplier.Value;
-        public bool IsRoundActive => _roundActive.Value;
-        public double LobbyStartTime => _lobbyStartTime.Value;
-        public bool LoadGame => _loadGame.Value;
-        public MatchWinner MatchWinner => _matchWinner.Value;
 
         public event Action<int, int, int, float, bool> StateChanged;
         public event Action<bool> RoundFinished;
@@ -93,8 +83,11 @@ namespace CoinGame.Network
 
         public override void OnNetworkDespawn()
         {
-            _roundCts?.Cancel();
-            _roundCts?.Dispose();
+            if (_roundCts != null)
+            {
+                _roundCts.Cancel();
+                _roundCts.Dispose();
+            }
             _roundCts = null;
             _round.OnValueChanged -= OnNetworkValueChanged;
             _maxRounds.OnValueChanged -= OnNetworkValueChanged;
@@ -131,7 +124,7 @@ namespace CoinGame.Network
             if (_clientSyncPhase == ClientSyncPhase.SceneLoaded && EveryoneReady(_phaseReadyClients))
             {
                 BeginClientSyncPhase(ClientSyncPhase.Positioned);
-                _relocationSent = NetworkConnector.Instance?.TryRelocatePlayers() ?? false;
+                _relocationSent = NetworkConnector.Instance != null && NetworkConnector.Instance.TryRelocatePlayers();
                 if (!_relocationSent)
                 {
                     BeginClientSyncPhase(ClientSyncPhase.SceneLoaded);
@@ -172,11 +165,7 @@ namespace CoinGame.Network
             }
         }
 
-        public void ConfigureLobbyServer(
-            int expectedPlayers,
-            int collectors,
-            int disruptors,
-            float lobbyCountdownSeconds = 10f)
+        public void ConfigureLobbyServer(int expectedPlayers, int collectors, int disruptors, float lobbyCountdownSeconds = 10f)
         {
             if (!IsServer)
             {
@@ -216,7 +205,6 @@ namespace CoinGame.Network
             }
         }
 
-        public bool IsRoleSelectionOpen => _lobbyStartTime.Value > 0d && !_loadGame.Value;
 
         private bool EveryoneReady(HashSet<ulong> clients)
         {
@@ -305,8 +293,11 @@ namespace CoinGame.Network
 
         private async UniTaskVoid StartRoundAfterDelayAsync(int round)
         {
-            _roundCts?.Cancel();
-            _roundCts?.Dispose();
+            if (_roundCts != null)
+            {
+                _roundCts.Cancel();
+                _roundCts.Dispose();
+            }
             _roundCts = CancellationTokenSource.CreateLinkedTokenSource(destroyCancellationToken);
 
             try
@@ -314,7 +305,7 @@ namespace CoinGame.Network
                 if (round > 1)
                 {
                     BeginClientSyncPhase(ClientSyncPhase.Positioned);
-                    if (!(NetworkConnector.Instance?.TryRelocatePlayers() ?? false))
+                    if (NetworkConnector.Instance == null || !NetworkConnector.Instance.TryRelocatePlayers())
                     {
                         BeginClientSyncPhase(ClientSyncPhase.Complete);
                         Debug.LogError("Failed to relocate players before starting the next round.", this);
@@ -330,9 +321,12 @@ namespace CoinGame.Network
 
                 foreach (NetworkClient client in NetworkManager.Singleton.ConnectedClientsList)
                 {
-                    NetworkPlayerStats stats = client.PlayerObject?.GetComponent<NetworkPlayerStats>();
-                    stats?.ResetRoundDisruptorStatsServer();
-                    stats?.ResetRoundLifeServer();
+                    NetworkPlayerStats stats = client.PlayerObject == null ? null : client.PlayerObject.GetComponent<NetworkPlayerStats>();
+                    if (stats != null)
+                    {
+                        stats.ResetRoundDisruptorStatsServer();
+                        stats.ResetRoundLifeServer();
+                    }
                 }
                 _matchWinner.Value = MatchWinner.None;
                 _targetCoins.Value = _stageConfig.GetRequiredCoins(round);
@@ -354,9 +348,7 @@ namespace CoinGame.Network
                 _nextTickTime = NetworkManager.Singleton.ServerTime.Time + 1d;
                 NotifyStateChanged();
             }
-            catch (OperationCanceledException)
-            {
-            }
+            catch (OperationCanceledException) { }
             finally
             {
                 _isRoundStarting = false;
@@ -396,7 +388,10 @@ namespace CoinGame.Network
 
             NetworkSpawner spawner = FindAnyObjectByType<NetworkSpawner>();
             NetworkPlayerController player = stats.GetComponent<NetworkPlayerController>();
-            spawner?.TryRelocatePlayer(player);
+            if (spawner != null)
+            {
+                spawner.TryRelocatePlayer(player);
+            }
         }
 
         private int CountAliveCollectorsServer()
@@ -404,7 +399,7 @@ namespace CoinGame.Network
             int alive = 0;
             foreach (NetworkClient client in NetworkManager.Singleton.ConnectedClientsList)
             {
-                NetworkPlayerStats stats = client.PlayerObject?.GetComponent<NetworkPlayerStats>();
+                NetworkPlayerStats stats = client.PlayerObject == null ? null : client.PlayerObject.GetComponent<NetworkPlayerStats>();
                 if (stats != null && stats.Role == PlayerRole.Collector && stats.IsAlive)
                 {
                     alive++;
@@ -426,11 +421,10 @@ namespace CoinGame.Network
 
             foreach (NetworkClient client in NetworkManager.Singleton.ConnectedClientsList)
             {
-                NetworkPlayerStats stats = client.PlayerObject?.GetComponent<NetworkPlayerStats>();
+                NetworkPlayerStats stats = client.PlayerObject == null ? null : client.PlayerObject.GetComponent<NetworkPlayerStats>();
                 if (stats != null && stats.Role == PlayerRole.Collector)
                 {
-                    stats.ApplyDamageServer(new DamageInfo(
-                        ulong.MaxValue, penalty, DamageType.Timeout, Vector3.zero));
+                    stats.ApplyDamageServer(new DamageInfo(ulong.MaxValue, penalty, DamageType.Timeout, Vector3.zero));
                 }
             }
         }
@@ -526,17 +520,40 @@ namespace CoinGame.Network
 
         private void OnResultVersionChanged(int previous, int current)
         {
-            RoundFinished?.Invoke(_collectorWon.Value);
+            if (RoundFinished != null)
+            {
+                RoundFinished.Invoke(_collectorWon.Value);
+            }
             if (_round.Value >= _maxRounds.Value)
             {
-                MatchFinished?.Invoke(_collectorWon.Value);
+                if (MatchFinished != null)
+                {
+                    MatchFinished.Invoke(_collectorWon.Value);
+                }
             }
         }
 
         private void NotifyStateChanged()
         {
             float time = _remainingSeconds.Value;
-            StateChanged?.Invoke(_round.Value, _targetCoins.Value, _remainingCoins.Value, time, _roundActive.Value);
+            if (StateChanged != null)
+            {
+                StateChanged.Invoke(_round.Value, _targetCoins.Value, _remainingCoins.Value, time, _roundActive.Value);
+            }
         }
+
+        public int Round => _round.Value;
+        public int MaxRounds => _maxRounds.Value;
+        public int TargetCoins => _targetCoins.Value;
+        public int RemainingCoins => _remainingCoins.Value;
+        public int SpawnCoins => _spawnCoins.Value;
+        public int RemainingSeconds => _remainingSeconds.Value;
+        public int CoinMultiplier => _coinMultiplier.Value;
+        public bool IsRoundActive => _roundActive.Value;
+        public double LobbyStartTime => _lobbyStartTime.Value;
+        public bool LoadGame => _loadGame.Value;
+        public MatchWinner MatchWinner => _matchWinner.Value;
+        public bool IsRoleSelectionOpen => _lobbyStartTime.Value > 0d && !_loadGame.Value;
+
     }
 }

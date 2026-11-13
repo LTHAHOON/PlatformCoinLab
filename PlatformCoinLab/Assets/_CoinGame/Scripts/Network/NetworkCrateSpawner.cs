@@ -1,11 +1,12 @@
 using System.Collections;
 using Unity.Netcode;
 using UnityEngine;
-using CoinGame.Stage;
 using System.Linq;
 
 namespace CoinGame.Network
 {
+    using CoinGame.Stage;
+
     public sealed class NetworkCrateSpawner : MonoBehaviour
     {
         [SerializeField] private NetworkCrate _cratePrefab;

@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using UnityEngine.InputSystem;
 
 namespace CoinGame.Input
@@ -22,7 +22,6 @@ namespace CoinGame.Input
         private InputAction _push;
         private InputAction _skill;
         private PlayerInputState _state;
-        public PlayerInputState Current => _state;
 
         private void Awake()
         {
@@ -91,5 +90,8 @@ namespace CoinGame.Input
 
             return action.WasPressedThisFrame();
         }
+
+        public PlayerInputState Current => _state;
+
     }
 }

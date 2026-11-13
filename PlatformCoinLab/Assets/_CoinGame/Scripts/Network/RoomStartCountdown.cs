@@ -65,7 +65,10 @@ namespace CoinGame.Network
 
             _isRunning = false;
             UpdateText();
-            Completed?.Invoke();
+            if (Completed != null)
+            {
+                Completed.Invoke();
+            }
         }
 
         private void UpdateText()

@@ -1,8 +1,9 @@
 using UnityEngine;
-using CoinGame.Gameplay.Combat;
 
 namespace CoinGame.Gameplay.Items
 {
+    using CoinGame.Gameplay.Combat;
+
     public enum ItemKind : byte { Ammo, Health, Gun, Sword, Boost, Invulnerable, Stealth, Revive, Random }
 
     [CreateAssetMenu(fileName = "ItemData", menuName = "CoinGame/Item Data")]

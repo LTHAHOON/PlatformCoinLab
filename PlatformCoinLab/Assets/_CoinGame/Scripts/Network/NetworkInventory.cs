@@ -1,10 +1,11 @@
 using System;
 using Unity.Netcode;
 using UnityEngine;
-using CoinGame.Gameplay.Combat;
 
 namespace CoinGame.Network
 {
+    using CoinGame.Gameplay.Combat;
+
     public class NetworkInventory : NetworkBehaviour
     {
         private readonly NetworkVariable<byte> _slot0 = new((byte)WeaponKind.None);
@@ -14,11 +15,6 @@ namespace CoinGame.Network
         private readonly NetworkVariable<int> _reserve = new(0);
         private readonly NetworkVariable<bool> _boost = new(false);
         private readonly NetworkVariable<bool> _revive = new(false);
-        public WeaponKind CurrentKind => (WeaponKind)( _current.Value == 0 ? _slot0.Value : _slot1.Value);
-        public int Magazine => _magazine.Value;
-        public int ReserveAmmo => _reserve.Value;
-        public bool HasBoost => _boost.Value;
-        public bool HasRevive => _revive.Value;
         public event Action Changed;
         private int _lastSignature = int.MinValue;
 
@@ -29,7 +25,10 @@ namespace CoinGame.Network
             signature ^= _revive.Value ? 31 : 0;
             if (signature == _lastSignature) return;
             _lastSignature = signature;
-            Changed?.Invoke();
+            if (Changed != null)
+            {
+                Changed.Invoke();
+            }
         }
 
         public override void OnNetworkSpawn()
@@ -78,5 +77,12 @@ namespace CoinGame.Network
         public bool ConsumeBoostServer() { if (!IsServer || !_boost.Value) return false; _boost.Value = false; return true; }
         public bool GiveReviveServer() { if (!IsServer || _revive.Value) return false; _revive.Value = true; return true; }
         public bool ConsumeReviveServer() { if (!IsServer || !_revive.Value) return false; _revive.Value = false; return true; }
+
+        public WeaponKind CurrentKind => (WeaponKind)( _current.Value == 0 ? _slot0.Value : _slot1.Value);
+        public int Magazine => _magazine.Value;
+        public int ReserveAmmo => _reserve.Value;
+        public bool HasBoost => _boost.Value;
+        public bool HasRevive => _revive.Value;
+
     }
 }

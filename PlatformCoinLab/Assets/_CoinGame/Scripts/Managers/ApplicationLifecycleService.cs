@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using UnityEngine;
 
 namespace CoinGame.Managers
@@ -26,7 +26,10 @@ namespace CoinGame.Managers
                 PlayerPrefs.Save();
             }
 
-            FocusChanged?.Invoke(!paused);
+            if (FocusChanged != null)
+            {
+                FocusChanged.Invoke(!paused);
+            }
         }
 
         private void OnApplicationFocus(bool focused)
@@ -36,7 +39,10 @@ namespace CoinGame.Managers
                 PlayerPrefs.Save();
             }
 
-            FocusChanged?.Invoke(focused);
+            if (FocusChanged != null)
+            {
+                FocusChanged.Invoke(focused);
+            }
         }
     }
 }

@@ -6,6 +6,8 @@ namespace CoinGame.Gameplay.Combat
     {
         protected readonly WeaponData Data;
         protected WeaponBase(WeaponData data) { Data = data; }
+
         public WeaponData Definition => Data;
+
     }
 }

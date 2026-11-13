@@ -12,35 +12,39 @@ using UnityEngine;
 
 namespace CoinGame.Network
 {
-    public sealed class RoomSessionService : IDisposable
+    public class RoomSessionService : IDisposable
     {
         private SessionConnector _sessionConnector;
         private MultiplayerSession _multiplayerSession;
+        private readonly SessionConnector _sessionConnectorAsset;
+        private readonly MultiplayerSession _multiplayerSessionAsset;
         private bool _isConnecting;
         private bool _isDisposing;
         private string _requestedSessionId;
 
         public ISession Session { get; private set; }
         public bool IsServicesReady { get; private set; }
-        public bool IsSessionReady => Session != null;
-        public bool IsHost => Session?.IsHost ?? false;
 
         public event Action<ISession> Connected;
         public event Action<string> Failed;
 
-        public async UniTask InitializeServicesAsync(
-            CancellationToken cancellationToken, string authenticationProfile = null, bool logPlayerId = false)
+        public RoomSessionService(MultiplayerSession multiplayerSession, SessionConnector sessionConnector)
+        {
+            _multiplayerSessionAsset = multiplayerSession;
+            _sessionConnectorAsset = sessionConnector;
+        }
+
+        public async UniTask InitializeServicesAsync(CancellationToken cancellationToken, string authenticationProfile = "", bool logPlayerId = false)
         {
             try
             {
                 if (UnityServices.State != ServicesInitializationState.Initialized)
                 {
-                    InitializationOptions options = string.IsNullOrWhiteSpace(authenticationProfile)
-                        ? null
-                        : new InitializationOptions().SetProfile(authenticationProfile);
+                    InitializationOptions options = new();
+                    options.SetProfile(authenticationProfile);
                     await UnityServices.InitializeAsync(options);
                 }
-                else if (!string.IsNullOrWhiteSpace(authenticationProfile))
+                else
                 {
                     if (AuthenticationService.Instance.IsSignedIn)
                     {
@@ -73,7 +77,7 @@ namespace CoinGame.Network
             }
         }
 
-        public async UniTask ConnectAsync(RoomSettings settings, bool createOrJoin, CancellationToken cancellationToken)
+        public async UniTask ConnectAsync(RoomSettings settings, bool isCreate, CancellationToken cancellationToken)
         {
             if (!IsServicesReady || IsSessionReady || _isConnecting)
             {
@@ -85,16 +89,20 @@ namespace CoinGame.Network
             try
             {
                 await ResetNetworkManagerAsync(cancellationToken);
-                await CleanupRegisteredSessionsAsync();
                 DisposeConnector();
 
-                _multiplayerSession = ScriptableObject.CreateInstance<MultiplayerSession>();
-                _sessionConnector = ScriptableObject.CreateInstance<SessionConnector>();
+                _multiplayerSession = _multiplayerSessionAsset;
+                _sessionConnector = _sessionConnectorAsset;
+                if (_multiplayerSession == null || _sessionConnector == null)
+                {
+                    throw new InvalidOperationException("MultiplayerSession and SessionConnector assets are required.");
+                }
+
                 _sessionConnector.MultiplayerSession = _multiplayerSession;
                 _sessionConnector.SuccessfulExecution.AddListener(OnSessionConnected);
                 _sessionConnector.FailedExecution.AddListener(OnSessionFailed);
 
-                if (createOrJoin)
+                if (isCreate)
                 {
                     Dictionary<string, SessionProperty> properties = new()
                     {
@@ -109,6 +117,7 @@ namespace CoinGame.Network
                         MaxPlayers = settings.MaxPlayers,
                         SessionProperties = properties,
                     };
+                    
                     _sessionConnector.WithCreateOrJoin(settings.RoomId)
                         .WithSessionOptions(sessionOptions)
                         .WithRelayNetworkOptions(RelayNetworkOptions.Default, RelayProtocol.Default)
@@ -121,9 +130,7 @@ namespace CoinGame.Network
 
                 await UniTask.Yield(PlayerLoopTiming.Update, cancellationToken);
             }
-            catch (OperationCanceledException)
-            {
-            }
+            catch (OperationCanceledException) { }
             catch (Exception exception)
             {
                 OnSessionFailed($"Room connection failed: {exception.Message}");
@@ -137,40 +144,13 @@ namespace CoinGame.Network
         private async UniTask ResetNetworkManagerAsync(CancellationToken cancellationToken)
         {
             NetworkManager networkManager = NetworkManager.Singleton;
-            if (networkManager == null || !networkManager.IsListening)
+            if (!networkManager || !networkManager.IsListening)
             {
                 return;
             }
 
             networkManager.Shutdown();
             await UniTask.WaitUntil(() => !networkManager.IsListening, cancellationToken: cancellationToken);
-        }
-
-        private async UniTask CleanupRegisteredSessionsAsync()
-        {
-            if (MultiplayerService.Instance == null || MultiplayerService.Instance.Sessions.Count == 0)
-            {
-                return;
-            }
-
-            List<ISession> sessions = new(MultiplayerService.Instance.Sessions.Values);
-            foreach (ISession session in sessions)
-            {
-                try
-                {
-                    await session.LeaveAsync();
-                }
-                catch (Exception exception)
-                {
-                    Debug.LogWarning($"Failed to clean up stale session: {exception.Message}");
-                }
-            }
-
-            for (int i = 0; i < 50 && MultiplayerService.Instance != null &&
-                MultiplayerService.Instance.Sessions.Count > 0; i++)
-            {
-                await UniTask.Delay(100);
-            }
         }
 
         private void OnSessionConnected(ISession session)
@@ -202,12 +182,10 @@ namespace CoinGame.Network
             {
                 _sessionConnector.SuccessfulExecution.RemoveListener(OnSessionConnected);
                 _sessionConnector.FailedExecution.RemoveListener(OnSessionFailed);
-                UnityEngine.Object.Destroy(_sessionConnector);
                 _sessionConnector = null;
             }
             if (_multiplayerSession != null)
             {
-                UnityEngine.Object.Destroy(_multiplayerSession);
                 _multiplayerSession = null;
             }
         }
@@ -251,5 +229,9 @@ namespace CoinGame.Network
         {
             DisposeAsync().Forget();
         }
+
+        public bool IsSessionReady => Session != null;
+        public bool IsHost => Session?.IsHost ?? false;
+
     }
 }

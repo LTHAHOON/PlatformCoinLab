@@ -1,10 +1,11 @@
-﻿using Unity.Netcode;
+using Unity.Netcode;
 using UnityEngine;
-using CoinGame.Network;
-using CoinGame.Player;
 
 namespace CoinGame.UI
 {
+    using CoinGame.Network;
+    using CoinGame.Player;
+
     public class RoleSelectionUI : MonoBehaviour
     {
         private NetworkPlayerStats _localStats;

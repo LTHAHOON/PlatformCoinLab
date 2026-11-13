@@ -1,9 +1,11 @@
 using UnityEngine;
 using UnityEngine.UI;
-using CoinGame.Player;
+using Unity.Netcode;
 
 namespace CoinGame.Network
 {
+    using CoinGame.Player;
+
     public sealed class NetworkWorldHealthBar : MonoBehaviour
     {
         private NetworkPlayerStats _stats;
@@ -43,7 +45,15 @@ namespace CoinGame.Network
             }
 
             _slider.value = (float)_stats.Health / Mathf.Max(1, _stats.MaxHealth);
-            NetworkPlayerStats local = Unity.Netcode.NetworkManager.Singleton?.SpawnManager.GetLocalPlayerObject()?.GetComponent<NetworkPlayerStats>();
+            NetworkPlayerStats local = null;
+            if (Unity.Netcode.NetworkManager.Singleton != null)
+            {
+                NetworkObject localObject = Unity.Netcode.NetworkManager.Singleton.SpawnManager.GetLocalPlayerObject();
+                if (localObject != null)
+                {
+                    local = localObject.GetComponent<NetworkPlayerStats>();
+                }
+            }
             _canvas.enabled = !_stats.IsStealthed || local == null || local.Role == _stats.Role;
         }
     }

@@ -1,25 +1,26 @@
-﻿using System;
+using System;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using Cysharp.Threading.Tasks.Triggers;
 using Unity.Netcode;
 using UnityEngine;
-using CoinGame.Utilities;
-using CoinGame.Managers;
 
 namespace CoinGame.Network
 {
+    using CoinGame.Utilities;
+    using CoinGame.Managers;
+
     public class NetworkCoinController : NetworkBehaviour
     {
         private CancellationTokenSource _triggerEnterCts;
         private CancellationTokenSource _despawnCts;
 
-        public CancellationToken DespawnToken =>
-            _despawnCts != null ? _despawnCts.Token : destroyCancellationToken;
-
         public override void OnNetworkSpawn()
         {
-            _despawnCts?.Dispose();
+            if (_despawnCts != null)
+            {
+                _despawnCts.Dispose();
+            }
             _despawnCts = new CancellationTokenSource();
 
             if (!IsServer)
@@ -76,7 +77,10 @@ namespace CoinGame.Network
                         continue;
                     }
                     playerStats.AddScoreServer(1);
-                    NetworkRoundState.Instance?.CollectCoinServer();
+                    if (NetworkRoundState.Instance != null)
+                    {
+                        NetworkRoundState.Instance.CollectCoinServer();
+                    }
                     NetworkGameObjectPool.Despawn(gameObject);
                     break;
                 }
@@ -93,12 +97,15 @@ namespace CoinGame.Network
         {
             if (!GameManager.Instance)
             {
-                Debug.LogError("GameManager瑜?李얠쓣 ???놁뒿?덈떎.", this);
+                Debug.LogError("GameManager??嶺뚢돦堉??????怨룸????덈펲.", this);
                 return;
             }
 
             GameManager.Instance.CollectStageCoin();
         }
+
+        public CancellationToken DespawnToken =>
+            _despawnCts != null ? _despawnCts.Token : destroyCancellationToken;
     }
 
 }

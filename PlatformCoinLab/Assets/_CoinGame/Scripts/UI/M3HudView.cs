@@ -2,15 +2,17 @@ using TMPro;
 using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.UI;
-using CoinGame.Gameplay.Combat;
-using CoinGame.Gameplay.Player;
-using CoinGame.Network;
 
 namespace CoinGame.UI
 {
-    public class M3HudView : MonoBehaviour
+    using CoinGame.Gameplay.Combat;
+    using CoinGame.Gameplay.Player;
+    using CoinGame.Network;
+
+    public sealed class M3HudView : MonoBehaviour
     {
-        [SerializeField] private bool _showPcKeys = true;
+        [SerializeField]
+        private bool _showPcKeys = true;
         private NetworkPlayerStats _stats;
         private NetworkInventory _inventory;
         private NetworkPlayerController _controller;
@@ -22,28 +24,60 @@ namespace CoinGame.UI
         private TMP_Text _skillText;
         private TMP_Text _reviveText;
 
-        private void Start() { Build(); }
+        private void Start()
+        {
+            Build();
+        }
         private void OnDestroy()
         {
-            if (_stats != null) _stats.HudStateChanged -= Refresh;
-            if (_inventory != null) _inventory.Changed -= Refresh;
+            if (_stats != null)
+            {
+                _stats.HudStateChanged -= Refresh;
+            }
+
+            if (_inventory != null)
+            {
+                _inventory.Changed -= Refresh;
+            }
         }
         private void Update()
         {
             BindLocal();
-            if (_stats != null) Refresh();
+            if (_stats != null)
+            {
+                Refresh();
+            }
         }
         private void BindLocal()
         {
-            if (NetworkManager.Singleton == null || !NetworkManager.Singleton.IsListening || NetworkManager.Singleton.SpawnManager == null) return;
+            if (NetworkManager.Singleton == null || !NetworkManager.Singleton.IsListening ||
+                NetworkManager.Singleton.SpawnManager == null)
+            {
+                return;
+            }
+
             NetworkObject local = NetworkManager.Singleton.SpawnManager.GetLocalPlayerObject();
-            if (local == null || local == _stats?.NetworkObject) return;
-            if (_stats != null) _stats.HudStateChanged -= Refresh;
-            if (_inventory != null) _inventory.Changed -= Refresh;
+            if (local == null || _stats != null && local == _stats.NetworkObject)
+            {
+                return;
+            }
+
+            if (_stats != null)
+            {
+                _stats.HudStateChanged -= Refresh;
+            }
+
+            if (_inventory != null)
+            {
+                _inventory.Changed -= Refresh;
+            }
             _stats = local.GetComponent<NetworkPlayerStats>();
             _inventory = local.GetComponent<NetworkInventory>();
             _controller = local.GetComponent<NetworkPlayerController>();
-            if (_stats == null || _inventory == null) return;
+            if (_stats == null || _inventory == null)
+            {
+                return;
+            }
             _stats.HudStateChanged += Refresh;
             _inventory.Changed += Refresh;
         }
@@ -61,7 +95,10 @@ namespace CoinGame.UI
         }
         private void Refresh()
         {
-            if (_stats == null || _inventory == null) return;
+            if (_stats == null || _inventory == null)
+            {
+                return;
+            }
             _health.maxValue = Mathf.Max(1, _stats.MaxHealth);
             _health.value = _stats.Health;
             _healthText.text = $"HP {_stats.Health}/{_stats.MaxHealth}";
@@ -70,15 +107,30 @@ namespace CoinGame.UI
             _statusText.text = StatusText();
             _skillText.text = _controller == null ? "" : $"O {_controller.PushCooldownRemaining:0.0}s  L {_controller.SkillCooldownRemaining:0.0}s";
             _reviveText.text = _stats.LifeState == PlayerLifeState.Spectating && _stats.ReviveReadyAt > NetworkManager.Singleton.ServerTime.Time
-                ? $"{(_showPcKeys ? "2" : "Revive")} 부활 {_stats.ReviveReadyAt - NetworkManager.Singleton.ServerTime.Time:0.0}s" : "";
+                ? $"{(_showPcKeys ? "2" : "Revive")} 遺??{_stats.ReviveReadyAt - NetworkManager.Singleton.ServerTime.Time:0.0}s" : "";
         }
         private string StatusText()
         {
             string text = "";
-            if (_stats.IsInvulnerable) text += $"무적 {_stats.InvulnerableRemaining:0.0}s ";
-            if (_stats.IsStealthed) text += $"은신 {_stats.StealthRemaining:0.0}s ";
-            if (_stats.IsBoosted) text += $"부스트 {_stats.BoostRemaining:0.0}s ";
-            if (_stats.IsItemBlocked) text += $"습득불가 {_stats.ItemBlockedRemaining:0.0}s";
+            if (_stats.IsInvulnerable)
+            {
+                text += $"臾댁쟻 {_stats.InvulnerableRemaining:0.0}s ";
+            }
+
+            if (_stats.IsStealthed)
+            {
+                text += $"???{_stats.StealthRemaining:0.0}s ";
+            }
+
+            if (_stats.IsBoosted)
+            {
+                text += $"遺?ㅽ듃 {_stats.BoostRemaining:0.0}s ";
+            }
+
+            if (_stats.IsItemBlocked)
+            {
+                text += $"?듬뱷遺덇? {_stats.ItemBlockedRemaining:0.0}s";
+            }
             return text;
         }
         private RectTransform MakePanel(string name, Vector2 offset, Vector2 min, Vector2 max)

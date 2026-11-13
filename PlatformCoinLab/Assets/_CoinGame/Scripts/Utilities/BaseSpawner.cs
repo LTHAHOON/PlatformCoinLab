@@ -6,11 +6,12 @@ using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.ResourceManagement.AsyncOperations;
 using UnityEngine.Serialization;
-using CoinGame.Managers;
-using CoinGame.Session;
 
 namespace CoinGame.Utilities
 {
+    using CoinGame.Managers;
+    using CoinGame.Session;
+
     // Kept together to preserve serialized fields and Unity lifecycle callbacks.
     public class BaseSpawner : MonoBehaviour
     {
@@ -75,7 +76,6 @@ namespace CoinGame.Utilities
         private bool _stageSessionBound;
         private int _lastSpawnedStageRound = -1;
 
-        public bool IsDefaultPlayerSpawner => _isDefaultPlayerSpawner;
 
         protected virtual void Awake()
         {
@@ -243,7 +243,10 @@ namespace CoinGame.Utilities
             {
                 if (!_isLoop)
                 {
-                    _spawnCts?.Dispose();
+                    if (_spawnCts != null)
+            {
+                _spawnCts.Dispose();
+            }
                     _spawnCts = null;
                 }
             }
@@ -304,14 +307,26 @@ namespace CoinGame.Utilities
 
         protected virtual void OnDestroy()
         {
-            _objectPool?.Dispose();
+            if (_objectPool != null)
+            {
+                _objectPool.Dispose();
+            }
             if (_spawnPrefabHandle.IsValid())
             {
                 Addressables.Release(_spawnPrefabHandle);
             }
 
-            _spawnCts?.Cancel();
-            _spawnCts?.Dispose();
+            if (_spawnCts != null)
+            {
+                _spawnCts.Cancel();
+            }
+            if (_spawnCts != null)
+            {
+                _spawnCts.Dispose();
+            }
         }
+
+        public bool IsDefaultPlayerSpawner => _isDefaultPlayerSpawner;
+
     }
 }

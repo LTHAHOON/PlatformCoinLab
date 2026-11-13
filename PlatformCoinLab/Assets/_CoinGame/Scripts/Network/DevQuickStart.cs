@@ -4,13 +4,14 @@ using Cysharp.Threading.Tasks;
 using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.SceneManagement;
-using CoinGame.Player;
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
 
 namespace CoinGame.Network
 {
+    using CoinGame.Player;
+
     public sealed class DevQuickStart : MonoBehaviour
     {
         private const string PersistentScenePath =
@@ -35,11 +36,6 @@ namespace CoinGame.Network
         private bool _hasBegun;
         private CancellationTokenSource _startCts;
 
-        public bool ShouldRun => _enabled && _isDirectLaunch;
-        public static string DevelopmentAuthProfile =>
-            Unity.Multiplayer.PlayMode.CurrentPlayer.IsMainEditor
-                ? "CoinDevHost"
-                : "CoinDevClient";
         public static bool LogAuthentication { get; private set; }
 
         private void Awake()
@@ -70,7 +66,10 @@ namespace CoinGame.Network
         {
             if (_isDirectLaunch && state == PlayModeStateChange.ExitingPlayMode)
             {
-                RoomLobbyController.Instance?.ShutdownDevelopmentSession();
+                if (RoomLobbyController.Instance != null)
+                {
+                    RoomLobbyController.Instance.ShutdownDevelopmentSession();
+                }
             }
         }
 #endif
@@ -83,8 +82,14 @@ namespace CoinGame.Network
             }
 
             _hasBegun = true;
-            _startCts?.Cancel();
-            _startCts?.Dispose();
+            if (_startCts != null)
+            {
+                _startCts.Cancel();
+            }
+            if (_startCts != null)
+            {
+                _startCts.Dispose();
+            }
             _startCts = CancellationTokenSource.CreateLinkedTokenSource(destroyCancellationToken);
             RunAsync(_startCts.Token).Forget();
         }
@@ -103,7 +108,7 @@ namespace CoinGame.Network
                 RoomSettings settings = new(
                     roomId, _roomName, maxPlayers, 1, maxDisruptors,
                     Mathf.Clamp(_maxRounds, 1, 20), 1);
-                bool createOrJoin = Unity.Multiplayer.PlayMode.CurrentPlayer.IsMainEditor;
+                bool createAndJoin = Unity.Multiplayer.PlayMode.CurrentPlayer.IsMainEditor;
                 RoomLobbyController controller = RoomLobbyController.Instance;
                 controller.HideLobbyUi();
 
@@ -111,7 +116,7 @@ namespace CoinGame.Network
                 {
                     if (!controller.IsRoomActionInProgress)
                     {
-                        await controller.StartDevelopmentSessionAsync(settings, createOrJoin);
+                        await controller.StartDevelopmentSessionAsync(settings, createAndJoin);
                     }
 
                     float waitSeconds = controller.IsRoomActionInProgress
@@ -120,7 +125,7 @@ namespace CoinGame.Network
                     await UniTask.Delay(TimeSpan.FromSeconds(waitSeconds), cancellationToken: token);
                 }
 
-                await SelectRoleWhenReadyAsync(createOrJoin, _soloTestMode, token);
+                await SelectRoleWhenReadyAsync(createAndJoin, _soloTestMode, token);
             }
             catch (OperationCanceledException)
             {
@@ -149,13 +154,27 @@ namespace CoinGame.Network
 
         private void OnDestroy()
         {
-            _startCts?.Cancel();
-            _startCts?.Dispose();
+            if (_startCts != null)
+            {
+                _startCts.Cancel();
+            }
+            if (_startCts != null)
+            {
+                _startCts.Dispose();
+            }
             if (_isDirectLaunch)
             {
                 RoomLobbyController.IsDevelopmentQuickStartActive = false;
                 LogAuthentication = false;
             }
         }
+
+        public bool ShouldRun => _enabled && _isDirectLaunch;
+
+        public static string DevelopmentAuthProfile =>
+            Unity.Multiplayer.PlayMode.CurrentPlayer.IsMainEditor
+                ? "CoinDevHost"
+                : "CoinDevClient";
+
     }
 }

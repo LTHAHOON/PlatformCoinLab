@@ -10,7 +10,9 @@ namespace CoinGame.Utilities
         [SerializeField]
         private Vector3 _maxVector;
 
+
         public Vector3 MinVector => _minVector;
         public Vector3 MaxVetor => _maxVector;        
+
     }
 }

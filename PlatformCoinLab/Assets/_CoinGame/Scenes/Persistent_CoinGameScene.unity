@@ -2832,6 +2832,8 @@ MonoBehaviour:
   _countdown: {fileID: 150262848}
   _outGameCanvas: {fileID: 1443105579}
   _networkRoundStatePrefab: {fileID: 4597449833319584482, guid: 58f01d0a75e2f9b4984caa32b2109f91, type: 3}
+  _multiplayerSession: {fileID: 11400000, guid: 6ec00dd2b9df06046aa782c0cc4ec58e, type: 2}
+  _sessionConnector: {fileID: 11400000, guid: 228940271b5f4b74b84d08e573544ecb, type: 2}
   _contentServerHealthUrl: https://localhost:5443/health
 --- !u!114 &840817113
 MonoBehaviour:
@@ -7087,6 +7089,7 @@ MonoBehaviour:
     NetworkTopology: 0
     UseCMBService: 0
     AutoSpawnPlayerPrefabClientSide: 1
+    NetworkMessageMetrics: 1
     NetworkProfilingMetrics: 1
     OldPrefabList: []
   RunInBackground: 1

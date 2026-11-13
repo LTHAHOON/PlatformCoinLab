@@ -1,10 +1,11 @@
 using Unity.Netcode;
 using UnityEngine;
-using CoinGame.Gameplay.Items;
-using CoinGame.Utilities;
 
 namespace CoinGame.Network
 {
+    using CoinGame.Gameplay.Items;
+    using CoinGame.Utilities;
+
     public class NetworkItemPickup : NetworkBehaviour
     {
         [SerializeField] private ItemData _data;

@@ -1,9 +1,10 @@
 using System;
 using UnityEngine;
-using CoinGame.UI;
 
 namespace CoinGame.Player
 {
+    using CoinGame.UI;
+
     public class PlayerAccount : MonoBehaviour
     {
         [SerializeField]
@@ -20,7 +21,10 @@ namespace CoinGame.Player
             set
             {
                 _isOnline = value;
-                OnlineStatusChanged?.Invoke(value);
+                if (OnlineStatusChanged != null)
+                {
+                    OnlineStatusChanged.Invoke(value);
+                }
             }
         }
 
@@ -28,7 +32,7 @@ namespace CoinGame.Player
         {
             if (_instance != null && _instance != this)
             {
-                Debug.LogError("PlayerAccount는 한 씬에 하나만 존재해야 합니다.", this);
+                Debug.LogError("PlayerAccount??????肉???롪돌筌?鈺곕똻???곷튊 ??몃빍??", this);
                 enabled = false;
                 return;
             }
@@ -45,7 +49,7 @@ namespace CoinGame.Player
             }
             else
             {
-                Debug.LogWarning("PlayerAccountView가 연결되지 않았습니다.", this);
+                Debug.LogWarning("PlayerAccountView揶쎛 ?怨뚭퍙??? ??녿릭??щ빍??", this);
             }
 
             IsOnline = false;
@@ -60,7 +64,9 @@ namespace CoinGame.Player
             }
         }
 
+
         public static Guid ID => _id;
+
     }
 }
 

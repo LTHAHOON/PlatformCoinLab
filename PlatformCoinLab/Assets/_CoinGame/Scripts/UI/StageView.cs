@@ -7,13 +7,14 @@ using TMPro;
 using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.UI;
-using CoinGame.Managers;
-using CoinGame.Session;
-using CoinGame.Network;
-using CoinGame.Player;
 
 namespace CoinGame.UI
 {
+    using CoinGame.Managers;
+    using CoinGame.Session;
+    using CoinGame.Network;
+    using CoinGame.Player;
+
     public class StageView : MonoBehaviour
     {
         [SerializeField]
@@ -171,8 +172,14 @@ namespace CoinGame.UI
             if (collectorText == null || _disruptorScoreboardText == null || _localStats == null ||
                 _localStats.Role == PlayerRole.Unselected)
             {
-                collectorText?.SetText(string.Empty);
-                _disruptorScoreboardText?.SetText(string.Empty);
+                if (collectorText != null)
+                {
+                    collectorText.SetText(string.Empty);
+                }
+                if (_disruptorScoreboardText != null)
+                {
+                    _disruptorScoreboardText.SetText(string.Empty);
+                }
                 return;
             }
 
@@ -230,8 +237,14 @@ namespace CoinGame.UI
                 return;
             }
 
-            _roundBannerCts?.Cancel();
-            _roundBannerCts?.Dispose();
+            if (_roundBannerCts != null)
+            {
+                _roundBannerCts.Cancel();
+            }
+            if (_roundBannerCts != null)
+            {
+                _roundBannerCts.Dispose();
+            }
             _roundBannerCts = CancellationTokenSource.CreateLinkedTokenSource(destroyCancellationToken);
             CancellationToken token = _roundBannerCts.Token;
             int bannerVersion = ++_roundBannerVersion;
@@ -275,8 +288,14 @@ namespace CoinGame.UI
         private void OnDestroy()
         {
             _roundBannerVersion++;
-            _roundBannerCts?.Cancel();
-            _roundBannerCts?.Dispose();
+            if (_roundBannerCts != null)
+            {
+                _roundBannerCts.Cancel();
+            }
+            if (_roundBannerCts != null)
+            {
+                _roundBannerCts.Dispose();
+            }
         }
     }
 }

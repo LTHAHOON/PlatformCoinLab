@@ -8,6 +8,7 @@ namespace CoinGame.Network
     using CoinGame.Gameplay.Items;
     using CoinGame.Player;
 
+
     public class NetworkCrate : NetworkBehaviour
     {
         private enum CrateState : byte
@@ -37,8 +38,6 @@ namespace CoinGame.Network
         private float _lidOpenStarted;
         private float _destroyAt;
 
-        private int MaxHealth => _data != null ? _data.MaxHealth : _maxHealth;
-        private int OpenedHitCount => _data != null ? _data.OpenedHitCount : 2;
 
         public void ApplyWeaponHitServer(WeaponKind kind, int damage, ulong attacker)
         {
@@ -103,8 +102,11 @@ namespace CoinGame.Network
 
         private void SetupLid()
         {
-            _lid ??= transform.Find("1_chest_top");
-            if (_lid == null) return;
+            if (_lid == null)
+            {
+                return;
+            }
+
             _closedRotation = _lid.localRotation;
             Vector3 axis = _data != null ? _data.LidRotationAxis : Vector3.right;
             float angle = _data != null ? _data.LidOpenAngle : 105f;
@@ -118,7 +120,10 @@ namespace CoinGame.Network
 
         private void ApplyState(CrateState state, bool instant)
         {
-            if (_lid == null) return;
+            if (_lid == null)
+            {
+                return;
+            }
             if (state == CrateState.Closed)
             {
                 _lid.localRotation = _closedRotation;
@@ -127,7 +132,10 @@ namespace CoinGame.Network
             if (state == CrateState.Opened)
             {
                 _lidOpenStarted = Time.time;
-                if (instant) _lid.localRotation = _openedRotation;
+                if (instant)
+                {
+                    _lid.localRotation = _openedRotation;
+                }
                 return;
             }
             _lid.localRotation = _openedRotation;
@@ -150,7 +158,10 @@ namespace CoinGame.Network
                 ItemData item = _dropTable[0];
                 foreach (ItemData entry in _dropTable)
                 {
-                    if (entry == null || !CanDropItemServer(entry)) continue;
+                    if (entry == null || !CanDropItemServer(entry))
+                    {
+                        continue;
+                    }
                     roll -= Mathf.Max(0, entry.Weight);
                     if (roll < 0) { item = entry; break; }
                 }
@@ -177,11 +188,22 @@ namespace CoinGame.Network
             {
                 NetworkPlayerStats stats = client.PlayerObject != null ? client.PlayerObject.GetComponent<NetworkPlayerStats>() : null;
                 NetworkInventory inventory = client.PlayerObject != null ? client.PlayerObject.GetComponent<NetworkInventory>() : null;
-                if (stats == null || inventory == null || stats.Role != PlayerRole.Collector) continue;
+                if (stats == null || inventory == null || stats.Role != PlayerRole.Collector)
+                {
+                    continue;
+                }
                 sawCollector = true;
-                if (item.Kind == ItemKind.Boost && !inventory.HasBoost || item.Kind == ItemKind.Revive && !inventory.HasRevive) return true;
+                if ((item.Kind == ItemKind.Boost && !inventory.HasBoost) ||
+                    (item.Kind == ItemKind.Revive && !inventory.HasRevive))
+                {
+                    return true;
+                }
             }
             return !sawCollector;
         }
+
+        private int MaxHealth => _data != null ? _data.MaxHealth : _maxHealth;
+        private int OpenedHitCount => _data != null ? _data.OpenedHitCount : 2;
+
     }
 }

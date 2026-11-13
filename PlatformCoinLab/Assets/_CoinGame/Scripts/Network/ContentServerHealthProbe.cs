@@ -17,7 +17,7 @@ namespace CoinGame.Network
                 : healthUrl.TrimEnd('/');
         }
 
-        public async UniTask<bool> IsAvailableAsync(CancellationToken cancellationToken)
+        public async UniTask<bool> IsAvailableAsync(CancellationToken token)
         {
             using UnityWebRequest request = UnityWebRequest.Get(_healthUrl);
             if (Uri.TryCreate(_healthUrl, UriKind.Absolute, out Uri uri) &&
@@ -29,7 +29,7 @@ namespace CoinGame.Network
             request.timeout = 3;
             try
             {
-                await request.SendWebRequest().ToUniTask(cancellationToken: cancellationToken);
+                await request.SendWebRequest().ToUniTask(cancellationToken: token);
                 return request.result == UnityWebRequest.Result.Success;
             }
             catch (OperationCanceledException)
@@ -42,19 +42,18 @@ namespace CoinGame.Network
             }
         }
 
-        public async UniTask<bool> IsAvailableWithRetryAsync(
-            CancellationToken cancellationToken, int retries = 2)
+        public async UniTask<bool> IsAvailableWithRetryAsync(CancellationToken token, int retries = 2)
         {
             for (int attempt = 0; attempt <= retries; attempt++)
             {
-                if (await IsAvailableAsync(cancellationToken))
+                if (await IsAvailableAsync(token))
                 {
                     return true;
                 }
                 if (attempt < retries)
                 {
                     await UniTask.Delay(TimeSpan.FromSeconds(attempt + 1),
-                        cancellationToken: cancellationToken);
+                        cancellationToken: token);
                 }
             }
             return false;

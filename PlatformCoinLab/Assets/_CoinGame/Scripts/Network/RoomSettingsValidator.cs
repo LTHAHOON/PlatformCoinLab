@@ -7,7 +7,7 @@ namespace CoinGame.Network
         public static bool TryRead(RoomLobbyView view, out RoomSettings settings)
         {
             settings = default;
-            if (view == null)
+            if (!view)
             {
                 return false;
             }

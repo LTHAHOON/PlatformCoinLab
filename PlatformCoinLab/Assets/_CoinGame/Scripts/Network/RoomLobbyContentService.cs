@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Threading;
 using Cysharp.Threading.Tasks;
 using UnityEngine.AddressableAssets;
 using UnityEngine.AddressableAssets.ResourceLocators;
@@ -8,7 +9,7 @@ using UnityEngine.ResourceManagement.ResourceLocations;
 
 namespace CoinGame.Network
 {
-    public sealed class RoomLobbyContentService
+    public class RoomLobbyContentService
     {
         private readonly ContentServerHealthProbe _healthProbe;
 
@@ -17,7 +18,7 @@ namespace CoinGame.Network
             _healthProbe = new ContentServerHealthProbe(healthUrl);
         }
 
-        public async UniTask<bool> IsAvailableAsync(System.Threading.CancellationToken token)
+        public async UniTask<bool> IsAvailableAsync(CancellationToken token)
         {
             if (!await UsesRemoteContentAsync(token))
             {
@@ -26,7 +27,7 @@ namespace CoinGame.Network
             return await _healthProbe.IsAvailableWithRetryAsync(token);
         }
 
-        private static async UniTask<bool> UsesRemoteContentAsync(System.Threading.CancellationToken token)
+        private static async UniTask<bool> UsesRemoteContentAsync(CancellationToken token)
         {
             try
             {

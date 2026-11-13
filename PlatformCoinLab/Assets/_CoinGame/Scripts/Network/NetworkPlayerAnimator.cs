@@ -1,10 +1,11 @@
 using Unity.Netcode;
 using UnityEngine;
-using CoinGame.Gameplay.Combat;
-using CoinGame.Gameplay.Player;
 
 namespace CoinGame.Network
 {
+    using CoinGame.Gameplay.Combat;
+    using CoinGame.Gameplay.Player;
+
     public class NetworkPlayerAnimator : NetworkBehaviour
     {
         private Animator _animator;

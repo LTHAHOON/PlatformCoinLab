@@ -1,14 +1,14 @@
 namespace CoinGame.Network
 {
-    public readonly struct RoomSettings
+    public struct RoomSettings
     {
-        public readonly string RoomId;
-        public readonly string RoomName;
-        public readonly int MaxPlayers;
-        public readonly int MaxCollectors;
-        public readonly int MaxDisruptors;
-        public readonly int MaxRounds;
-        public readonly int CoinMultiplier;
+        public string RoomId {get; private set;}
+        public string RoomName {get; private set;}
+        public int MaxPlayers {get; private set;}
+        public int MaxCollectors {get; private set;}
+        public int MaxDisruptors {get; private set;}
+        public int MaxRounds {get; private set;}
+        public int CoinMultiplier {get; private set;}
 
         public RoomSettings(string roomId, string roomName, int maxPlayers, int maxCollectors,
             int maxDisruptors, int maxRounds, int coinMultiplier)

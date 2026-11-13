@@ -203,3 +203,15 @@
 - 지원 플랫폼에 Web(WebGL)을 포함하고, 문서의 플랫폼 대응·실행 자료·실행/복원 절차에 Web 결과를 기록한다.
 - 맵 작업은 `CoinGame_GDD.md` 17장의 Lands 규칙을 따른다. `Location with environment` 통째 사용을 금지하고 Lands 2x2, 표준 자식 구조, 시드 배치, 금지 구역, 레이어 마스크, 도달 가능성 검증을 유지한다.
 - 맵 프리팹과 씬을 수정할 때마다 프로젝트 소개 문서 표와 맵 제작 섹션의 구현 상태·검증 결과·미확인 항목을 함께 갱신한다.
+
+## 추가 사용자 코드 기준
+
+- Persistent 씬에 필수로 배치된 `NetworkManager`는 `NetworkManager.Singleton`을 바로 사용한다. 동일한 메서드에서 지역 변수로 복사하거나 반복적인 null 검사를 추가하지 않는다.
+- 씬과 Prefab의 Inspector에서 설정할 수 있는 값은 코드에서 덮어쓰지 않는다. `NetworkConfig`, 씬 참조, UI 참조, ScriptableObject 참조처럼 직렬화된 설정은 Inspector를 단일 기준으로 사용한다.
+- Inspector 참조가 필수인 컴포넌트는 런타임 `Find`, `GetComponentInChildren`, `AddComponent` fallback을 추가하지 않는다. 실제 씬 계층에 없는 fallback은 삭제한다.
+- 현재 실행 경로에서 호출되지 않는 이벤트, public 메서드, 비동기 루프와 그 구독·해제 코드는 삭제한다. 삭제 전 프로젝트 전체 참조를 검색한다.
+- `=>`로 작성한 계산형 프로퍼티와 단순 멤버 접근자는 주요 로직을 먼저 보여준 뒤 파일 뒤쪽에 모아 배치한다.
+- `CoinGame` 관련 네임스페이스의 `using`은 파일 최상단이 아니라 해당 `namespace` 블록 안에 배치한다. Unity와 외부 패키지 `using`은 파일 최상단에 둔다.
+- `=>`는 계산형 프로퍼티와 단순 멤버 접근자에만 사용하고, 해당 멤버는 타입의 주요 실행 메서드 뒤쪽에 모아 둔다.
+- `new`를 사용한 객체 생성은 생성자 인자가 길지 않으면 줄바꿈하지 않고 한 줄에 작성한다. 인자가 길어도 객체 생성 자체는 한 줄에 두고, 필요한 경우 인자 값을 먼저 지역 변수로 나눈다.
+- `MonoBehaviour`, `NetworkBehaviour`, `ScriptableObject` 등 `UnityEngine.Object` 계열 클래스에서는 null propagation(`?.`)을 사용하지 않는다. 명시적인 null 검사와 중괄호를 사용한다. Unity 객체를 상속하지 않는 일반 C# 코드에서는 기존 코드 스타일과 가독성에 맞으면 `?.`를 사용할 수 있다.

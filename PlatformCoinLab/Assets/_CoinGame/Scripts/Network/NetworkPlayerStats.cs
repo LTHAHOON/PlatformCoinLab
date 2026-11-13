@@ -1,17 +1,18 @@
-﻿using Unity.Netcode;
+using Unity.Netcode;
 using System;
 using UnityEngine;
-using CoinGame.UI;
-using CoinGame.Utilities;
-using CoinGame.Player;
-using CoinGame.Gameplay.Combat;
-using CoinGame.Gameplay.Player;
-using CoinGame.Stage;
-using CoinGame.Gameplay.Items;
-using CoinGame.Managers;
 
 namespace CoinGame.Network
 {
+    using CoinGame.UI;
+    using CoinGame.Utilities;
+    using CoinGame.Player;
+    using CoinGame.Gameplay.Combat;
+    using CoinGame.Gameplay.Player;
+    using CoinGame.Stage;
+    using CoinGame.Gameplay.Items;
+    using CoinGame.Managers;
+
     public class NetworkPlayerStats : NetworkBehaviour
     {
         private readonly NetworkVariable<int> _curScore = new(0);
@@ -40,25 +41,6 @@ namespace CoinGame.Network
         private ulong _coinLockSourceClientId = ulong.MaxValue;
         private ulong _pushSourceClientId = ulong.MaxValue;
 
-        public PlayerRole Role => _role.Value;
-        public bool IsCoinLocked => NetworkManager.Singleton != null && NetworkManager.Singleton.ServerTime.Time < _coinLockUntil.Value;
-        public bool IsBeingPushed => NetworkManager.Singleton != null && NetworkManager.Singleton.ServerTime.Time < _pushedUntil.Value;
-        public int Score => _curScore.Value;
-        public int DisruptionScore => _disruptionScore.Value;
-        public int Health => _health.Value;
-        public int MaxHealth => _maxHealth.Value;
-        public PlayerLifeState LifeState => _lifeState.Value;
-        public bool IsAlive => _lifeState.Value == PlayerLifeState.Alive;
-        public double ReviveReadyAt => _reviveReadyAt.Value;
-        public bool IsInvulnerable => NetworkManager.Singleton != null && NetworkManager.Singleton.ServerTime.Time < _invulnerableUntil.Value;
-        public bool IsStunned => NetworkManager.Singleton != null && NetworkManager.Singleton.ServerTime.Time < _stunnedUntil.Value;
-        public bool IsStealthed => NetworkManager.Singleton != null && NetworkManager.Singleton.ServerTime.Time < _stealthUntil.Value;
-        public bool IsItemBlocked => NetworkManager.Singleton != null && NetworkManager.Singleton.ServerTime.Time < _itemBlockedUntil.Value;
-        public bool IsBoosted => NetworkManager.Singleton != null && NetworkManager.Singleton.ServerTime.Time < _boostUntil.Value;
-        public double InvulnerableRemaining => Remaining(_invulnerableUntil.Value);
-        public double StealthRemaining => Remaining(_stealthUntil.Value);
-        public double ItemBlockedRemaining => Remaining(_itemBlockedUntil.Value);
-        public double BoostRemaining => Remaining(_boostUntil.Value);
         public event Action HudStateChanged;
         private int _lastHudSignature = int.MinValue;
 
@@ -91,7 +73,10 @@ namespace CoinGame.Network
             if (signature != _lastHudSignature)
             {
                 _lastHudSignature = signature;
-                HudStateChanged?.Invoke();
+                if (HudStateChanged != null)
+                {
+                    HudStateChanged.Invoke();
+                }
             }
             if (IsOwner && !_playerStatsView)
             {
@@ -143,7 +128,7 @@ namespace CoinGame.Network
         {
             if (addAmount <= 0 || addAmount > MaxAddScoreAmount)
             {
-                Debug.LogWarning($"?섎せ???먯닔 利앷??? {addAmount}");
+                Debug.LogWarning($"??濡?굘???????嶺뚯빘鍮??? {addAmount}");
                 return;
             }
 
@@ -156,7 +141,7 @@ namespace CoinGame.Network
         {
             if (curScore < 0 || curScore > MaxSetScoreAmount)
             {
-                Debug.LogWarning($"?섎せ???먯닔 ?ㅼ젙媛? {curScore}");
+                Debug.LogWarning($"??濡?굘??????????깆젧?? {curScore}");
                 return;
             }
             _curScore.Value = curScore;
@@ -183,7 +168,10 @@ namespace CoinGame.Network
             if (Role == PlayerRole.Collector)
             {
                 _lifeState.Value = PlayerLifeState.Spectating;
-                NetworkRoundState.Instance?.NotifyPlayerDeathServer();
+                if (NetworkRoundState.Instance != null)
+                {
+                    NetworkRoundState.Instance.NotifyPlayerDeathServer();
+                }
                 return;
             }
             _respawnAt = NetworkManager.Singleton.ServerTime.Time + (_config != null ? _config.DisruptorRespawnDelay : 5f);
@@ -318,7 +306,10 @@ namespace CoinGame.Network
             if (!IsServer || _lifeState.Value != PlayerLifeState.Dead || NetworkManager.Singleton.ServerTime.Time < _respawnAt) return;
             _health.Value = _maxHealth.Value;
             _lifeState.Value = PlayerLifeState.Alive;
-            NetworkRoundState.Instance?.RelocatePlayerServer(this);
+            if (NetworkRoundState.Instance != null)
+            {
+                NetworkRoundState.Instance.RelocatePlayerServer(this);
+            }
         }
 
         public void ResetRoundLifeServer()
@@ -370,9 +361,10 @@ namespace CoinGame.Network
                 }
             }
 
+            RoomSettings settings = RoomLobbyController.Instance.Settings;
             int maxRoleCount = role == PlayerRole.Collector
-                ? RoomLobbyController.Instance?.MaxCollectors ?? 1
-                : RoomLobbyController.Instance?.MaxDisruptors ?? 1;
+                ? settings.MaxCollectors
+                : settings.MaxDisruptors;
             if (roleCount >= maxRoleCount)
             {
                 return;
@@ -474,6 +466,27 @@ namespace CoinGame.Network
                 }
             }
         }
+
+        public PlayerRole Role => _role.Value;
+        public bool IsCoinLocked => NetworkManager.Singleton != null && NetworkManager.Singleton.ServerTime.Time < _coinLockUntil.Value;
+        public bool IsBeingPushed => NetworkManager.Singleton != null && NetworkManager.Singleton.ServerTime.Time < _pushedUntil.Value;
+        public int Score => _curScore.Value;
+        public int DisruptionScore => _disruptionScore.Value;
+        public int Health => _health.Value;
+        public int MaxHealth => _maxHealth.Value;
+        public PlayerLifeState LifeState => _lifeState.Value;
+        public bool IsAlive => _lifeState.Value == PlayerLifeState.Alive;
+        public double ReviveReadyAt => _reviveReadyAt.Value;
+        public bool IsInvulnerable => NetworkManager.Singleton != null && NetworkManager.Singleton.ServerTime.Time < _invulnerableUntil.Value;
+        public bool IsStunned => NetworkManager.Singleton != null && NetworkManager.Singleton.ServerTime.Time < _stunnedUntil.Value;
+        public bool IsStealthed => NetworkManager.Singleton != null && NetworkManager.Singleton.ServerTime.Time < _stealthUntil.Value;
+        public bool IsItemBlocked => NetworkManager.Singleton != null && NetworkManager.Singleton.ServerTime.Time < _itemBlockedUntil.Value;
+        public bool IsBoosted => NetworkManager.Singleton != null && NetworkManager.Singleton.ServerTime.Time < _boostUntil.Value;
+        public double InvulnerableRemaining => Remaining(_invulnerableUntil.Value);
+        public double StealthRemaining => Remaining(_stealthUntil.Value);
+        public double ItemBlockedRemaining => Remaining(_itemBlockedUntil.Value);
+        public double BoostRemaining => Remaining(_boostUntil.Value);
+
     }
 }
 
