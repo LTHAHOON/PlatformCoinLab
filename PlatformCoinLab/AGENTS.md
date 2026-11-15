@@ -168,9 +168,9 @@
 - `NetworkInventory`가 서버 권한 무기 슬롯 2개, 현재 무기, 탄창/예비 탄약, 부스트/부활 보유를 동기화한다.
 - `WeaponData`, `WeaponBase`, `Gun`, `Sword`를 추가했다. 기본 총은 데미지 12/탄창 12/간격 0.3초, 검은 데미지 20/간격 0.6초/사거리 1.5m다.
 - `NetworkCombat`가 K/R/Q/E 입력을 서버 RPC로 전달하고, 서버가 쿨타임·탄약·팀킬·명중·피해를 판정한다. 투사체 런타임 경로는 `NetworkProjectile`과 `NetworkGameObjectPool`을 사용한다.
-- `NetworkPlayerStats`에 피격 무적 0.3초, 경직 0.1초, 수동 부활 3초, 부활 후 2초 무적, 은신, 이동 부스트, 아이템 습득 불가 상태를 확장했다.
+- `NetworkPlayerStats`에 피격 무적 0.3초, 경직 0.1초, 수동 부활 3초, 부활 후 2초 무적, 은신, 이동 부스트, 코인 수집 차단과 선택적 아이템 습득 차단 상태를 확장했다.
 - `NetworkCrate`, `NetworkCrateSpawner`, `NetworkItemPickup`, `ItemData`를 추가했다. 상자 HP와 가중치 드롭, 보유 제한 초과 시 미획득 규칙을 서버에서 처리한다.
-- 방해자 `L`은 기존 코인 잠금과 GDD 아이템 습득 불가를 함께 적용하며, 습득 불가 지속 5초/쿨타임 10초로 설정했다. `O` 밀치기 기본값은 쿨타임 3초/스턴 0.4초로 맞췄다.
+- 방해자 `L`은 수집가의 코인 수집을 5초 차단하고 10초 후 재사용한다. 아이템 습득 차단은 기능 플래그로 기본 비활성화했다. `O` 밀치기 기본값은 쿨타임 3초/스턴 0.4초로 맞췄다.
 - `M3DebugTools`를 Player 프리팹에 연결했다. Development Build에서 F1~F9로 총/검/탄약/부스트/부활/무적/은신/체력 회복/랜덤 아이템을 지급한다.
 - 패키지 원본은 수정하지 않고 `Assets/_Project/Prefabs/M3`에 BTM 아이템 복사본, Low Poly Guns 기반 총 외형, 기본 Cube 검 외형, Capsule 투사체를 만들었다.
 - Player 프리팹에 `WeaponSocket/Muzzle`을 추가하고 현재 무기 `NetworkVariable`에 따라 각 클라이언트가 총/검 외형을 로컬 장착한다.
@@ -179,6 +179,18 @@
 - 상자 드롭 픽업은 Variant의 `GlobalObjectHash=0` 문제를 피하도록 정규 `NetworkItemPickup.prefab`으로 변환해 등록했고, `Crate.prefab`의 `_pickupPrefab`과 드롭 테이블 참조를 재연결했다.
 - `M3HudView`와 `NetworkWorldHealthBar`를 추가해 체력/무기/탄약/퀵슬롯/상태/부활 대기/스킬 쿨타임과 월드 체력 바를 최소 표시한다. 키 바인딩은 변경하지 않았다.
 - `WeaponData`와 `ItemData`에 손 장착·드롭 스케일/오프셋 및 픽업 반경 보정값을 추가하고, BTM 아이템은 기본 드롭 스케일 0.22와 월드 픽업 반경 0.3을 사용한다.
+
+## 확정 규칙 정합성 진행 상태
+
+- 기획서에 R1~R7과 해석 I1~I5를 반영했다. 시간 초과 체력 페널티와 방해자 리스폰은 폐기하고, 라운드 클리어 시 사망 수집가 부활 흐름을 기록했다.
+- `RoundOutcomeEvaluator`와 `NetworkRoundState`에 시간 초과 방해자 승리, 방해자 전원 탈락 수집가 승리, 마지막 라운드 코인 클리어 판정을 반영했다.
+- 수집가와 방해자 모두 사망 시 관전 상태로 전환하며, 라운드 중 부활 아이템과 라운드 클리어 수집가 부활을 분리했다. 라운드 클리어 부활 체력은 `PlayerStatsConfig`에서 설정한다.
+- L 스킬은 코인 수집 차단으로 유지하고 아이템 습득 차단은 `RoleAbilityConfig.EnableItemBlockSkill` 기본값을 `false`로 두었다. 점수 탈취도 `EnableScoreSteal` 기본값을 `false`로 두었다.
+- `WeaponKind.Fist`, 역할별 서버 장비 지급, 라운드 1 공격 아이템 보정 정책을 추가했다. 수집가는 비무장, 방해자는 주먹으로 시작한다.
+- `AnimatorParameterSet` ScriptableObject와 `CharacterAnimatorUtility`를 추가하고 `Player.prefab`의 `NetworkPlayerAnimator`가 이동 시 Animator의 `MoveSpeed` 파라미터를 갱신하도록 연결했다.
+- 코인은 `OnTriggerStay`에서도 서버 판정을 재시도해 L 차단 시간이 끝난 뒤 같은 위치에 계속 서 있어도 수집되도록 수정했다. Animator root motion은 끄고 이동량 보간과 이동 방향 `Quaternion.Slerp` 회전을 추가했다.
+- `InGame_CoinGameScene/Map/Environment`에 `Grid`와 `KayKit_BlockBits_1.0_FREE` 블록 103개를 격자형 아레나로 배치하고 메시 bounds를 셀 폭에 맞춰 정규화했다. `Obstacle` 레이어·`BoxCollider`를 연결했으며 빈 셀 92개의 연결성을 확인했다. Spawner와 앵커 위치는 변경하지 않았다.
+- C# 정적 빌드는 오류 0개·경고 1개까지 확인했다. Unity EditMode 전체 실행은 기존 테스트 3개만 검색되어 통과했으며, CoinGame 테스트 검색·호스트 1 + 클라이언트 1 실제 검증은 추가 확인이 필요하다.
 
 ## 프로젝트 필수 요소 및 문서화 규칙
 

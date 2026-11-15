@@ -11,6 +11,7 @@ namespace CoinGame.Network
     using CoinGame.Player;
     using CoinGame.Managers;
     using CoinGame.Gameplay.Combat;
+    using CoinGame.Gameplay.Items;
     using CoinGame.Gameplay.Stage;
     using CoinGame.Utilities;
 
@@ -42,6 +43,7 @@ namespace CoinGame.Network
         private readonly NetworkVariable<int> _resultVersion = new(0);
         private readonly NetworkVariable<double> _lobbyStartTime = new(0d);
         private readonly NetworkVariable<bool> _loadGame = new(false);
+        private readonly NetworkVariable<int> _roundOneAttackDrops = new(0);
 
         private readonly HashSet<ulong> _phaseReadyClients = new();
         private int _expectedPlayers;
@@ -160,8 +162,7 @@ namespace CoinGame.Network
             _remainingSeconds.Value = Mathf.Max(0, _remainingSeconds.Value - 1);
             if (_remainingSeconds.Value <= 0)
             {
-                ApplyTimeoutPenaltyServer();
-                FinishRoundServer(false).Forget();
+                FinishMatchServer(MatchWinner.Disruptor);
             }
         }
 
@@ -326,10 +327,16 @@ namespace CoinGame.Network
                     {
                         stats.ResetRoundDisruptorStatsServer();
                         stats.ResetRoundLifeServer();
+                        NetworkInventory inventory = stats.GetComponent<NetworkInventory>();
+                        if (inventory != null)
+                        {
+                            inventory.ResetRoundWeaponsServer();
+                        }
                     }
                 }
                 _matchWinner.Value = MatchWinner.None;
                 _targetCoins.Value = _stageConfig.GetRequiredCoins(round);
+                _roundOneAttackDrops.Value = 0;
                 _remainingCoins.Value = _targetCoins.Value;
                 _spawnCoins.Value = _stageConfig.GetSpawnCoinCount(round, _coinMultiplier.Value);
                 _remainingSeconds.Value = Mathf.CeilToInt(_stageConfig.GetTimeLimit(round));
@@ -371,12 +378,18 @@ namespace CoinGame.Network
 
         public void NotifyPlayerDeathServer()
         {
-            if (!IsServer || !IsRoundActive || CountAliveCollectorsServer() > 0)
+            if (!IsServer || !IsRoundActive)
             {
                 return;
             }
 
-            FinishMatchServer(MatchWinner.Disruptor);
+            if (CountAliveCollectorsServer() <= 0 || CountAliveDisruptorsServer() <= 0)
+            {
+                MatchWinner winner = CountAliveCollectorsServer() <= 0
+                    ? MatchWinner.Disruptor
+                    : MatchWinner.Collector;
+                FinishMatchServer(winner);
+            }
         }
 
         public void RelocatePlayerServer(NetworkPlayerStats stats)
@@ -409,24 +422,60 @@ namespace CoinGame.Network
             return alive;
         }
 
-        private void ApplyTimeoutPenaltyServer()
+        private int CountAliveDisruptorsServer()
         {
-            int penalty = _stageConfig != null
-                ? _stageConfig.GetTimeoutPenalty(_remainingCoins.Value)
-                : 0;
-            if (penalty <= 0)
+            int alive = 0;
+            foreach (NetworkClient client in NetworkManager.Singleton.ConnectedClientsList)
+            {
+                NetworkPlayerStats stats = client.PlayerObject == null ? null : client.PlayerObject.GetComponent<NetworkPlayerStats>();
+                if (stats != null && stats.Role == PlayerRole.Disruptor && stats.IsAlive)
+                {
+                    alive++;
+                }
+            }
+
+            return alive;
+        }
+
+        public bool ShouldGuaranteeRoundOneAttackItemServer()
+        {
+            if (!IsServer)
+            {
+                return false;
+            }
+
+            return DropGuaranteePolicy.ShouldGuaranteeAttackItem(
+                _round.Value,
+                CountCollectorsServer(),
+                _roundOneAttackDrops.Value);
+        }
+
+        public void RegisterRoundOneAttackItemDropServer()
+        {
+            if (!IsServer)
             {
                 return;
             }
 
+            if (ShouldGuaranteeRoundOneAttackItemServer())
+            {
+                _roundOneAttackDrops.Value++;
+            }
+        }
+
+        private int CountCollectorsServer()
+        {
+            int count = 0;
             foreach (NetworkClient client in NetworkManager.Singleton.ConnectedClientsList)
             {
                 NetworkPlayerStats stats = client.PlayerObject == null ? null : client.PlayerObject.GetComponent<NetworkPlayerStats>();
                 if (stats != null && stats.Role == PlayerRole.Collector)
                 {
-                    stats.ApplyDamageServer(new DamageInfo(ulong.MaxValue, penalty, DamageType.Timeout, Vector3.zero));
+                    count++;
                 }
             }
+
+            return count;
         }
 
         private async UniTaskVoid FinishRoundServer(bool collectorWon)
@@ -436,11 +485,16 @@ namespace CoinGame.Network
                 return;
             }
 
+            if (collectorWon)
+            {
+                ReviveCollectorsForRoundClearServer();
+            }
+
             _roundActive.Value = false;
             bool finalCollectorWon = collectorWon;
             if (_round.Value >= _maxRounds.Value)
             {
-                finalCollectorWon = CountAliveCollectorsServer() > 0;
+                finalCollectorWon = _remainingCoins.Value <= 0 && CountAliveCollectorsServer() > 0;
                 _matchWinner.Value = finalCollectorWon
                     ? MatchWinner.Collector
                     : MatchWinner.Disruptor;
@@ -453,6 +507,18 @@ namespace CoinGame.Network
             {
                 await UniTask.Delay(TimeSpan.FromSeconds(2f), cancellationToken: destroyCancellationToken);
                 StartRoundServer();
+            }
+        }
+
+        private void ReviveCollectorsForRoundClearServer()
+        {
+            foreach (NetworkClient client in NetworkManager.Singleton.ConnectedClientsList)
+            {
+                NetworkPlayerStats stats = client.PlayerObject == null ? null : client.PlayerObject.GetComponent<NetworkPlayerStats>();
+                if (stats != null && stats.ReviveForRoundClearServer())
+                {
+                    RelocatePlayerServer(stats);
+                }
             }
         }
 

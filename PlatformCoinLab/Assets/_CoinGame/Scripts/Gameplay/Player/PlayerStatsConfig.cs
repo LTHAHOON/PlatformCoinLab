@@ -6,8 +6,7 @@ namespace CoinGame.Gameplay.Player
     public class PlayerStatsConfig : ScriptableObject
     {
         [Min(1)] public int MaxHealth = 100;
-        [Min(0)] public float DisruptorRespawnDelay = 5f;
         [Min(0)] public float ReviveReadyDelay = 3f;
-        [Min(0)] public float TimeoutDamagePerMissingCoin = 1f;
+        [Range(1, 100)] public int RoundClearReviveHealthPercent = 50;
     }
 }

@@ -13,8 +13,9 @@ namespace CoinGame.Network
         private float _speed;
         private float _remaining;
         private int _damage;
+        private int _crateDamage;
         private ulong _attacker;
-        public void InitializeServer(Vector3 direction, float speed, float range, int damage, ulong attacker)
+        public void InitializeServer(Vector3 direction, float speed, float range, int damage, int crateDamage, ulong attacker)
         {
             if (!IsServer)
             {
@@ -25,6 +26,7 @@ namespace CoinGame.Network
             _speed = speed;
             _remaining = range;
             _damage = damage;
+            _crateDamage = crateDamage;
             _attacker = attacker;
         }
         private void Update()
@@ -44,7 +46,7 @@ namespace CoinGame.Network
 
                 if (hit.collider.TryGetComponent(out NetworkCrate crate))
                 {
-                    crate.ApplyWeaponHitServer(WeaponKind.Gun, _damage, _attacker);
+                    crate.ApplyWeaponHitServer(_crateDamage, _attacker);
                 }
 
                 NetworkGameObjectPool.Despawn(gameObject);

@@ -10,9 +10,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: caf1ce8a232e458b947251bf2f38003c, type: 3}
-  m_Name: PlayerStatsConfig
+  m_Name: Player Stats Config
   m_EditorClassIdentifier: 
   MaxHealth: 100
-  DisruptorRespawnDelay: 5
   ReviveReadyDelay: 3
-  TimeoutDamagePerMissingCoin: 1
+  RoundClearReviveHealthPercent: 50

@@ -1,4 +1,6 @@
 {
+    "files.encoding": "utf8",
+    "files.autoGuessEncoding": false,
     "files.exclude": {
         "**/.DS_Store": true,
         "**/.git": true,

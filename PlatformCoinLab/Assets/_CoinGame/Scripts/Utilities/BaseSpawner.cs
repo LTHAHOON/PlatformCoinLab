@@ -64,6 +64,9 @@ namespace CoinGame.Utilities
         protected LayerMask _blockingLayerMask;
 
         [SerializeField]
+        protected List<BoxCollider> _spawnZones = new();
+
+        [SerializeField]
         protected bool _canUseObjectPool;
 
         protected GameObject _spawnPrefab;
@@ -327,6 +330,6 @@ namespace CoinGame.Utilities
         }
 
         public bool IsDefaultPlayerSpawner => _isDefaultPlayerSpawner;
-
     }
+
 }

@@ -11,6 +11,8 @@ namespace CoinGame.Network
         [SerializeField]
         private WeaponData _gun;
         [SerializeField]
+        private WeaponData _fist;
+        [SerializeField]
         private WeaponData _sword;
         [SerializeField]
         private Transform _weaponSocket;
@@ -39,6 +41,11 @@ namespace CoinGame.Network
                 _gun = CreateDefault(WeaponKind.Gun, 12, 0.3f, 12f, 14f, 12, 60, 1f);
             }
 
+            if (_fist == null)
+            {
+                _fist = CreateDefault(WeaponKind.Fist, 8, 0.45f, 3f, 0f, 0, 0, 1f);
+            }
+
             if (_sword == null)
             {
                 _sword = CreateDefault(WeaponKind.Sword, 20, 0.6f, 1.5f, 0f, 0, 0, 2f);
@@ -63,7 +70,12 @@ namespace CoinGame.Network
             }
 
             _visualKind = _inventory.CurrentKind;
-            if (_weaponSocket == null || _visualKind == WeaponKind.None)
+            if (_weaponSocket == null)
+            {
+                return;
+            }
+
+            if (_visualKind == WeaponKind.Fist)
             {
                 return;
             }
@@ -125,7 +137,18 @@ namespace CoinGame.Network
 
             SwitchRpc(delta);
         }
-        [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Owner)] private void AttackRpc(Vector3 direction)
+
+        public void RequestSelectWeapon(WeaponKind kind)
+        {
+            if (!IsOwner)
+            {
+                return;
+            }
+
+            SelectWeaponRpc(kind);
+        }
+        [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Owner)]
+        private void AttackRpc(Vector3 direction)
         {
             if (!IsServer || _stats == null || !_stats.IsAlive || _stats.IsInvulnerable ||
                 NetworkManager.Singleton.ServerTime.Time < _nextAttack)
@@ -134,8 +157,8 @@ namespace CoinGame.Network
             }
 
             WeaponKind kind = _inventory.CurrentKind;
-            WeaponData data = kind == WeaponKind.Sword ? _sword : _gun;
-            if (data == null || kind == WeaponKind.None)
+            WeaponData data = GetWeaponData(kind);
+            if (data == null)
             {
                 return;
             }
@@ -153,9 +176,9 @@ namespace CoinGame.Network
             }
 
             direction.Normalize();
-            if (kind == WeaponKind.Sword)
+            if (kind == WeaponKind.Sword || kind == WeaponKind.Fist)
             {
-                HitSword(direction, data);
+                HitMelee(direction, data, kind, GetPlayerDamage(kind, data));
             }
             else
             {
@@ -166,6 +189,7 @@ namespace CoinGame.Network
         }
         [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Owner)] private void ReloadRpc() { _inventory.ReloadServer(_gun != null ? _gun.MagazineSize : 12); _reloadVersion.Value++; }
         [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Owner)] private void SwitchRpc(int delta) { _inventory.SwitchServer(delta); }
+        [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Owner)] private void SelectWeaponRpc(WeaponKind kind) { _inventory.SelectWeaponServer(kind); }
         private void HitGun(Vector3 direction, WeaponData data)
         {
             if (_projectilePrefab != null)
@@ -173,16 +197,22 @@ namespace CoinGame.Network
                 Vector3 origin = _muzzle != null ? _muzzle.position : transform.position + Vector3.up;
                 NetworkProjectile projectile = Instantiate(_projectilePrefab, origin, Quaternion.LookRotation(direction));
                 projectile.NetworkObject.Spawn();
-                projectile.InitializeServer(direction, data.ProjectileSpeed, data.Range, data.Damage, OwnerClientId);
+                projectile.InitializeServer(direction, data.ProjectileSpeed, data.Range, data.Damage,
+                    GetCrateDamage(data), OwnerClientId);
                 return;
             }
             if (Physics.Raycast(transform.position + Vector3.up, direction, out RaycastHit hit, data.Range))
             {
-                ResolveHit(hit.collider, data.Damage, WeaponKind.Gun, direction);
+                ResolveHit(hit.collider, data.Damage, GetCrateDamage(data), direction);
             }
         }
-        private void HitSword(Vector3 direction, WeaponData data)
+        private void HitMelee(Vector3 direction, WeaponData data, WeaponKind kind, int playerDamage)
         {
+            if (TryHitCrateRaycast(direction, data))
+            {
+                return;
+            }
+
             foreach (Collider hit in Physics.OverlapSphere(transform.position + direction * data.Range * 0.5f, data.Range))
             {
                 Vector3 to = hit.transform.position - transform.position; to.y = 0f;
@@ -191,10 +221,38 @@ namespace CoinGame.Network
                 {
                     continue;
                 }
-                ResolveHit(hit, data.Damage, WeaponKind.Sword, direction);
+                ResolveHit(hit, playerDamage, GetCrateDamage(data), direction);
             }
         }
-        private void ResolveHit(Collider hit, int damage, WeaponKind kind, Vector3 direction)
+
+        private bool TryHitCrateRaycast(Vector3 direction, WeaponData data)
+        {
+            Vector3 origin = transform.position + Vector3.up * 0.8f;
+            if (!Physics.Raycast(origin, direction, out RaycastHit hit, data.Range,
+                Physics.DefaultRaycastLayers, QueryTriggerInteraction.Ignore))
+            {
+                return false;
+            }
+
+            if (!hit.collider.TryGetComponent(out NetworkCrate crate))
+            {
+                return false;
+            }
+
+            crate.ApplyWeaponHitServer(GetCrateDamage(data), OwnerClientId);
+            return true;
+        }
+
+        private WeaponData GetWeaponData(WeaponKind kind)
+        {
+            if (kind == WeaponKind.Fist)
+            {
+                return _fist;
+            }
+
+            return kind == WeaponKind.Sword ? _sword : _gun;
+        }
+        private void ResolveHit(Collider hit, int damage, int crateDamage, Vector3 direction)
         {
             if (hit.TryGetComponent(out NetworkPlayerStats target))
             {
@@ -206,8 +264,23 @@ namespace CoinGame.Network
             }
             if (hit.TryGetComponent(out NetworkCrate crate))
             {
-                crate.ApplyWeaponHitServer(kind, damage, OwnerClientId);
+                crate.ApplyWeaponHitServer(crateDamage, OwnerClientId);
             }
+        }
+
+        private int GetPlayerDamage(WeaponKind kind, WeaponData data)
+        {
+            if (kind == WeaponKind.Fist && _inventory != null)
+            {
+                return _inventory.GetBasicDamage(_stats.Role);
+            }
+
+            return data.Damage;
+        }
+
+        private int GetCrateDamage(WeaponData data)
+        {
+            return Mathf.Max(1, Mathf.RoundToInt(data.CrateDamage));
         }
 
         public int AttackVersion => _attackVersion.Value;

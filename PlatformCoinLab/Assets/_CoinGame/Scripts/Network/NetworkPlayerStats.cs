@@ -34,7 +34,6 @@ namespace CoinGame.Network
         private readonly NetworkVariable<double> _stealthUntil = new(0d);
         private readonly NetworkVariable<double> _itemBlockedUntil = new(0d);
         private readonly NetworkVariable<double> _boostUntil = new(0d);
-        private double _respawnAt;
         [SerializeField]
         private PlayerStatsConfig _config;
         private PlayerStatsView _playerStatsView;
@@ -53,7 +52,6 @@ namespace CoinGame.Network
                 _health.Value = maxHealth;
                 _lifeState.Value = PlayerLifeState.Alive;
                 _reviveReadyAt.Value = 0d;
-                _respawnAt = 0d;
                 RefreshMatchPlayerCount();
             }
 
@@ -68,7 +66,6 @@ namespace CoinGame.Network
 
         private void Update()
         {
-            UpdateLifeServer();
             int signature = HashCode.Combine(_health.Value, _lifeState.Value, IsInvulnerable, IsStealthed, IsItemBlocked, IsBoosted);
             if (signature != _lastHudSignature)
             {
@@ -160,26 +157,25 @@ namespace CoinGame.Network
                 return;
             }
             _stunnedUntil.Value = Mathf.Max((float)_stunnedUntil.Value, (float)(NetworkManager.Singleton.ServerTime.Time + 0.1d));
-            _invulnerableUntil.Value = Mathf.Max((float)_invulnerableUntil.Value, (float)(NetworkManager.Singleton.ServerTime.Time + 0.3d));
+            if (info.Type != DamageType.Weapon)
+            {
+                _invulnerableUntil.Value = Mathf.Max((float)_invulnerableUntil.Value,
+                    (float)(NetworkManager.Singleton.ServerTime.Time + 0.3d));
+            }
             _health.Value = Mathf.Max(0, _health.Value - info.Amount);
             if (_health.Value > 0) return;
             _lifeState.Value = PlayerLifeState.Dead;
             _reviveReadyAt.Value = NetworkManager.Singleton.ServerTime.Time + (_config != null ? _config.ReviveReadyDelay : 3f);
-            if (Role == PlayerRole.Collector)
+            _lifeState.Value = PlayerLifeState.Spectating;
+            if (NetworkRoundState.Instance != null)
             {
-                _lifeState.Value = PlayerLifeState.Spectating;
-                if (NetworkRoundState.Instance != null)
-                {
-                    NetworkRoundState.Instance.NotifyPlayerDeathServer();
-                }
-                return;
+                NetworkRoundState.Instance.NotifyPlayerDeathServer();
             }
-            _respawnAt = NetworkManager.Singleton.ServerTime.Time + (_config != null ? _config.DisruptorRespawnDelay : 5f);
         }
 
         public bool TryReviveServer()
         {
-            if (!IsServer || Role != PlayerRole.Collector || _lifeState.Value != PlayerLifeState.Spectating ||
+            if (!IsServer || (Role != PlayerRole.Collector && Role != PlayerRole.Disruptor) || _lifeState.Value != PlayerLifeState.Spectating ||
                 NetworkManager.Singleton.ServerTime.Time > _reviveReadyAt.Value)
             {
                 return false;
@@ -188,6 +184,21 @@ namespace CoinGame.Network
             if (inventory == null || !inventory.ConsumeReviveServer()) return false;
             _health.Value = Mathf.Max(1, _maxHealth.Value / 2);
             _lifeState.Value = PlayerLifeState.Alive;
+            _invulnerableUntil.Value = NetworkManager.Singleton.ServerTime.Time + 2d;
+            return true;
+        }
+
+        public bool ReviveForRoundClearServer()
+        {
+            if (!IsServer || Role != PlayerRole.Collector || _lifeState.Value != PlayerLifeState.Spectating)
+            {
+                return false;
+            }
+
+            int percent = _config != null ? _config.RoundClearReviveHealthPercent : 50;
+            _health.Value = Mathf.Max(1, _maxHealth.Value * Mathf.Clamp(percent, 1, 100) / 100);
+            _lifeState.Value = PlayerLifeState.Alive;
+            _reviveReadyAt.Value = 0d;
             _invulnerableUntil.Value = NetworkManager.Singleton.ServerTime.Time + 2d;
             return true;
         }
@@ -301,17 +312,6 @@ namespace CoinGame.Network
             _boostUntil.Value = Mathf.Max((float)_boostUntil.Value, (float)until);
         }
 
-        private void UpdateLifeServer()
-        {
-            if (!IsServer || _lifeState.Value != PlayerLifeState.Dead || NetworkManager.Singleton.ServerTime.Time < _respawnAt) return;
-            _health.Value = _maxHealth.Value;
-            _lifeState.Value = PlayerLifeState.Alive;
-            if (NetworkRoundState.Instance != null)
-            {
-                NetworkRoundState.Instance.RelocatePlayerServer(this);
-            }
-        }
-
         public void ResetRoundLifeServer()
         {
             if (!IsServer)
@@ -319,10 +319,9 @@ namespace CoinGame.Network
                 return;
             }
 
-            _health.Value = _maxHealth.Value;
-            _lifeState.Value = PlayerLifeState.Alive;
             _reviveReadyAt.Value = 0d;
-            _respawnAt = 0d;
+            _coinLockUntil.Value = 0d;
+            _itemBlockedUntil.Value = 0d;
         }
 
         public void SelectRole(PlayerRole role)
@@ -335,6 +334,11 @@ namespace CoinGame.Network
             if (IsServer && role is PlayerRole.Collector or PlayerRole.Disruptor)
             {
                 _role.Value = role;
+                NetworkInventory inventory = GetComponent<NetworkInventory>();
+                if (inventory != null)
+                {
+                    inventory.SetRoleLoadoutServer(role);
+                }
             }
         }
 
@@ -485,6 +489,7 @@ namespace CoinGame.Network
         public double InvulnerableRemaining => Remaining(_invulnerableUntil.Value);
         public double StealthRemaining => Remaining(_stealthUntil.Value);
         public double ItemBlockedRemaining => Remaining(_itemBlockedUntil.Value);
+        public double CoinLockedRemaining => Remaining(_coinLockUntil.Value);
         public double BoostRemaining => Remaining(_boostUntil.Value);
 
     }

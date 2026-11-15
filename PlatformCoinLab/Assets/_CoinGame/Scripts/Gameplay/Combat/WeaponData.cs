@@ -2,7 +2,7 @@ using UnityEngine;
 
 namespace CoinGame.Gameplay.Combat
 {
-    public enum WeaponKind : byte { None, Gun, Sword }
+    public enum WeaponKind : byte { Fist, Gun, Sword }
 
     [CreateAssetMenu(fileName = "WeaponData", menuName = "CoinGame/Weapon Data")]
     public class WeaponData : ScriptableObject
@@ -15,7 +15,7 @@ namespace CoinGame.Gameplay.Combat
         [Min(1)] public int MagazineSize = 12;
         [Min(0)] public int ReserveAmmo = 60;
         [Min(0.01f)] public float ArcAngle = 70f;
-        [Min(0.01f)] public float CrateDamage = 2f;
+        [Min(0.01f)] public float CrateDamage = 1f;
         public Vector3 HandScale = Vector3.one;
         public Vector3 HandOffset = Vector3.zero;
         public Vector3 HandRotation = Vector3.zero;

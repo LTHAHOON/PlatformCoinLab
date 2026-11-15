@@ -14,14 +14,19 @@
             return aliveCollectors <= 0 ? MatchWinner.Disruptor : MatchWinner.None;
         }
 
-        public static MatchWinner EvaluateFinalRound(int aliveCollectors)
+        public static MatchWinner EvaluateDisruptorDeath(int aliveDisruptors)
         {
-            return aliveCollectors > 0 ? MatchWinner.Collector : MatchWinner.Disruptor;
+            return aliveDisruptors <= 0 ? MatchWinner.Collector : MatchWinner.None;
         }
 
-        public static int CalculateTimeoutPenalty(int missingCoins, float coefficient)
+        public static MatchWinner EvaluateFinalRound(bool coinsCollected, int aliveCollectors)
         {
-            return (int)System.Math.Max(0, System.Math.Ceiling(missingCoins * coefficient));
+            if (!coinsCollected)
+            {
+                return MatchWinner.Disruptor;
+            }
+
+            return aliveCollectors > 0 ? MatchWinner.Collector : MatchWinner.Disruptor;
         }
     }
 }

@@ -45,7 +45,7 @@ namespace CoinGame.Timeline
 
         public void OnLoadScene(int gameScene)
         {
-            if (gameScene < (int)GameScene.OutGame || gameScene > (int)GameScene.InGame)
+            if (gameScene < (int)GameScene.OutGame || gameScene > (int)GameScene.Waiting)
             {
                 Debug.LogError($"Invalid game scene value: {gameScene}.", this);
                 return;

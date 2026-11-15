@@ -330,7 +330,11 @@ MonoBehaviour:
   _blockingLayerMask:
     serializedVersion: 2
     m_Bits: 384
+  _spawnZones: []
   _canUseObjectPool: 0
+  _playerZones: []
+  _collectorPlayerZones: []
+  _disruptorPlayerZones: []
 --- !u!4 &79639844
 Transform:
   m_ObjectHideFlags: 0
@@ -343,7 +347,8 @@ Transform:
   m_LocalPosition: {x: 0, y: 0, z: -7.2}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
-  m_Children: []
+  m_Children:
+  - {fileID: 745349917}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &103947562
@@ -1565,7 +1570,7 @@ MonoBehaviour:
     m_Bits: 1
   m_VolumeTrigger: {fileID: 0}
   m_VolumeFrameworkUpdateModeOption: 2
-  m_RenderPostProcessing: 1
+  m_RenderPostProcessing: 0
   m_Antialiasing: 0
   m_AntialiasingQuality: 2
   m_StopNaN: 0
@@ -1645,7 +1650,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::NetworkConnector
   _defaultPlayerSpawner: {fileID: 79639843}
-  _autoConnectOnStart: 0
 --- !u!1 &418787434
 GameObject:
   m_ObjectHideFlags: 0
@@ -2152,6 +2156,19 @@ MonoBehaviour:
   m_EditorClassIdentifier: Unity.InputSystem::UnityEngine.InputSystem.InputActionReference
   m_Asset: {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}
   m_ActionId: 9caa3d8a-6b2f-4e8e-8bad-6ede561bd9be
+--- !u!134 &500696794
+PhysicsMaterial:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: ' (Instance)'
+  serializedVersion: 2
+  m_DynamicFriction: 0.6
+  m_StaticFriction: 0.6
+  m_Bounciness: 0
+  m_FrictionCombine: 0
+  m_BounceCombine: 0
 --- !u!1 &506407312
 GameObject:
   m_ObjectHideFlags: 0
@@ -2831,10 +2848,64 @@ MonoBehaviour:
   _view: {fileID: 150262853}
   _countdown: {fileID: 150262848}
   _outGameCanvas: {fileID: 1443105579}
+  _outGameCanvasGroup: {fileID: 1443105581}
   _networkRoundStatePrefab: {fileID: 4597449833319584482, guid: 58f01d0a75e2f9b4984caa32b2109f91, type: 3}
   _multiplayerSession: {fileID: 11400000, guid: 6ec00dd2b9df06046aa782c0cc4ec58e, type: 2}
   _sessionConnector: {fileID: 11400000, guid: 228940271b5f4b74b84d08e573544ecb, type: 2}
   _contentServerHealthUrl: https://localhost:5443/health
+--- !u!1 &745349916
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 745349917}
+  - component: {fileID: 745349918}
+  m_Layer: 0
+  m_Name: WaitingPlayerSpawnZone
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &745349917
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 745349916}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 79639844}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!65 &745349918
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 745349916}
+  m_Material: {fileID: 500696794}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 3, y: 2, z: 3}
+  m_Center: {x: 0, y: 1, z: 0}
 --- !u!114 &840817113
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -4897,6 +4968,9 @@ MonoBehaviour:
   _outGameSceneRef:
     _sceneAsset: {fileID: 102900000, guid: 3800c6de171d45d46b4056d587ae9dcc, type: 3}
     _scenePath: Assets/_CoinGame/Scenes/Persistent_CoinGameScene.unity
+  _waitingSceneRef:
+    _sceneAsset: {fileID: 102900000, guid: 2cb4dfabdec71f445a7de0f714dbab6b, type: 3}
+    _scenePath: Assets/_CoinGame/Scenes/RoomWaiting_CoinGameScene.unity
   _roundStartDelay: 3
   _networkRoundState: {fileID: 0}
 --- !u!4 &1155378281

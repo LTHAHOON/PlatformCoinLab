@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 8646634499705195293}
   - component: {fileID: 3346440293990209419}
   - component: {fileID: 1586953451526034495}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: 1_chest_bottom
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -101,7 +101,7 @@ GameObject:
   - component: {fileID: 2307545198725173234}
   - component: {fileID: 3199922767433324806}
   - component: {fileID: 430982796944208960}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: 1_chest_top
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -117,8 +117,8 @@ Transform:
   m_GameObject: {fileID: 4043866225360769327}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 1.0381764, z: -1.3217936}
-  m_LocalScale: {x: 0.7, y: 0.7, z: 0.7}
+  m_LocalPosition: {x: 0, y: 0.98, z: -1.303}
+  m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 2922368886785114080}
@@ -192,7 +192,7 @@ GameObject:
   - component: {fileID: 2618685771596936413}
   - component: {fileID: 6501910989161320697}
   - component: {fileID: 3378676342530512424}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: Crate
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -209,7 +209,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: -0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalScale: {x: 0.5, y: 0.5, z: 0.5}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 8646634499705195293}
@@ -249,7 +249,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
-  GlobalObjectIdHash: 247375410
+  GlobalObjectIdHash: 329123010
   InScenePlacedSourceGlobalObjectIdHash: 0
   m_InScenePlacedDisabledByDefault: 0
   DeferredDespawnTick: 0
@@ -276,10 +276,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 34f697bb8916e434a890891eedc167d0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CoinGame.Network.NetworkCrate
-  _data: {fileID: 11400000, guid: 5f5f78fd9f9f4a9cb2d7c4c3f4f2a11b, type: 2}
   ShowTopMostFoldoutHeaderGroup: 1
-  _maxHealth: 30
+  _data: {fileID: 11400000, guid: 5f5f78fd9f9f4a9cb2d7c4c3f4f2a11b, type: 2}
   _pickupPrefab: {fileID: 6413215496426315854, guid: 9a12f5f6c4eb621409479d02fe690821, type: 3}
+  _ammoPickupPrefab: {fileID: 510478459734884575, guid: 04aa13cf4d9b3dd40a87721e37d22f00, type: 3}
+  _boostPickupPrefab: {fileID: 1527749136741719199, guid: f57087729368edb4b9dade26e1480afe, type: 3}
+  _healthPickupPrefab: {fileID: 8431037216731093152, guid: 7e5f4ffa5e8476b45b94c5472ed86a25, type: 3}
+  _invulnerablePickupPrefab: {fileID: 5842849792798530184, guid: d10a133d4dbee954ca7f688165aa35bf, type: 3}
+  _randomPickupPrefab: {fileID: 7621981584965302771, guid: 0e547b3bfd2dd284a85e2d3e3f7b122e, type: 3}
+  _revivePickupPrefab: {fileID: 4594725583029489272, guid: e353c61e6e6139a41b626eafe88bb340, type: 3}
+  _stealthPickupPrefab: {fileID: 7033391531605794726, guid: 9e19609409504184ea0c3253fb0cea2e, type: 3}
   _dropTable:
   - {fileID: 11400000, guid: beb747d558fb48e3a331239cb89fb21d, type: 2}
   - {fileID: 11400000, guid: 31b6e941c47e4ec29d3acc9d8c22edf1, type: 2}

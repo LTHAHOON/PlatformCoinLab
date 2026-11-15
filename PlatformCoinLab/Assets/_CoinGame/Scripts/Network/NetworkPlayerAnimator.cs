@@ -1,4 +1,4 @@
-using Unity.Netcode;
+﻿using Unity.Netcode;
 using UnityEngine;
 
 namespace CoinGame.Network
@@ -8,7 +8,11 @@ namespace CoinGame.Network
 
     public class NetworkPlayerAnimator : NetworkBehaviour
     {
-        private Animator _animator;
+        [SerializeField]
+        private AnimatorParameterSet _parameterSet;
+        [SerializeField]
+        private CharacterAnimatorUtility _animatorUtility;
+
         private NetworkPlayerStats _stats;
         private NetworkInventory _inventory;
         private NetworkCombat _combat;
@@ -17,13 +21,17 @@ namespace CoinGame.Network
         private int _lastReload;
         private int _lastHealth;
         private PlayerLifeState _lastLifeState;
+        private float _moveParameter;
 
         private void Awake()
         {
-            _animator = GetComponentInChildren<Animator>();
             _stats = GetComponent<NetworkPlayerStats>();
             _inventory = GetComponent<NetworkInventory>();
             _combat = GetComponent<NetworkCombat>();
+            if (_animatorUtility == null)
+            {
+                _animatorUtility = GetComponent<CharacterAnimatorUtility>();
+            }
         }
 
         public override void OnNetworkSpawn()
@@ -35,48 +43,119 @@ namespace CoinGame.Network
 
         private void Update()
         {
-            if (_animator == null || _stats == null) return;
+            if (_animatorUtility == null || _stats == null)
+            {
+                return;
+            }
+
             Vector3 delta = transform.position - _lastPosition;
             delta.y = 0f;
             float speed = delta.magnitude / Mathf.Max(Time.deltaTime, 0.001f);
-            _animator.SetFloat("Speed", speed);
-            _animator.SetBool("IsMoving", speed > 0.05f);
-            _animator.SetInteger("WeaponType", _inventory != null && _inventory.CurrentKind == WeaponKind.Sword ? 1 : 0);
-            _animator.SetBool("IsDead", !_stats.IsAlive);
+            float targetMoveParameter = Mathf.Clamp01(speed / 4f);
+            float blend = 1f - Mathf.Exp(-12f * Time.deltaTime);
+            _moveParameter = Mathf.Lerp(_moveParameter, targetMoveParameter, blend);
+            _animatorUtility.SetMove(_moveParameter);
+            SetFloat(GetParameter("Speed", "Speed"), speed);
+            SetBool(GetParameter("IsMoving", "IsMoving"), speed > 0.05f);
+            SetInteger(GetParameter("WeaponType", "WeaponType"), _inventory != null && _inventory.CurrentKind == WeaponKind.Sword ? 1 : 0);
+            SetBool(GetParameter("IsDead", "IsDead"), !_stats.IsAlive);
+
             if (_combat != null)
             {
-                if (_combat.AttackVersion != _lastAttack) Trigger("Attack");
-                if (_combat.ReloadVersion != _lastReload) Trigger("Reload");
+                if (_combat.AttackVersion != _lastAttack)
+                {
+                    _animatorUtility.Trigger(GetParameter("Attack", "Attack"));
+                }
+                if (_combat.ReloadVersion != _lastReload)
+                {
+                    _animatorUtility.Trigger(GetParameter("Reload", "Reload"));
+                }
                 _lastAttack = _combat.AttackVersion;
                 _lastReload = _combat.ReloadVersion;
             }
+
             if (_stats.Health < _lastHealth)
             {
-                Trigger("Hit");
-                Trigger("Damage");
+                _animatorUtility.Trigger(GetParameter("Hit", "Hit"));
+                _animatorUtility.Trigger(GetParameter("Damage", "Damage"));
             }
-            if (_lastLifeState != _stats.LifeState && !_stats.IsAlive) Trigger("Death");
-            if (_lastLifeState != _stats.LifeState && _stats.IsAlive) Trigger("Revive");
+            if (_lastLifeState != _stats.LifeState && !_stats.IsAlive)
+            {
+                _animatorUtility.Trigger(GetParameter("Death", "Death"));
+            }
+            if (_lastLifeState != _stats.LifeState && _stats.IsAlive)
+            {
+                _animatorUtility.Trigger(GetParameter("Revive", "Revive"));
+            }
+
             _lastHealth = _stats.Health;
             _lastLifeState = _stats.LifeState;
             _lastPosition = transform.position;
         }
 
-        private void Trigger(string parameter)
+        private void SetFloat(string parameter, float value)
         {
-            if (_animator.HasParameter(parameter)) _animator.SetTrigger(parameter);
+            _animatorUtility.SetFloat(parameter, value);
         }
-    }
 
-    internal static class AnimatorExtensions
-    {
-        public static bool HasParameter(this Animator animator, string name)
+        private void SetBool(string parameter, bool value)
         {
-            foreach (AnimatorControllerParameter parameter in animator.parameters)
+            _animatorUtility.SetBool(parameter, value);
+        }
+
+        private void SetInteger(string parameter, int value)
+        {
+            _animatorUtility.SetInteger(parameter, value);
+        }
+
+        private string GetParameter(string name, string fallback)
+        {
+            if (_parameterSet == null)
             {
-                if (parameter.name == name) return true;
+                return fallback;
             }
-            return false;
+
+            if (name == "Speed")
+            {
+                return _parameterSet.Speed;
+            }
+            if (name == "IsMoving")
+            {
+                return _parameterSet.IsMoving;
+            }
+            if (name == "WeaponType")
+            {
+                return _parameterSet.WeaponType;
+            }
+            if (name == "IsDead")
+            {
+                return _parameterSet.IsDead;
+            }
+            if (name == "Attack")
+            {
+                return _parameterSet.Attack;
+            }
+            if (name == "Reload")
+            {
+                return _parameterSet.Reload;
+            }
+            if (name == "Hit")
+            {
+                return _parameterSet.Hit;
+            }
+            if (name == "Damage")
+            {
+                return _parameterSet.Damage;
+            }
+            if (name == "Death")
+            {
+                return _parameterSet.Death;
+            }
+            if (name == "Revive")
+            {
+                return _parameterSet.Revive;
+            }
+            return fallback;
         }
     }
 }

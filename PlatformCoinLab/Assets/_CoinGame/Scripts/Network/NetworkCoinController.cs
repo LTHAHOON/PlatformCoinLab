@@ -14,9 +14,14 @@ namespace CoinGame.Network
     {
         private CancellationTokenSource _triggerEnterCts;
         private CancellationTokenSource _despawnCts;
+        private bool _collected;
+        private Renderer[] _renderers;
 
         public override void OnNetworkSpawn()
         {
+            _collected = false;
+            _renderers = GetComponentsInChildren<Renderer>(true);
+            ApplyVisibility();
             if (_despawnCts != null)
             {
                 _despawnCts.Dispose();
@@ -34,6 +39,38 @@ namespace CoinGame.Network
                 OnTriggerEnterAsync(_triggerEnterCts.Token).Forget();
             }
 
+        }
+
+        private void Update()
+        {
+            ApplyVisibility();
+        }
+
+        private void ApplyVisibility()
+        {
+            if (_renderers == null)
+            {
+                return;
+            }
+
+            NetworkPlayerStats localStats = null;
+            if (NetworkManager.Singleton != null && NetworkManager.Singleton.SpawnManager != null)
+            {
+                NetworkObject localObject = NetworkManager.Singleton.SpawnManager.GetLocalPlayerObject();
+                if (localObject != null)
+                {
+                    localStats = localObject.GetComponent<NetworkPlayerStats>();
+                }
+            }
+
+            bool visible = localStats != null && localStats.Role == CoinGame.Player.PlayerRole.Collector;
+            foreach (Renderer renderer in _renderers)
+            {
+                if (renderer != null)
+                {
+                    renderer.enabled = visible;
+                }
+            }
         }
 
         public override void OnNetworkDespawn()
@@ -67,22 +104,7 @@ namespace CoinGame.Network
                     {
                         continue;
                     }
-                    if (playerStats.Role != CoinGame.Player.PlayerRole.Collector)
-                    {
-                        continue;
-                    }
-                    if (playerStats.IsCoinLocked || playerStats.IsBeingPushed)
-                    {
-                        playerStats.RegisterBlockedCoinAttemptServer();
-                        continue;
-                    }
-                    playerStats.AddScoreServer(1);
-                    if (NetworkRoundState.Instance != null)
-                    {
-                        NetworkRoundState.Instance.CollectCoinServer();
-                    }
-                    NetworkGameObjectPool.Despawn(gameObject);
-                    break;
+                    TryCollectServer(playerStats);
                 }
             }
             catch (OperationCanceledException) { }
@@ -90,6 +112,38 @@ namespace CoinGame.Network
             {
                 Debug.LogError(ex.Message);
             }
+        }
+
+        private void OnTriggerStay(Collider collider)
+        {
+            if (!IsServer || !collider || !collider.TryGetComponent(out NetworkPlayerStats playerStats))
+            {
+                return;
+            }
+
+            TryCollectServer(playerStats);
+        }
+
+        private void TryCollectServer(NetworkPlayerStats playerStats)
+        {
+            if (!IsServer || _collected || playerStats.Role != CoinGame.Player.PlayerRole.Collector)
+            {
+                return;
+            }
+
+            if (playerStats.IsCoinLocked || playerStats.IsBeingPushed)
+            {
+                playerStats.RegisterBlockedCoinAttemptServer();
+                return;
+            }
+
+            _collected = true;
+            playerStats.AddScoreServer(1);
+            if (NetworkRoundState.Instance != null)
+            {
+                NetworkRoundState.Instance.CollectCoinServer();
+            }
+            NetworkGameObjectPool.Despawn(gameObject);
         }
 
         [Rpc(SendTo.Everyone)]

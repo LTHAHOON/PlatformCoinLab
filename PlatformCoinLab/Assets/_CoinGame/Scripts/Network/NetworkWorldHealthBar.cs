@@ -8,6 +8,12 @@ namespace CoinGame.Network
 
     public sealed class NetworkWorldHealthBar : MonoBehaviour
     {
+        [SerializeField]
+        private Vector3 _worldOffset = new(0f, 2.25f, 0f);
+        [SerializeField]
+        private Vector3 _viewOffset;
+        [SerializeField]
+        private Vector2 _screenOffset;
         private NetworkPlayerStats _stats;
         private Slider _slider;
         private Canvas _canvas;
@@ -16,7 +22,6 @@ namespace CoinGame.Network
             _stats = GetComponent<NetworkPlayerStats>();
             GameObject root = new("WorldHealthBar");
             root.transform.SetParent(transform, false);
-            root.transform.localPosition = Vector3.up * 2.25f;
             _canvas = root.AddComponent<Canvas>();
             _canvas.renderMode = RenderMode.WorldSpace;
             _canvas.transform.localScale = Vector3.one * 0.01f;
@@ -38,11 +43,18 @@ namespace CoinGame.Network
             }
 
             Camera camera = Camera.main;
+            Vector3 worldPosition = transform.position + _worldOffset;
             if (camera != null)
             {
-                _canvas.transform.rotation = Quaternion.LookRotation(
-                    _canvas.transform.position - camera.transform.position);
+                worldPosition += camera.transform.right * _viewOffset.x;
+                worldPosition += camera.transform.up * _viewOffset.y;
+                worldPosition += camera.transform.forward * _viewOffset.z;
+                Vector3 screenPosition = camera.WorldToScreenPoint(worldPosition);
+                screenPosition += new Vector3(_screenOffset.x, _screenOffset.y, 0f);
+                worldPosition = camera.ScreenToWorldPoint(screenPosition);
             }
+
+            _canvas.transform.SetPositionAndRotation(worldPosition, Quaternion.identity);
 
             _slider.value = (float)_stats.Health / Mathf.Max(1, _stats.MaxHealth);
             NetworkPlayerStats local = null;

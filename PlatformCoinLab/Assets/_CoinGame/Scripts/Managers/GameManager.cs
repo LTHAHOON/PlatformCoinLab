@@ -19,6 +19,7 @@ namespace CoinGame.Managers
     {
         OutGame = 0,
         InGame = 1,
+        Waiting = 2,
     }
 
     public class GameManager : MonoBehaviour
@@ -31,6 +32,8 @@ namespace CoinGame.Managers
         private SceneReference _inGameSceneRef;
         [SerializeField]
         private SceneReference _outGameSceneRef;
+        [SerializeField]
+        private SceneReference _waitingSceneRef;
         [SerializeField]
         private float _roundStartDelay = 1f;
         [SerializeField]
@@ -269,12 +272,24 @@ namespace CoinGame.Managers
                 if (gameScene == GameScene.InGame)
                 {
                     ConfigureInGameSceneServices();
+                    SetActiveScene(gameScene);
                 }
                 return;
             }
+
+            if (gameScene == GameScene.InGame)
+            {
+                SetPersistentMainCameraActive(false);
+            }
+
             AsyncOperation loadOperation = SceneManager.LoadSceneAsync(sceneRefToLoad.ScenePath, LoadSceneMode.Additive);
             if (loadOperation == null)
             {
+                if (gameScene == GameScene.InGame)
+                {
+                    SetPersistentMainCameraActive(true);
+                }
+
                 Debug.LogError($"Cannot load scene at path '{sceneRefToLoad.ScenePath}'. Check that the scene exists and is included in Build Settings.", this);
                 return;
             }
@@ -283,6 +298,7 @@ namespace CoinGame.Managers
             if (gameScene == GameScene.InGame)
             {
                 ConfigureInGameSceneServices();
+                SetActiveScene(gameScene);
             }
         }
 
@@ -306,14 +322,7 @@ namespace CoinGame.Managers
                 return;
             }
 
-            Scene persistentScene = SceneManager.GetSceneByPath(_outGameSceneRef.ScenePath);
-            foreach (GameObject root in persistentScene.GetRootGameObjects())
-            {
-                if (root.name == "Main Camera")
-                {
-                    root.SetActive(false);
-                }
-            }
+            SetPersistentMainCameraActive(false);
 
             foreach (GameObject root in inGameScene.GetRootGameObjects())
             {
@@ -321,6 +330,43 @@ namespace CoinGame.Managers
                 {
                     root.SetActive(false);
                 }
+            }
+        }
+
+        private void SetPersistentMainCameraActive(bool isActive)
+        {
+            if (_outGameSceneRef == null || string.IsNullOrEmpty(_outGameSceneRef.ScenePath))
+            {
+                return;
+            }
+
+            Scene persistentScene = SceneManager.GetSceneByPath(_outGameSceneRef.ScenePath);
+            if (!persistentScene.isLoaded)
+            {
+                return;
+            }
+
+            foreach (GameObject root in persistentScene.GetRootGameObjects())
+            {
+                if (root.name == "Main Camera")
+                {
+                    root.SetActive(isActive);
+                }
+            }
+        }
+
+        private void SetActiveScene(GameScene gameScene)
+        {
+            SceneReference sceneReference = GetSceneReference(gameScene);
+            if (sceneReference == null || string.IsNullOrEmpty(sceneReference.ScenePath))
+            {
+                return;
+            }
+
+            Scene scene = SceneManager.GetSceneByPath(sceneReference.ScenePath);
+            if (scene.isLoaded)
+            {
+                SceneManager.SetActiveScene(scene);
             }
         }
 
@@ -343,6 +389,7 @@ namespace CoinGame.Managers
             if (gameScene == GameScene.InGame)
             {
                 RestoreOutGameSceneServices();
+                SetActiveScene(GameScene.OutGame);
             }
         }
 
@@ -374,6 +421,7 @@ namespace CoinGame.Managers
             {
                 GameScene.OutGame => _outGameSceneRef,
                 GameScene.InGame => _inGameSceneRef,
+                GameScene.Waiting => _waitingSceneRef,
                 _ => throw new ArgumentOutOfRangeException(nameof(gameScene), gameScene, null),
             };
         }

@@ -12,10 +12,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a03844a65de927e4e9a19dc875636a42, type: 3}
   m_Name: Crate_Default
   m_EditorClassIdentifier: Assembly-CSharp::CoinGame.Gameplay.Items.CrateData
-  MaxHealth: 30
-  OpenedHitCount: 2
+  MaxHealth: 3
+  OpenedHitCount: 1
   LidOpenAngle: 105
   LidOpenDuration: 0.35
   LidRotationAxis: {x: 1, y: 0, z: 0}
-  DropOffset: {x: 0, y: 0.8, z: 0.6}
+  DropOffset: {x: 0, y: 1.6, z: 0.4}
   DestroyDuration: 0.2

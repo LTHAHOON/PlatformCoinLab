@@ -83,11 +83,11 @@ namespace CoinGame.UI
         }
         private void Build()
         {
-            RectTransform panel = MakePanel("M3_HUD", new Vector2(24f, -540f), new Vector2(0f, 1f), new Vector2(0f, 1f));
+            RectTransform panel = MakePanel("M3_HUD", new Vector2(24f, -850f), new Vector2(0f, 1f), new Vector2(0f, 1f));
             _health = MakeSlider(panel, "HealthBar", new Vector2(180f, 18f));
             _healthText = MakeText(panel, "HealthText", "HP", 16);
             _weaponText = MakeText(panel, "WeaponText", "Weapon", 16);
-            _quickText = MakeText(panel, "QuickText", "1 Boost | 2 Revive", 14);
+            _quickText = MakeText(panel, "QuickText", "4 Boost | 5 Revive", 14);
             _statusText = MakeText(panel, "StatusText", "", 14);
             _skillText = MakeText(panel, "SkillText", "", 14);
             _reviveText = MakeText(panel, "ReviveText", "", 18);
@@ -103,11 +103,11 @@ namespace CoinGame.UI
             _health.value = _stats.Health;
             _healthText.text = $"HP {_stats.Health}/{_stats.MaxHealth}";
             _weaponText.text = $"{_inventory.CurrentKind}  {_inventory.Magazine}/{_inventory.ReserveAmmo}";
-            _quickText.text = $"{(_showPcKeys ? "1 " : "")}Boost: {(_inventory.HasBoost ? "Ready" : "-")}  {(_showPcKeys ? "2 " : "")}Revive: {(_inventory.HasRevive ? "Ready" : "-")}";
+            _quickText.text = $"{(_showPcKeys ? "4 " : "")}Boost: {(_inventory.HasBoost ? "Ready" : "-")}  {(_showPcKeys ? "5 " : "")}Revive: {(_inventory.HasRevive ? "Ready" : "-")}";
             _statusText.text = StatusText();
             _skillText.text = _controller == null ? "" : $"O {_controller.PushCooldownRemaining:0.0}s  L {_controller.SkillCooldownRemaining:0.0}s";
             _reviveText.text = _stats.LifeState == PlayerLifeState.Spectating && _stats.ReviveReadyAt > NetworkManager.Singleton.ServerTime.Time
-                ? $"{(_showPcKeys ? "2" : "Revive")} 遺??{_stats.ReviveReadyAt - NetworkManager.Singleton.ServerTime.Time:0.0}s" : "";
+                ? $"{(_showPcKeys ? "5" : "Revive")} 遺??{_stats.ReviveReadyAt - NetworkManager.Singleton.ServerTime.Time:0.0}s" : "";
         }
         private string StatusText()
         {
@@ -127,9 +127,9 @@ namespace CoinGame.UI
                 text += $"遺?ㅽ듃 {_stats.BoostRemaining:0.0}s ";
             }
 
-            if (_stats.IsItemBlocked)
+            if (_stats.IsCoinLocked)
             {
-                text += $"?듬뱷遺덇? {_stats.ItemBlockedRemaining:0.0}s";
+                text += $"🚫 코인 수집 금지 {_stats.CoinLockedRemaining:0.0}s";
             }
             return text;
         }

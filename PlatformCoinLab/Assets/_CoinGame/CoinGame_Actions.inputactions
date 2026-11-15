@@ -1,4 +1,4 @@
-﻿{
+{
     "version":  1,
     "name":  "CoinGame_Actions",
     "maps":  [
@@ -556,7 +556,7 @@
                                       {
                                           "name":  "",
                                           "id":  "59811346-247e-472b-b7ec-b33461a4605e",
-                                          "path":  "\u003cKeyboard\u003e/1",
+                                          "path":  "\u003cKeyboard\u003e/4",
                                           "interactions":  "",
                                           "processors":  "",
                                           "groups":  "Keyboard\u0026Mouse",
@@ -567,7 +567,7 @@
                                       {
                                           "name":  "",
                                           "id":  "939ff78d-d94c-444f-82df-a42c58d54caf",
-                                          "path":  "\u003cKeyboard\u003e/2",
+                                          "path":  "\u003cKeyboard\u003e/5",
                                           "interactions":  "",
                                           "processors":  "",
                                           "groups":  "Keyboard\u0026Mouse",

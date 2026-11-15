@@ -9,6 +9,9 @@ EditorBuildSettings:
     path: Assets/_CoinGame/Scenes/Persistent_CoinGameScene.unity
     guid: 3800c6de171d45d46b4056d587ae9dcc
   - enabled: 1
+    path: Assets/_CoinGame/Scenes/RoomWaiting_CoinGameScene.unity
+    guid: 2cb4dfabdec71f445a7de0f714dbab6b
+  - enabled: 1
     path: Assets/_CoinGame/Scenes/InGame_CoinGameScene.unity
     guid: 99c9720ab356a0642a771bea13969a05
   - enabled: 1

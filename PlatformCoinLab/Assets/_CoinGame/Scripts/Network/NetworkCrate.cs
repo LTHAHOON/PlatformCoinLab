@@ -1,6 +1,5 @@
 using Unity.Netcode;
 using UnityEngine;
-using UnityEngine.Serialization;
 
 namespace CoinGame.Network
 {
@@ -21,15 +20,28 @@ namespace CoinGame.Network
         [SerializeField]
         private CrateData _data;
         [SerializeField]
-        [FormerlySerializedAs("_maxHealth")]
-        private int _maxHealth = 30;
-        [SerializeField]
         private NetworkItemPickup _pickupPrefab;
+        [SerializeField]
+        private NetworkItemPickup _ammoPickupPrefab;
+        [SerializeField]
+        private NetworkItemPickup _boostPickupPrefab;
+        [SerializeField]
+        private NetworkItemPickup _healthPickupPrefab;
+        [SerializeField]
+        private NetworkItemPickup _invulnerablePickupPrefab;
+        [SerializeField]
+        private NetworkItemPickup _randomPickupPrefab;
+        [SerializeField]
+        private NetworkItemPickup _revivePickupPrefab;
+        [SerializeField]
+        private NetworkItemPickup _stealthPickupPrefab;
         [SerializeField]
         private ItemData[] _dropTable;
 
         [SerializeField]
         private Transform _lid;
+        [SerializeField]
+        private bool _showHealthDebug = true;
         private readonly NetworkVariable<int> _health = new(30);
         private readonly NetworkVariable<CrateState> _state = new(CrateState.Closed);
         private readonly NetworkVariable<int> _openedHits = new(0);
@@ -37,9 +49,10 @@ namespace CoinGame.Network
         private Quaternion _openedRotation;
         private float _lidOpenStarted;
         private float _destroyAt;
+        private NetworkItemPickup _pendingPickup;
 
 
-        public void ApplyWeaponHitServer(WeaponKind kind, int damage, ulong attacker)
+        public void ApplyWeaponHitServer(int crateDamage, ulong attacker)
         {
             if (!IsServer || _state.Value == CrateState.Destroyed)
             {
@@ -50,13 +63,23 @@ namespace CoinGame.Network
                 _openedHits.Value++;
                 if (_openedHits.Value >= OpenedHitCount)
                 {
+                    if (_pendingPickup != null)
+                    {
+                        _pendingPickup.EnablePickupServer();
+                        _pendingPickup = null;
+                    }
                     _state.Value = CrateState.Destroyed;
                     _destroyAt = Time.time + (_data != null ? _data.DestroyDuration : 0.2f);
                 }
                 return;
             }
 
-            _health.Value -= Mathf.Max(1, kind == WeaponKind.Sword ? damage * 2 : damage);
+            int previousHealth = _health.Value;
+            _health.Value -= Mathf.Max(1, crateDamage);
+            if (Debug.isDebugBuild)
+            {
+                Debug.Log($"[CrateHit] {name}: {previousHealth} -> {_health.Value}", this);
+            }
             if (_health.Value <= 0)
             {
                 _state.Value = CrateState.Opened;
@@ -93,6 +116,23 @@ namespace CoinGame.Network
                 float t = Mathf.Clamp01((Time.time - _lidOpenStarted) / Mathf.Max(0.01f, duration));
                 _lid.localRotation = Quaternion.Slerp(_closedRotation, _openedRotation, t);
             }
+        }
+
+        private void OnGUI()
+        {
+            if (!_showHealthDebug || !IsSpawned || Camera.main == null)
+            {
+                return;
+            }
+
+            Vector3 screen = Camera.main.WorldToScreenPoint(transform.position + Vector3.up * 2f);
+            if (screen.z <= 0f)
+            {
+                return;
+            }
+
+            Rect rect = new Rect(screen.x - 40f, Screen.height - screen.y - 18f, 80f, 18f);
+            GUI.Label(rect, $"Crate {_health.Value}/{MaxHealth}");
         }
 
         public override void OnNetworkDespawn()
@@ -145,6 +185,17 @@ namespace CoinGame.Network
         {
             if (_dropTable != null && _dropTable.Length > 0)
             {
+                ItemData guaranteed = FindGuaranteedAttackItemServer();
+                if (guaranteed != null)
+                {
+                    SpawnPickupServer(guaranteed);
+                    if (NetworkRoundState.Instance != null)
+                    {
+                        NetworkRoundState.Instance.RegisterRoundOneAttackItemDropServer();
+                    }
+                    return;
+                }
+
                 int total = 0;
                 foreach (ItemData entry in _dropTable)
                 {
@@ -154,8 +205,13 @@ namespace CoinGame.Network
                     }
                 }
                 
-                int roll = Random.Range(0, Mathf.Max(1, total));
-                ItemData item = _dropTable[0];
+                if (total <= 0)
+                {
+                    return;
+                }
+
+                int roll = Random.Range(0, total);
+                ItemData item = null;
                 foreach (ItemData entry in _dropTable)
                 {
                     if (entry == null || !CanDropItemServer(entry))
@@ -163,17 +219,85 @@ namespace CoinGame.Network
                         continue;
                     }
                     roll -= Mathf.Max(0, entry.Weight);
-                    if (roll < 0) { item = entry; break; }
+                    if (roll < 0)
+                    {
+                        item = entry;
+                        break;
+                    }
                 }
-                if (item != null && _pickupPrefab != null)
+                if (item != null && GetPickupPrefab(item.Kind) != null)
                 {
-                    Vector3 offset = _data != null ? _data.DropOffset : new Vector3(0f, 0.8f, 0.6f);
-                    NetworkItemPickup pickup = Instantiate(_pickupPrefab, transform.TransformPoint(offset), Quaternion.identity);
-                    pickup.InitializeServer(item);
-                    pickup.NetworkObject.Spawn();
+                    SpawnPickupServer(item);
                 }
             }
-            NetworkObject.Despawn();
+        }
+
+        private ItemData FindGuaranteedAttackItemServer()
+        {
+            if (NetworkRoundState.Instance == null || !NetworkRoundState.Instance.ShouldGuaranteeRoundOneAttackItemServer())
+            {
+                return null;
+            }
+
+            foreach (ItemData item in _dropTable)
+            {
+                if (item != null && CanDropItemServer(item) && (item.Kind == ItemKind.Gun || item.Kind == ItemKind.Sword))
+                {
+                    return item;
+                }
+            }
+
+            return null;
+        }
+
+        private void SpawnPickupServer(ItemData item)
+        {
+            NetworkItemPickup pickupPrefab = GetPickupPrefab(item.Kind);
+            if (pickupPrefab == null)
+            {
+                return;
+            }
+
+            Vector3 offset = _data != null ? _data.DropOffset : new Vector3(0f, 1.6f, 0.4f);
+            Vector3 position = transform.position + transform.rotation * offset;
+            NetworkItemPickup pickup = Instantiate(pickupPrefab, position, Quaternion.identity);
+            pickup.InitializeServer(item, false);
+            pickup.NetworkObject.Spawn();
+            _pendingPickup = pickup;
+        }
+
+        private NetworkItemPickup GetPickupPrefab(ItemKind kind)
+        {
+            if (kind == ItemKind.Ammo && _ammoPickupPrefab != null)
+            {
+                return _ammoPickupPrefab;
+            }
+            if (kind == ItemKind.Boost && _boostPickupPrefab != null)
+            {
+                return _boostPickupPrefab;
+            }
+            if (kind == ItemKind.Health && _healthPickupPrefab != null)
+            {
+                return _healthPickupPrefab;
+            }
+            if (kind == ItemKind.Invulnerable && _invulnerablePickupPrefab != null)
+            {
+                return _invulnerablePickupPrefab;
+            }
+            if (kind == ItemKind.Random && _randomPickupPrefab != null)
+            {
+                return _randomPickupPrefab;
+            }
+            if (kind == ItemKind.Revive && _revivePickupPrefab != null)
+            {
+                return _revivePickupPrefab;
+            }
+            if (kind == ItemKind.Stealth && _stealthPickupPrefab != null)
+            {
+                return _stealthPickupPrefab;
+            }
+
+            return _pickupPrefab;
         }
 
         private bool CanDropItemServer(ItemData item)
@@ -202,8 +326,9 @@ namespace CoinGame.Network
             return !sawCollector;
         }
 
-        private int MaxHealth => _data != null ? _data.MaxHealth : _maxHealth;
-        private int OpenedHitCount => _data != null ? _data.OpenedHitCount : 2;
+        private int MaxHealth => _data != null ? _data.MaxHealth : 1;
+        private int OpenedHitCount => _data != null ? _data.OpenedHitCount : 1;
+        public int CurrentHealth => _health.Value;
 
     }
 }

@@ -66,4 +66,5 @@ MonoBehaviour:
   _blockingLayerMask:
     serializedVersion: 2
     m_Bits: 384
+  _spawnZones: []
   _canUseObjectPool: 1

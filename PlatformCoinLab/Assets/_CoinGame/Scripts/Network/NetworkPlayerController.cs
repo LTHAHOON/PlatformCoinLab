@@ -24,6 +24,8 @@ namespace CoinGame.Network
         [SerializeField]
         private float _moveSpeed = 4f;
         [SerializeField]
+        private float _rotationSpeed = 12f;
+        [SerializeField]
         private bool _followPlayerCamera = false;
         [SerializeField]
         private AssetReferenceT<VectorMinMaxData> _playerPosMinMaxDataRef;
@@ -280,11 +282,10 @@ namespace CoinGame.Network
                     }
                     if (_networkPlayerStats.Role == PlayerRole.Disruptor && _networkPlayerStats.IsAlive)
                     {
-                        if (_inputProvider != null && _inputProvider.Current.Attack) _combat.RequestAttack();
+                        if (AttackPressed()) _combat.RequestAttack();
                         if (_inputProvider != null && _inputProvider.Current.Reload) _combat.RequestReload();
-                        if (_inputProvider != null && _inputProvider.Current.WeaponPrevious) _combat.RequestSwitch(-1);
-                        if (_inputProvider != null && _inputProvider.Current.WeaponNext) _combat.RequestSwitch(1);
-                        if (_inputProvider != null && _inputProvider.Current.Boost) BoostRpc();
+                        ProcessWeaponSelection();
+                        if (BoostPressed()) BoostRpc();
                         if (_inputProvider != null && _inputProvider.Current.Push && Time.time >= _pushCooldownUntil)
                         {
                             _pushCooldownUntil = Time.time + PushCooldown;
@@ -303,13 +304,12 @@ namespace CoinGame.Network
                     }
                     else if (_networkPlayerStats.IsAlive)
                     {
-                        if (_inputProvider != null && _inputProvider.Current.Attack) _combat.RequestAttack();
+                        if (AttackPressed()) _combat.RequestAttack();
                         if (_inputProvider != null && _inputProvider.Current.Reload) _combat.RequestReload();
-                        if (_inputProvider != null && _inputProvider.Current.WeaponPrevious) _combat.RequestSwitch(-1);
-                        if (_inputProvider != null && _inputProvider.Current.WeaponNext) _combat.RequestSwitch(1);
-                        if (_inputProvider != null && _inputProvider.Current.Boost) BoostRpc();
+                        ProcessWeaponSelection();
+                        if (BoostPressed()) BoostRpc();
                     }
-                    if (_inputProvider != null && _inputProvider.Current.Revive) ReviveRpc();
+                    if (RevivePressed()) ReviveRpc();
 
                     await UniTask.Yield(PlayerLoopTiming.Update, token);
                 }
@@ -325,15 +325,38 @@ namespace CoinGame.Network
                 return;
             }
 
-            NetworkPlayerController target = FindNearestOpponent(origin);
+            NetworkPlayerController target = FindNearestOpponent(transform.position, AbilityRange);
             if (target != null && target.TryGetComponent(out NetworkPlayerStats targetStats))
             {
                 if (_networkPlayerStats.Role == PlayerRole.Disruptor && targetStats.Role == PlayerRole.Collector)
                 {
                     targetStats.SetBeingPushedServer(NetworkManager.Singleton.ServerTime.Time + PushStunDuration, _networkPlayerStats);
-                    target.ReceivePushRpc(target.OwnerClientId, direction.normalized, PushForce);
+                    Vector3 pushDirection = transform.forward;
+                    if (pushDirection.sqrMagnitude < 0.01f)
+                    {
+                        pushDirection = direction;
+                    }
+
+                    if (target.OwnerClientId == NetworkManager.ServerClientId)
+                    {
+                        target.ApplyPushServer(pushDirection.normalized, PushForce);
+                    }
+                    else
+                    {
+                        target.ReceivePushRpc(target.OwnerClientId, pushDirection.normalized, PushForce);
+                    }
                 }
             }
+        }
+
+        private void ApplyPushServer(Vector3 direction, float force)
+        {
+            if (!IsServer || _controller == null)
+            {
+                return;
+            }
+
+            _controller.Move(direction * force);
         }
 
         [Rpc(SendTo.NotServer)]
@@ -355,13 +378,16 @@ namespace CoinGame.Network
                 return;
             }
 
-            NetworkPlayerController target = FindNearestOpponent(origin);
+            NetworkPlayerController target = FindNearestOpponent(transform.position, AbilityRange);
             if (target != null && target.TryGetComponent(out NetworkPlayerStats targetStats))
             {
                 if (_networkPlayerStats.Role == PlayerRole.Disruptor && targetStats.Role == PlayerRole.Collector)
                 {
                     targetStats.SetCoinLockServer(NetworkManager.Singleton.ServerTime.Time + LockDuration, _networkPlayerStats);
-                    targetStats.SetItemBlockedServer(NetworkManager.Singleton.ServerTime.Time + ItemBlockDuration);
+                    if (_roleAbilityConfig != null && _roleAbilityConfig.EnableItemBlockSkill)
+                    {
+                        targetStats.SetItemBlockedServer(NetworkManager.Singleton.ServerTime.Time + ItemBlockDuration);
+                    }
                 }
             }
         }
@@ -384,17 +410,17 @@ namespace CoinGame.Network
                 return;
             }
 
-            NetworkPlayerController target = FindNearestOpponent(origin);
+            NetworkPlayerController target = FindNearestOpponent(transform.position, AbilityRange);
             NetworkPlayerStats targetStats = target ? target.GetComponent<NetworkPlayerStats>() : null;
             NetworkPlayerStats ownStats = GetComponent<NetworkPlayerStats>();
-            if (targetStats != null && ownStats != null && ownStats.Role == PlayerRole.Disruptor &&
+            if (targetStats != null && ownStats != null && EnableScoreSteal && ownStats.Role == PlayerRole.Disruptor &&
                 targetStats.Role == PlayerRole.Collector && targetStats.TrySpendScore(StealAmount))
             {
                 ownStats.AddScoreServer(StealAmount);
             }
         }
 
-        private NetworkPlayerController FindNearestOpponent(Vector3 origin)
+        private NetworkPlayerController FindNearestOpponent(Vector3 origin, float range)
         {
             if (!IsServer || NetworkManager.Singleton == null)
             {
@@ -403,6 +429,7 @@ namespace CoinGame.Network
 
             NetworkPlayerController nearest = null;
             float nearestDistance = float.MaxValue;
+            float rangeSqr = range * range;
             foreach (NetworkClient client in NetworkManager.Singleton.ConnectedClientsList)
             {
                 if (client.PlayerObject == null || client.PlayerObject == NetworkObject)
@@ -416,8 +443,14 @@ namespace CoinGame.Network
                     continue;
                 }
 
+                NetworkPlayerStats candidateStats = candidate.GetComponent<NetworkPlayerStats>();
+                if (candidateStats == null || !candidateStats.IsAlive)
+                {
+                    continue;
+                }
+
                 float distance = (candidate.transform.position - origin).sqrMagnitude;
-                if (distance < nearestDistance)
+                if (distance <= rangeSqr && distance < nearestDistance)
                 {
                     nearest = candidate;
                     nearestDistance = distance;
@@ -454,6 +487,11 @@ namespace CoinGame.Network
                     if (moveDir.sqrMagnitude > 0.0001f)
                     {
                         if (_combat != null) _combat.AimDirection = moveDir.normalized;
+                        Quaternion targetRotation = Quaternion.LookRotation(moveDir.normalized, Vector3.up);
+                        transform.rotation = Quaternion.Slerp(
+                            transform.rotation,
+                            targetRotation,
+                            Mathf.Clamp01(_rotationSpeed * Time.deltaTime));
                         float speed = _moveSpeed * (_networkPlayerStats != null && _networkPlayerStats.IsBoosted ? 1.5f : 1f);
                         Vector3 moveDelta = speed * Time.deltaTime * moveDir.normalized;
                         Vector3 curPlayerPos = _controller.transform.position;
@@ -472,16 +510,66 @@ namespace CoinGame.Network
             }
         }
 
+        private bool AttackPressed()
+        {
+            if (_inputProvider != null && _inputProvider.Current.Attack)
+            {
+                return true;
+            }
+
+            if (_attackAction != null && _attackAction.WasPressedThisFrame())
+            {
+                return true;
+            }
+
+            return Keyboard.current != null && Keyboard.current.kKey.wasPressedThisFrame;
+        }
+
+        private void ProcessWeaponSelection()
+        {
+            if (Keyboard.current == null || _combat == null)
+            {
+                return;
+            }
+
+            if (Keyboard.current.digit1Key.wasPressedThisFrame)
+            {
+                _combat.RequestSelectWeapon(Gameplay.Combat.WeaponKind.Fist);
+            }
+            else if (Keyboard.current.digit2Key.wasPressedThisFrame)
+            {
+                _combat.RequestSelectWeapon(Gameplay.Combat.WeaponKind.Gun);
+            }
+            else if (Keyboard.current.digit3Key.wasPressedThisFrame)
+            {
+                _combat.RequestSelectWeapon(Gameplay.Combat.WeaponKind.Sword);
+            }
+        }
+
+        private bool BoostPressed()
+        {
+            return _inputProvider != null && _inputProvider.Current.Boost ||
+                Keyboard.current != null && Keyboard.current.digit4Key.wasPressedThisFrame;
+        }
+
+        private bool RevivePressed()
+        {
+            return _inputProvider != null && _inputProvider.Current.Revive ||
+                Keyboard.current != null && Keyboard.current.digit5Key.wasPressedThisFrame;
+        }
+
 
         private float PushCooldown => _roleAbilityConfig ? _roleAbilityConfig.PushCooldown : 2f;
-        private float LockCooldown => _roleAbilityConfig ? _roleAbilityConfig.LockCooldown : 8f;
+        private float LockCooldown => _roleAbilityConfig ? _roleAbilityConfig.LockCooldown : 10f;
         private float StealCooldown => _roleAbilityConfig ? _roleAbilityConfig.StealCooldown : 10f;
-        private float LockDuration => _roleAbilityConfig ? _roleAbilityConfig.CoinLockDuration : 3f;
+        private float LockDuration => _roleAbilityConfig ? _roleAbilityConfig.CoinLockDuration : 5f;
         private float PushForce => _roleAbilityConfig ? _roleAbilityConfig.PushForce : 5f;
+        private float AbilityRange => _roleAbilityConfig ? _roleAbilityConfig.AbilityRange : 2.5f;
         private float PushStunDuration => _roleAbilityConfig ? _roleAbilityConfig.PushStunDuration : 1f;
         private int StealAmount => _roleAbilityConfig ? _roleAbilityConfig.StealAmount : 1;
         private float ItemBlockDuration => _roleAbilityConfig ? _roleAbilityConfig.ItemBlockDuration : 5f;
         private float ItemBlockCooldown => _roleAbilityConfig ? _roleAbilityConfig.ItemBlockCooldown : 10f;
+        private bool EnableScoreSteal => _roleAbilityConfig != null && _roleAbilityConfig.EnableScoreSteal;
         public float PushCooldownRemaining => Mathf.Max(0f, _pushCooldownUntil - Time.time);
         public float SkillCooldownRemaining => Mathf.Max(0f, _lockCooldownUntil - Time.time);
 
