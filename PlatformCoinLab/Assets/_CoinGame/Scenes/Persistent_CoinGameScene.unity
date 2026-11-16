@@ -332,9 +332,14 @@ MonoBehaviour:
     m_Bits: 384
   _spawnZones: []
   _canUseObjectPool: 0
-  _playerZones: []
-  _collectorPlayerZones: []
-  _disruptorPlayerZones: []
+  _playerZones:
+  - {fileID: 0}
+  - {fileID: 0}
+  _collectorPlayerZones:
+  - {fileID: 0}
+  _disruptorPlayerZones:
+  - {fileID: 0}
+  _gridSpawnMap: {fileID: 11400000, guid: 6b12235aaed66e94584573d3bad5cd1d, type: 2}
 --- !u!4 &79639844
 Transform:
   m_ObjectHideFlags: 0

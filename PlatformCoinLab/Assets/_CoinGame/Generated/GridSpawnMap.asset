@@ -1,0 +1,789 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7ceeaf13d8e625e42b99e2c2087d6739, type: 3}
+  m_Name: GridSpawnMap
+  m_EditorClassIdentifier: Assembly-CSharp::CoinGame.Utilities.GridSpawnMap
+  _sourceScene: Assets/_CoinGame/Scenes/InGame_CoinGameScene.unity
+  _groundPath: Map/Ground
+  _worldOrigin: {x: -13.31304, y: 0, z: -13.686967}
+  _cellSize: {x: 1.7999868, y: 1.7999992}
+  _width: 16
+  _height: 16
+  _cells:
+  - _coordinates: {x: 0, y: 0}
+    _worldPosition: {x: -13.31304, y: -0.060629427, z: -13.686967}
+    _flags: 3
+  - _coordinates: {x: 1, y: 0}
+    _worldPosition: {x: -11.513053, y: -0.060629427, z: -13.686967}
+    _flags: 3
+  - _coordinates: {x: 2, y: 0}
+    _worldPosition: {x: -9.713066, y: -0.060629427, z: -13.686967}
+    _flags: 3
+  - _coordinates: {x: 3, y: 0}
+    _worldPosition: {x: -7.9130793, y: -0.060629427, z: -13.686967}
+    _flags: 3
+  - _coordinates: {x: 4, y: 0}
+    _worldPosition: {x: -6.1130924, y: -0.060629427, z: -13.686967}
+    _flags: 3
+  - _coordinates: {x: 5, y: 0}
+    _worldPosition: {x: -4.3131056, y: -0.060629427, z: -13.686967}
+    _flags: 3
+  - _coordinates: {x: 6, y: 0}
+    _worldPosition: {x: -2.5131187, y: -0.060629427, z: -13.686967}
+    _flags: 3
+  - _coordinates: {x: 7, y: 0}
+    _worldPosition: {x: -0.7131319, y: -0.060629427, z: -13.686967}
+    _flags: 3
+  - _coordinates: {x: 8, y: 0}
+    _worldPosition: {x: 1.0868549, y: -0.060629427, z: -13.686967}
+    _flags: 3
+  - _coordinates: {x: 9, y: 0}
+    _worldPosition: {x: 2.8868418, y: -0.060629427, z: -13.686967}
+    _flags: 3
+  - _coordinates: {x: 10, y: 0}
+    _worldPosition: {x: 4.6868286, y: -0.060629427, z: -13.686967}
+    _flags: 3
+  - _coordinates: {x: 11, y: 0}
+    _worldPosition: {x: 6.4868155, y: -0.060629427, z: -13.686967}
+    _flags: 3
+  - _coordinates: {x: 12, y: 0}
+    _worldPosition: {x: 8.286802, y: -0.060629427, z: -13.686967}
+    _flags: 3
+  - _coordinates: {x: 13, y: 0}
+    _worldPosition: {x: 10.086789, y: -0.060629427, z: -13.686967}
+    _flags: 3
+  - _coordinates: {x: 14, y: 0}
+    _worldPosition: {x: 11.886776, y: -0.060629427, z: -13.686967}
+    _flags: 3
+  - _coordinates: {x: 15, y: 0}
+    _worldPosition: {x: 13.686763, y: -0.060629427, z: -13.686967}
+    _flags: 3
+  - _coordinates: {x: 0, y: 1}
+    _worldPosition: {x: -13.31304, y: -0.060629427, z: -11.886968}
+    _flags: 3
+  - _coordinates: {x: 1, y: 1}
+    _worldPosition: {x: -11.513053, y: -0.060629427, z: -11.886968}
+    _flags: 33
+  - _coordinates: {x: 2, y: 1}
+    _worldPosition: {x: -9.713066, y: -0.060629427, z: -11.886968}
+    _flags: 33
+  - _coordinates: {x: 3, y: 1}
+    _worldPosition: {x: -7.9130793, y: -0.060629427, z: -11.886968}
+    _flags: 33
+  - _coordinates: {x: 4, y: 1}
+    _worldPosition: {x: -6.1130924, y: -0.060629427, z: -11.886968}
+    _flags: 1
+  - _coordinates: {x: 5, y: 1}
+    _worldPosition: {x: -4.3131056, y: -0.060629427, z: -11.886968}
+    _flags: 1
+  - _coordinates: {x: 6, y: 1}
+    _worldPosition: {x: -2.5131187, y: -0.060629427, z: -11.886968}
+    _flags: 1
+  - _coordinates: {x: 7, y: 1}
+    _worldPosition: {x: -0.7131319, y: -0.060629427, z: -11.886968}
+    _flags: 1
+  - _coordinates: {x: 8, y: 1}
+    _worldPosition: {x: 1.0868549, y: -0.060629427, z: -11.886968}
+    _flags: 1
+  - _coordinates: {x: 9, y: 1}
+    _worldPosition: {x: 2.8868418, y: -0.060629427, z: -11.886968}
+    _flags: 1
+  - _coordinates: {x: 10, y: 1}
+    _worldPosition: {x: 4.6868286, y: -0.060629427, z: -11.886968}
+    _flags: 1
+  - _coordinates: {x: 11, y: 1}
+    _worldPosition: {x: 6.4868155, y: -0.060629427, z: -11.886968}
+    _flags: 1
+  - _coordinates: {x: 12, y: 1}
+    _worldPosition: {x: 8.286802, y: -0.060629427, z: -11.886968}
+    _flags: 1
+  - _coordinates: {x: 13, y: 1}
+    _worldPosition: {x: 10.086789, y: -0.060629427, z: -11.886968}
+    _flags: 1
+  - _coordinates: {x: 14, y: 1}
+    _worldPosition: {x: 11.886776, y: -0.060629427, z: -11.886968}
+    _flags: 1
+  - _coordinates: {x: 15, y: 1}
+    _worldPosition: {x: 13.686763, y: -0.060629427, z: -11.886968}
+    _flags: 3
+  - _coordinates: {x: 0, y: 2}
+    _worldPosition: {x: -13.31304, y: -0.060629427, z: -10.086968}
+    _flags: 3
+  - _coordinates: {x: 1, y: 2}
+    _worldPosition: {x: -11.513053, y: -0.060629427, z: -10.086968}
+    _flags: 33
+  - _coordinates: {x: 2, y: 2}
+    _worldPosition: {x: -9.713066, y: -0.060629427, z: -10.086968}
+    _flags: 33
+  - _coordinates: {x: 3, y: 2}
+    _worldPosition: {x: -7.9130793, y: -0.060629427, z: -10.086968}
+    _flags: 35
+  - _coordinates: {x: 4, y: 2}
+    _worldPosition: {x: -6.1130924, y: -0.060629427, z: -10.086968}
+    _flags: 3
+  - _coordinates: {x: 5, y: 2}
+    _worldPosition: {x: -4.3131056, y: -0.060629427, z: -10.086968}
+    _flags: 1
+  - _coordinates: {x: 6, y: 2}
+    _worldPosition: {x: -2.5131187, y: -0.060629427, z: -10.086968}
+    _flags: 13
+  - _coordinates: {x: 7, y: 2}
+    _worldPosition: {x: -0.7131319, y: -0.060629427, z: -10.086968}
+    _flags: 13
+  - _coordinates: {x: 8, y: 2}
+    _worldPosition: {x: 1.0868549, y: -0.060629427, z: -10.086968}
+    _flags: 13
+  - _coordinates: {x: 9, y: 2}
+    _worldPosition: {x: 2.8868418, y: -0.060629427, z: -10.086968}
+    _flags: 13
+  - _coordinates: {x: 10, y: 2}
+    _worldPosition: {x: 4.6868286, y: -0.060629427, z: -10.086968}
+    _flags: 1
+  - _coordinates: {x: 11, y: 2}
+    _worldPosition: {x: 6.4868155, y: -0.060629427, z: -10.086968}
+    _flags: 3
+  - _coordinates: {x: 12, y: 2}
+    _worldPosition: {x: 8.286802, y: -0.060629427, z: -10.086968}
+    _flags: 1
+  - _coordinates: {x: 13, y: 2}
+    _worldPosition: {x: 10.086789, y: -0.060629427, z: -10.086968}
+    _flags: 1
+  - _coordinates: {x: 14, y: 2}
+    _worldPosition: {x: 11.886776, y: -0.060629427, z: -10.086968}
+    _flags: 1
+  - _coordinates: {x: 15, y: 2}
+    _worldPosition: {x: 13.686763, y: -0.060629427, z: -10.086968}
+    _flags: 3
+  - _coordinates: {x: 0, y: 3}
+    _worldPosition: {x: -13.31304, y: -0.060629427, z: -8.286969}
+    _flags: 3
+  - _coordinates: {x: 1, y: 3}
+    _worldPosition: {x: -11.513053, y: -0.060629427, z: -8.286969}
+    _flags: 33
+  - _coordinates: {x: 2, y: 3}
+    _worldPosition: {x: -9.713066, y: -0.060629427, z: -8.286969}
+    _flags: 33
+  - _coordinates: {x: 3, y: 3}
+    _worldPosition: {x: -7.9130793, y: -0.060629427, z: -8.286969}
+    _flags: 35
+  - _coordinates: {x: 4, y: 3}
+    _worldPosition: {x: -6.1130924, y: -0.060629427, z: -8.286969}
+    _flags: 3
+  - _coordinates: {x: 5, y: 3}
+    _worldPosition: {x: -4.3131056, y: -0.060629427, z: -8.286969}
+    _flags: 1
+  - _coordinates: {x: 6, y: 3}
+    _worldPosition: {x: -2.5131187, y: -0.060629427, z: -8.286969}
+    _flags: 13
+  - _coordinates: {x: 7, y: 3}
+    _worldPosition: {x: -0.7131319, y: -0.060629427, z: -8.286969}
+    _flags: 13
+  - _coordinates: {x: 8, y: 3}
+    _worldPosition: {x: 1.0868549, y: -0.060629427, z: -8.286969}
+    _flags: 13
+  - _coordinates: {x: 9, y: 3}
+    _worldPosition: {x: 2.8868418, y: -0.060629427, z: -8.286969}
+    _flags: 77
+  - _coordinates: {x: 10, y: 3}
+    _worldPosition: {x: 4.6868286, y: -0.060629427, z: -8.286969}
+    _flags: 65
+  - _coordinates: {x: 11, y: 3}
+    _worldPosition: {x: 6.4868155, y: -0.060629427, z: -8.286969}
+    _flags: 3
+  - _coordinates: {x: 12, y: 3}
+    _worldPosition: {x: 8.286802, y: -0.060629427, z: -8.286969}
+    _flags: 3
+  - _coordinates: {x: 13, y: 3}
+    _worldPosition: {x: 10.086789, y: -0.060629427, z: -8.286969}
+    _flags: 1
+  - _coordinates: {x: 14, y: 3}
+    _worldPosition: {x: 11.886776, y: -0.060629427, z: -8.286969}
+    _flags: 1
+  - _coordinates: {x: 15, y: 3}
+    _worldPosition: {x: 13.686763, y: -0.060629427, z: -8.286969}
+    _flags: 3
+  - _coordinates: {x: 0, y: 4}
+    _worldPosition: {x: -13.31304, y: -0.060629427, z: -6.48697}
+    _flags: 3
+  - _coordinates: {x: 1, y: 4}
+    _worldPosition: {x: -11.513053, y: -0.060629427, z: -6.48697}
+    _flags: 1
+  - _coordinates: {x: 2, y: 4}
+    _worldPosition: {x: -9.713066, y: -0.060629427, z: -6.48697}
+    _flags: 1
+  - _coordinates: {x: 3, y: 4}
+    _worldPosition: {x: -7.9130793, y: -0.060629427, z: -6.48697}
+    _flags: 1
+  - _coordinates: {x: 4, y: 4}
+    _worldPosition: {x: -6.1130924, y: -0.060629427, z: -6.48697}
+    _flags: 3
+  - _coordinates: {x: 5, y: 4}
+    _worldPosition: {x: -4.3131056, y: -0.060629427, z: -6.48697}
+    _flags: 3
+  - _coordinates: {x: 6, y: 4}
+    _worldPosition: {x: -2.5131187, y: -0.060629427, z: -6.48697}
+    _flags: 1
+  - _coordinates: {x: 7, y: 4}
+    _worldPosition: {x: -0.7131319, y: -0.060629427, z: -6.48697}
+    _flags: 1
+  - _coordinates: {x: 8, y: 4}
+    _worldPosition: {x: 1.0868549, y: -0.060629427, z: -6.48697}
+    _flags: 1
+  - _coordinates: {x: 9, y: 4}
+    _worldPosition: {x: 2.8868418, y: -0.060629427, z: -6.48697}
+    _flags: 65
+  - _coordinates: {x: 10, y: 4}
+    _worldPosition: {x: 4.6868286, y: -0.060629427, z: -6.48697}
+    _flags: 65
+  - _coordinates: {x: 11, y: 4}
+    _worldPosition: {x: 6.4868155, y: -0.060629427, z: -6.48697}
+    _flags: 1
+  - _coordinates: {x: 12, y: 4}
+    _worldPosition: {x: 8.286802, y: -0.060629427, z: -6.48697}
+    _flags: 3
+  - _coordinates: {x: 13, y: 4}
+    _worldPosition: {x: 10.086789, y: -0.060629427, z: -6.48697}
+    _flags: 3
+  - _coordinates: {x: 14, y: 4}
+    _worldPosition: {x: 11.886776, y: -0.060629427, z: -6.48697}
+    _flags: 1
+  - _coordinates: {x: 15, y: 4}
+    _worldPosition: {x: 13.686763, y: -0.060629427, z: -6.48697}
+    _flags: 3
+  - _coordinates: {x: 0, y: 5}
+    _worldPosition: {x: -13.31304, y: -0.060629427, z: -4.6869707}
+    _flags: 3
+  - _coordinates: {x: 1, y: 5}
+    _worldPosition: {x: -11.513053, y: -0.060629427, z: -4.6869707}
+    _flags: 1
+  - _coordinates: {x: 2, y: 5}
+    _worldPosition: {x: -9.713066, y: -0.060629427, z: -4.6869707}
+    _flags: 1
+  - _coordinates: {x: 3, y: 5}
+    _worldPosition: {x: -7.9130793, y: -0.060629427, z: -4.6869707}
+    _flags: 1
+  - _coordinates: {x: 4, y: 5}
+    _worldPosition: {x: -6.1130924, y: -0.060629427, z: -4.6869707}
+    _flags: 3
+  - _coordinates: {x: 5, y: 5}
+    _worldPosition: {x: -4.3131056, y: -0.060629427, z: -4.6869707}
+    _flags: 3
+  - _coordinates: {x: 6, y: 5}
+    _worldPosition: {x: -2.5131187, y: -0.060629427, z: -4.6869707}
+    _flags: 3
+  - _coordinates: {x: 7, y: 5}
+    _worldPosition: {x: -0.7131319, y: -0.060629427, z: -4.6869707}
+    _flags: 3
+  - _coordinates: {x: 8, y: 5}
+    _worldPosition: {x: 1.0868549, y: -0.060629427, z: -4.6869707}
+    _flags: 1
+  - _coordinates: {x: 9, y: 5}
+    _worldPosition: {x: 2.8868418, y: -0.060629427, z: -4.6869707}
+    _flags: 65
+  - _coordinates: {x: 10, y: 5}
+    _worldPosition: {x: 4.6868286, y: -0.060629427, z: -4.6869707}
+    _flags: 65
+  - _coordinates: {x: 11, y: 5}
+    _worldPosition: {x: 6.4868155, y: -0.060629427, z: -4.6869707}
+    _flags: 1
+  - _coordinates: {x: 12, y: 5}
+    _worldPosition: {x: 8.286802, y: -0.060629427, z: -4.6869707}
+    _flags: 1
+  - _coordinates: {x: 13, y: 5}
+    _worldPosition: {x: 10.086789, y: -0.060629427, z: -4.6869707}
+    _flags: 3
+  - _coordinates: {x: 14, y: 5}
+    _worldPosition: {x: 11.886776, y: -0.060629427, z: -4.6869707}
+    _flags: 1
+  - _coordinates: {x: 15, y: 5}
+    _worldPosition: {x: 13.686763, y: -0.060629427, z: -4.6869707}
+    _flags: 3
+  - _coordinates: {x: 0, y: 6}
+    _worldPosition: {x: -13.31304, y: -0.060629427, z: -2.8869715}
+    _flags: 3
+  - _coordinates: {x: 1, y: 6}
+    _worldPosition: {x: -11.513053, y: -0.060629427, z: -2.8869715}
+    _flags: 33
+  - _coordinates: {x: 2, y: 6}
+    _worldPosition: {x: -9.713066, y: -0.060629427, z: -2.8869715}
+    _flags: 33
+  - _coordinates: {x: 3, y: 6}
+    _worldPosition: {x: -7.9130793, y: -0.060629427, z: -2.8869715}
+    _flags: 33
+  - _coordinates: {x: 4, y: 6}
+    _worldPosition: {x: -6.1130924, y: -0.060629427, z: -2.8869715}
+    _flags: 35
+  - _coordinates: {x: 5, y: 6}
+    _worldPosition: {x: -4.3131056, y: -0.060629427, z: -2.8869715}
+    _flags: 3
+  - _coordinates: {x: 6, y: 6}
+    _worldPosition: {x: -2.5131187, y: -0.060629427, z: -2.8869715}
+    _flags: 35
+  - _coordinates: {x: 7, y: 6}
+    _worldPosition: {x: -0.7131319, y: -0.060629427, z: -2.8869715}
+    _flags: 35
+  - _coordinates: {x: 8, y: 6}
+    _worldPosition: {x: 1.0868549, y: -0.060629427, z: -2.8869715}
+    _flags: 33
+  - _coordinates: {x: 9, y: 6}
+    _worldPosition: {x: 2.8868418, y: -0.060629427, z: -2.8869715}
+    _flags: 35
+  - _coordinates: {x: 10, y: 6}
+    _worldPosition: {x: 4.6868286, y: -0.060629427, z: -2.8869715}
+    _flags: 1
+  - _coordinates: {x: 11, y: 6}
+    _worldPosition: {x: 6.4868155, y: -0.060629427, z: -2.8869715}
+    _flags: 1
+  - _coordinates: {x: 12, y: 6}
+    _worldPosition: {x: 8.286802, y: -0.060629427, z: -2.8869715}
+    _flags: 1
+  - _coordinates: {x: 13, y: 6}
+    _worldPosition: {x: 10.086789, y: -0.060629427, z: -2.8869715}
+    _flags: 1
+  - _coordinates: {x: 14, y: 6}
+    _worldPosition: {x: 11.886776, y: -0.060629427, z: -2.8869715}
+    _flags: 1
+  - _coordinates: {x: 15, y: 6}
+    _worldPosition: {x: 13.686763, y: -0.060629427, z: -2.8869715}
+    _flags: 3
+  - _coordinates: {x: 0, y: 7}
+    _worldPosition: {x: -13.31304, y: -0.060629427, z: -1.0869722}
+    _flags: 3
+  - _coordinates: {x: 1, y: 7}
+    _worldPosition: {x: -11.513053, y: -0.060629427, z: -1.0869722}
+    _flags: 33
+  - _coordinates: {x: 2, y: 7}
+    _worldPosition: {x: -9.713066, y: -0.060629427, z: -1.0869722}
+    _flags: 33
+  - _coordinates: {x: 3, y: 7}
+    _worldPosition: {x: -7.9130793, y: -0.060629427, z: -1.0869722}
+    _flags: 33
+  - _coordinates: {x: 4, y: 7}
+    _worldPosition: {x: -6.1130924, y: -0.060629427, z: -1.0869722}
+    _flags: 33
+  - _coordinates: {x: 5, y: 7}
+    _worldPosition: {x: -4.3131056, y: -0.060629427, z: -1.0869722}
+    _flags: 1
+  - _coordinates: {x: 6, y: 7}
+    _worldPosition: {x: -2.5131187, y: -0.060629427, z: -1.0869722}
+    _flags: 33
+  - _coordinates: {x: 7, y: 7}
+    _worldPosition: {x: -0.7131319, y: -0.060629427, z: -1.0869722}
+    _flags: 33
+  - _coordinates: {x: 8, y: 7}
+    _worldPosition: {x: 1.0868549, y: -0.060629427, z: -1.0869722}
+    _flags: 33
+  - _coordinates: {x: 9, y: 7}
+    _worldPosition: {x: 2.8868418, y: -0.060629427, z: -1.0869722}
+    _flags: 33
+  - _coordinates: {x: 10, y: 7}
+    _worldPosition: {x: 4.6868286, y: -0.060629427, z: -1.0869722}
+    _flags: 1
+  - _coordinates: {x: 11, y: 7}
+    _worldPosition: {x: 6.4868155, y: -0.060629427, z: -1.0869722}
+    _flags: 33
+  - _coordinates: {x: 12, y: 7}
+    _worldPosition: {x: 8.286802, y: -0.060629427, z: -1.0869722}
+    _flags: 33
+  - _coordinates: {x: 13, y: 7}
+    _worldPosition: {x: 10.086789, y: -0.060629427, z: -1.0869722}
+    _flags: 33
+  - _coordinates: {x: 14, y: 7}
+    _worldPosition: {x: 11.886776, y: -0.060629427, z: -1.0869722}
+    _flags: 1
+  - _coordinates: {x: 15, y: 7}
+    _worldPosition: {x: 13.686763, y: -0.060629427, z: -1.0869722}
+    _flags: 3
+  - _coordinates: {x: 0, y: 8}
+    _worldPosition: {x: -13.31304, y: -0.060629427, z: 0.713027}
+    _flags: 3
+  - _coordinates: {x: 1, y: 8}
+    _worldPosition: {x: -11.513053, y: -0.060629427, z: 0.713027}
+    _flags: 33
+  - _coordinates: {x: 2, y: 8}
+    _worldPosition: {x: -9.713066, y: -0.060629427, z: 0.713027}
+    _flags: 33
+  - _coordinates: {x: 3, y: 8}
+    _worldPosition: {x: -7.9130793, y: -0.060629427, z: 0.713027}
+    _flags: 33
+  - _coordinates: {x: 4, y: 8}
+    _worldPosition: {x: -6.1130924, y: -0.060629427, z: 0.713027}
+    _flags: 33
+  - _coordinates: {x: 5, y: 8}
+    _worldPosition: {x: -4.3131056, y: -0.060629427, z: 0.713027}
+    _flags: 1
+  - _coordinates: {x: 6, y: 8}
+    _worldPosition: {x: -2.5131187, y: -0.060629427, z: 0.713027}
+    _flags: 33
+  - _coordinates: {x: 7, y: 8}
+    _worldPosition: {x: -0.7131319, y: -0.060629427, z: 0.713027}
+    _flags: 33
+  - _coordinates: {x: 8, y: 8}
+    _worldPosition: {x: 1.0868549, y: -0.060629427, z: 0.713027}
+    _flags: 33
+  - _coordinates: {x: 9, y: 8}
+    _worldPosition: {x: 2.8868418, y: -0.060629427, z: 0.713027}
+    _flags: 33
+  - _coordinates: {x: 10, y: 8}
+    _worldPosition: {x: 4.6868286, y: -0.060629427, z: 0.713027}
+    _flags: 1
+  - _coordinates: {x: 11, y: 8}
+    _worldPosition: {x: 6.4868155, y: -0.060629427, z: 0.713027}
+    _flags: 33
+  - _coordinates: {x: 12, y: 8}
+    _worldPosition: {x: 8.286802, y: -0.060629427, z: 0.713027}
+    _flags: 33
+  - _coordinates: {x: 13, y: 8}
+    _worldPosition: {x: 10.086789, y: -0.060629427, z: 0.713027}
+    _flags: 33
+  - _coordinates: {x: 14, y: 8}
+    _worldPosition: {x: 11.886776, y: -0.060629427, z: 0.713027}
+    _flags: 1
+  - _coordinates: {x: 15, y: 8}
+    _worldPosition: {x: 13.686763, y: -0.060629427, z: 0.713027}
+    _flags: 3
+  - _coordinates: {x: 0, y: 9}
+    _worldPosition: {x: -13.31304, y: -0.060629427, z: 2.5130262}
+    _flags: 3
+  - _coordinates: {x: 1, y: 9}
+    _worldPosition: {x: -11.513053, y: -0.060629427, z: 2.5130262}
+    _flags: 1
+  - _coordinates: {x: 2, y: 9}
+    _worldPosition: {x: -9.713066, y: -0.060629427, z: 2.5130262}
+    _flags: 1
+  - _coordinates: {x: 3, y: 9}
+    _worldPosition: {x: -7.9130793, y: -0.060629427, z: 2.5130262}
+    _flags: 1
+  - _coordinates: {x: 4, y: 9}
+    _worldPosition: {x: -6.1130924, y: -0.060629427, z: 2.5130262}
+    _flags: 1
+  - _coordinates: {x: 5, y: 9}
+    _worldPosition: {x: -4.3131056, y: -0.060629427, z: 2.5130262}
+    _flags: 1
+  - _coordinates: {x: 6, y: 9}
+    _worldPosition: {x: -2.5131187, y: -0.060629427, z: 2.5130262}
+    _flags: 35
+  - _coordinates: {x: 7, y: 9}
+    _worldPosition: {x: -0.7131319, y: -0.060629427, z: 2.5130262}
+    _flags: 33
+  - _coordinates: {x: 8, y: 9}
+    _worldPosition: {x: 1.0868549, y: -0.060629427, z: 2.5130262}
+    _flags: 35
+  - _coordinates: {x: 9, y: 9}
+    _worldPosition: {x: 2.8868418, y: -0.060629427, z: 2.5130262}
+    _flags: 35
+  - _coordinates: {x: 10, y: 9}
+    _worldPosition: {x: 4.6868286, y: -0.060629427, z: 2.5130262}
+    _flags: 3
+  - _coordinates: {x: 11, y: 9}
+    _worldPosition: {x: 6.4868155, y: -0.060629427, z: 2.5130262}
+    _flags: 3
+  - _coordinates: {x: 12, y: 9}
+    _worldPosition: {x: 8.286802, y: -0.060629427, z: 2.5130262}
+    _flags: 1
+  - _coordinates: {x: 13, y: 9}
+    _worldPosition: {x: 10.086789, y: -0.060629427, z: 2.5130262}
+    _flags: 1
+  - _coordinates: {x: 14, y: 9}
+    _worldPosition: {x: 11.886776, y: -0.060629427, z: 2.5130262}
+    _flags: 1
+  - _coordinates: {x: 15, y: 9}
+    _worldPosition: {x: 13.686763, y: -0.060629427, z: 2.5130262}
+    _flags: 3
+  - _coordinates: {x: 0, y: 10}
+    _worldPosition: {x: -13.31304, y: -0.060629427, z: 4.3130255}
+    _flags: 3
+  - _coordinates: {x: 1, y: 10}
+    _worldPosition: {x: -11.513053, y: -0.060629427, z: 4.3130255}
+    _flags: 1
+  - _coordinates: {x: 2, y: 10}
+    _worldPosition: {x: -9.713066, y: -0.060629427, z: 4.3130255}
+    _flags: 3
+  - _coordinates: {x: 3, y: 10}
+    _worldPosition: {x: -7.9130793, y: -0.060629427, z: 4.3130255}
+    _flags: 1
+  - _coordinates: {x: 4, y: 10}
+    _worldPosition: {x: -6.1130924, y: -0.060629427, z: 4.3130255}
+    _flags: 1
+  - _coordinates: {x: 5, y: 10}
+    _worldPosition: {x: -4.3131056, y: -0.060629427, z: 4.3130255}
+    _flags: 1
+  - _coordinates: {x: 6, y: 10}
+    _worldPosition: {x: -2.5131187, y: -0.060629427, z: 4.3130255}
+    _flags: 1
+  - _coordinates: {x: 7, y: 10}
+    _worldPosition: {x: -0.7131319, y: -0.060629427, z: 4.3130255}
+    _flags: 1
+  - _coordinates: {x: 8, y: 10}
+    _worldPosition: {x: 1.0868549, y: -0.060629427, z: 4.3130255}
+    _flags: 3
+  - _coordinates: {x: 9, y: 10}
+    _worldPosition: {x: 2.8868418, y: -0.060629427, z: 4.3130255}
+    _flags: 3
+  - _coordinates: {x: 10, y: 10}
+    _worldPosition: {x: 4.6868286, y: -0.060629427, z: 4.3130255}
+    _flags: 3
+  - _coordinates: {x: 11, y: 10}
+    _worldPosition: {x: 6.4868155, y: -0.060629427, z: 4.3130255}
+    _flags: 3
+  - _coordinates: {x: 12, y: 10}
+    _worldPosition: {x: 8.286802, y: -0.060629427, z: 4.3130255}
+    _flags: 65
+  - _coordinates: {x: 13, y: 10}
+    _worldPosition: {x: 10.086789, y: -0.060629427, z: 4.3130255}
+    _flags: 65
+  - _coordinates: {x: 14, y: 10}
+    _worldPosition: {x: 11.886776, y: -0.060629427, z: 4.3130255}
+    _flags: 1
+  - _coordinates: {x: 15, y: 10}
+    _worldPosition: {x: 13.686763, y: -0.060629427, z: 4.3130255}
+    _flags: 3
+  - _coordinates: {x: 0, y: 11}
+    _worldPosition: {x: -13.31304, y: -0.060629427, z: 6.1130247}
+    _flags: 3
+  - _coordinates: {x: 1, y: 11}
+    _worldPosition: {x: -11.513053, y: -0.060629427, z: 6.1130247}
+    _flags: 1
+  - _coordinates: {x: 2, y: 11}
+    _worldPosition: {x: -9.713066, y: -0.060629427, z: 6.1130247}
+    _flags: 3
+  - _coordinates: {x: 3, y: 11}
+    _worldPosition: {x: -7.9130793, y: -0.060629427, z: 6.1130247}
+    _flags: 3
+  - _coordinates: {x: 4, y: 11}
+    _worldPosition: {x: -6.1130924, y: -0.060629427, z: 6.1130247}
+    _flags: 1
+  - _coordinates: {x: 5, y: 11}
+    _worldPosition: {x: -4.3131056, y: -0.060629427, z: 6.1130247}
+    _flags: 1
+  - _coordinates: {x: 6, y: 11}
+    _worldPosition: {x: -2.5131187, y: -0.060629427, z: 6.1130247}
+    _flags: 1
+  - _coordinates: {x: 7, y: 11}
+    _worldPosition: {x: -0.7131319, y: -0.060629427, z: 6.1130247}
+    _flags: 1
+  - _coordinates: {x: 8, y: 11}
+    _worldPosition: {x: 1.0868549, y: -0.060629427, z: 6.1130247}
+    _flags: 1
+  - _coordinates: {x: 9, y: 11}
+    _worldPosition: {x: 2.8868418, y: -0.060629427, z: 6.1130247}
+    _flags: 1
+  - _coordinates: {x: 10, y: 11}
+    _worldPosition: {x: 4.6868286, y: -0.060629427, z: 6.1130247}
+    _flags: 3
+  - _coordinates: {x: 11, y: 11}
+    _worldPosition: {x: 6.4868155, y: -0.060629427, z: 6.1130247}
+    _flags: 3
+  - _coordinates: {x: 12, y: 11}
+    _worldPosition: {x: 8.286802, y: -0.060629427, z: 6.1130247}
+    _flags: 65
+  - _coordinates: {x: 13, y: 11}
+    _worldPosition: {x: 10.086789, y: -0.060629427, z: 6.1130247}
+    _flags: 65
+  - _coordinates: {x: 14, y: 11}
+    _worldPosition: {x: 11.886776, y: -0.060629427, z: 6.1130247}
+    _flags: 1
+  - _coordinates: {x: 15, y: 11}
+    _worldPosition: {x: 13.686763, y: -0.060629427, z: 6.1130247}
+    _flags: 3
+  - _coordinates: {x: 0, y: 12}
+    _worldPosition: {x: -13.31304, y: -0.060629427, z: 7.913024}
+    _flags: 3
+  - _coordinates: {x: 1, y: 12}
+    _worldPosition: {x: -11.513053, y: -0.060629427, z: 7.913024}
+    _flags: 1
+  - _coordinates: {x: 2, y: 12}
+    _worldPosition: {x: -9.713066, y: -0.060629427, z: 7.913024}
+    _flags: 1
+  - _coordinates: {x: 3, y: 12}
+    _worldPosition: {x: -7.9130793, y: -0.060629427, z: 7.913024}
+    _flags: 3
+  - _coordinates: {x: 4, y: 12}
+    _worldPosition: {x: -6.1130924, y: -0.060629427, z: 7.913024}
+    _flags: 3
+  - _coordinates: {x: 5, y: 12}
+    _worldPosition: {x: -4.3131056, y: -0.060629427, z: 7.913024}
+    _flags: 1
+  - _coordinates: {x: 6, y: 12}
+    _worldPosition: {x: -2.5131187, y: -0.060629427, z: 7.913024}
+    _flags: 1
+  - _coordinates: {x: 7, y: 12}
+    _worldPosition: {x: -0.7131319, y: -0.060629427, z: 7.913024}
+    _flags: 1
+  - _coordinates: {x: 8, y: 12}
+    _worldPosition: {x: 1.0868549, y: -0.060629427, z: 7.913024}
+    _flags: 1
+  - _coordinates: {x: 9, y: 12}
+    _worldPosition: {x: 2.8868418, y: -0.060629427, z: 7.913024}
+    _flags: 1
+  - _coordinates: {x: 10, y: 12}
+    _worldPosition: {x: 4.6868286, y: -0.060629427, z: 7.913024}
+    _flags: 1
+  - _coordinates: {x: 11, y: 12}
+    _worldPosition: {x: 6.4868155, y: -0.060629427, z: 7.913024}
+    _flags: 3
+  - _coordinates: {x: 12, y: 12}
+    _worldPosition: {x: 8.286802, y: -0.060629427, z: 7.913024}
+    _flags: 67
+  - _coordinates: {x: 13, y: 12}
+    _worldPosition: {x: 10.086789, y: -0.060629427, z: 7.913024}
+    _flags: 65
+  - _coordinates: {x: 14, y: 12}
+    _worldPosition: {x: 11.886776, y: -0.060629427, z: 7.913024}
+    _flags: 1
+  - _coordinates: {x: 15, y: 12}
+    _worldPosition: {x: 13.686763, y: -0.060629427, z: 7.913024}
+    _flags: 3
+  - _coordinates: {x: 0, y: 13}
+    _worldPosition: {x: -13.31304, y: -0.060629427, z: 9.713023}
+    _flags: 3
+  - _coordinates: {x: 1, y: 13}
+    _worldPosition: {x: -11.513053, y: -0.060629427, z: 9.713023}
+    _flags: 1
+  - _coordinates: {x: 2, y: 13}
+    _worldPosition: {x: -9.713066, y: -0.060629427, z: 9.713023}
+    _flags: 1
+  - _coordinates: {x: 3, y: 13}
+    _worldPosition: {x: -7.9130793, y: -0.060629427, z: 9.713023}
+    _flags: 1
+  - _coordinates: {x: 4, y: 13}
+    _worldPosition: {x: -6.1130924, y: -0.060629427, z: 9.713023}
+    _flags: 3
+  - _coordinates: {x: 5, y: 13}
+    _worldPosition: {x: -4.3131056, y: -0.060629427, z: 9.713023}
+    _flags: 1
+  - _coordinates: {x: 6, y: 13}
+    _worldPosition: {x: -2.5131187, y: -0.060629427, z: 9.713023}
+    _flags: 21
+  - _coordinates: {x: 7, y: 13}
+    _worldPosition: {x: -0.7131319, y: -0.060629427, z: 9.713023}
+    _flags: 21
+  - _coordinates: {x: 8, y: 13}
+    _worldPosition: {x: 1.0868549, y: -0.060629427, z: 9.713023}
+    _flags: 21
+  - _coordinates: {x: 9, y: 13}
+    _worldPosition: {x: 2.8868418, y: -0.060629427, z: 9.713023}
+    _flags: 21
+  - _coordinates: {x: 10, y: 13}
+    _worldPosition: {x: 4.6868286, y: -0.060629427, z: 9.713023}
+    _flags: 1
+  - _coordinates: {x: 11, y: 13}
+    _worldPosition: {x: 6.4868155, y: -0.060629427, z: 9.713023}
+    _flags: 3
+  - _coordinates: {x: 12, y: 13}
+    _worldPosition: {x: 8.286802, y: -0.060629427, z: 9.713023}
+    _flags: 3
+  - _coordinates: {x: 13, y: 13}
+    _worldPosition: {x: 10.086789, y: -0.060629427, z: 9.713023}
+    _flags: 1
+  - _coordinates: {x: 14, y: 13}
+    _worldPosition: {x: 11.886776, y: -0.060629427, z: 9.713023}
+    _flags: 1
+  - _coordinates: {x: 15, y: 13}
+    _worldPosition: {x: 13.686763, y: -0.060629427, z: 9.713023}
+    _flags: 3
+  - _coordinates: {x: 0, y: 14}
+    _worldPosition: {x: -13.31304, y: -0.060629427, z: 11.513022}
+    _flags: 3
+  - _coordinates: {x: 1, y: 14}
+    _worldPosition: {x: -11.513053, y: -0.060629427, z: 11.513022}
+    _flags: 1
+  - _coordinates: {x: 2, y: 14}
+    _worldPosition: {x: -9.713066, y: -0.060629427, z: 11.513022}
+    _flags: 1
+  - _coordinates: {x: 3, y: 14}
+    _worldPosition: {x: -7.9130793, y: -0.060629427, z: 11.513022}
+    _flags: 1
+  - _coordinates: {x: 4, y: 14}
+    _worldPosition: {x: -6.1130924, y: -0.060629427, z: 11.513022}
+    _flags: 1
+  - _coordinates: {x: 5, y: 14}
+    _worldPosition: {x: -4.3131056, y: -0.060629427, z: 11.513022}
+    _flags: 1
+  - _coordinates: {x: 6, y: 14}
+    _worldPosition: {x: -2.5131187, y: -0.060629427, z: 11.513022}
+    _flags: 21
+  - _coordinates: {x: 7, y: 14}
+    _worldPosition: {x: -0.7131319, y: -0.060629427, z: 11.513022}
+    _flags: 21
+  - _coordinates: {x: 8, y: 14}
+    _worldPosition: {x: 1.0868549, y: -0.060629427, z: 11.513022}
+    _flags: 21
+  - _coordinates: {x: 9, y: 14}
+    _worldPosition: {x: 2.8868418, y: -0.060629427, z: 11.513022}
+    _flags: 21
+  - _coordinates: {x: 10, y: 14}
+    _worldPosition: {x: 4.6868286, y: -0.060629427, z: 11.513022}
+    _flags: 1
+  - _coordinates: {x: 11, y: 14}
+    _worldPosition: {x: 6.4868155, y: -0.060629427, z: 11.513022}
+    _flags: 1
+  - _coordinates: {x: 12, y: 14}
+    _worldPosition: {x: 8.286802, y: -0.060629427, z: 11.513022}
+    _flags: 1
+  - _coordinates: {x: 13, y: 14}
+    _worldPosition: {x: 10.086789, y: -0.060629427, z: 11.513022}
+    _flags: 1
+  - _coordinates: {x: 14, y: 14}
+    _worldPosition: {x: 11.886776, y: -0.060629427, z: 11.513022}
+    _flags: 1
+  - _coordinates: {x: 15, y: 14}
+    _worldPosition: {x: 13.686763, y: -0.060629427, z: 11.513022}
+    _flags: 3
+  - _coordinates: {x: 0, y: 15}
+    _worldPosition: {x: -13.31304, y: -0.060629427, z: 13.313022}
+    _flags: 3
+  - _coordinates: {x: 1, y: 15}
+    _worldPosition: {x: -11.513053, y: -0.060629427, z: 13.313022}
+    _flags: 3
+  - _coordinates: {x: 2, y: 15}
+    _worldPosition: {x: -9.713066, y: -0.060629427, z: 13.313022}
+    _flags: 3
+  - _coordinates: {x: 3, y: 15}
+    _worldPosition: {x: -7.9130793, y: -0.060629427, z: 13.313022}
+    _flags: 3
+  - _coordinates: {x: 4, y: 15}
+    _worldPosition: {x: -6.1130924, y: -0.060629427, z: 13.313022}
+    _flags: 3
+  - _coordinates: {x: 5, y: 15}
+    _worldPosition: {x: -4.3131056, y: -0.060629427, z: 13.313022}
+    _flags: 3
+  - _coordinates: {x: 6, y: 15}
+    _worldPosition: {x: -2.5131187, y: -0.060629427, z: 13.313022}
+    _flags: 3
+  - _coordinates: {x: 7, y: 15}
+    _worldPosition: {x: -0.7131319, y: -0.060629427, z: 13.313022}
+    _flags: 3
+  - _coordinates: {x: 8, y: 15}
+    _worldPosition: {x: 1.0868549, y: -0.060629427, z: 13.313022}
+    _flags: 3
+  - _coordinates: {x: 9, y: 15}
+    _worldPosition: {x: 2.8868418, y: -0.060629427, z: 13.313022}
+    _flags: 3
+  - _coordinates: {x: 10, y: 15}
+    _worldPosition: {x: 4.6868286, y: -0.060629427, z: 13.313022}
+    _flags: 3
+  - _coordinates: {x: 11, y: 15}
+    _worldPosition: {x: 6.4868155, y: -0.060629427, z: 13.313022}
+    _flags: 3
+  - _coordinates: {x: 12, y: 15}
+    _worldPosition: {x: 8.286802, y: -0.060629427, z: 13.313022}
+    _flags: 3
+  - _coordinates: {x: 13, y: 15}
+    _worldPosition: {x: 10.086789, y: -0.060629427, z: 13.313022}
+    _flags: 3
+  - _coordinates: {x: 14, y: 15}
+    _worldPosition: {x: 11.886776, y: -0.060629427, z: 13.313022}
+    _flags: 3
+  - _coordinates: {x: 15, y: 15}
+    _worldPosition: {x: 13.686763, y: -0.060629427, z: 13.313022}
+    _flags: 3

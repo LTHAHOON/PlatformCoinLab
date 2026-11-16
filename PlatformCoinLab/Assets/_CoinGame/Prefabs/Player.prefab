@@ -1,4 +1,4 @@
-﻿%YAML 1.1
+%YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
 --- !u!1 &1368085303373623400
 GameObject:
@@ -126,7 +126,7 @@ Animator:
   m_LinearVelocityBlending: 0
   m_StabilizeFeet: 0
   m_AnimatePhysics: 0
-  m_WarningMessage:
+  m_WarningMessage: 
   m_HasTransformHierarchy: 1
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
@@ -168,7 +168,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
-  GlobalObjectIdHash: 1219676839
+  GlobalObjectIdHash: 698505533
   InScenePlacedSourceGlobalObjectIdHash: 0
   m_InScenePlacedDisabledByDefault: 0
   DeferredDespawnTick: 0
@@ -257,6 +257,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::CoinGame.Network.NetworkPlayerController
   ShowTopMostFoldoutHeaderGroup: 1
   _moveSpeed: 4
+  _rotationSpeed: 12
   _followPlayerCamera: 0
   _playerPosMinMaxDataRef:
     m_AssetGUID: b65b34205923623489a6006f23252fdf
@@ -325,8 +326,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4cbdbf18fffa9b8458873fe1810ccf03, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CoinGame.Network.NetworkInventory
-  _roleLoadout: {fileID: 11400000, guid: 8f0a1b2c3d4e5f6a7b9c0d1e2f3a4b56, type: 2}
   ShowTopMostFoldoutHeaderGroup: 1
+  _roleLoadout: {fileID: 11400000, guid: 8f0a1b2c3d4e5f6a7b9c0d1e2f3a4b56, type: 2}
 --- !u!114 &6291126183999740266
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -360,6 +361,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ba8940e7155bb614b82a89a1a5b7b363, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CoinGame.Network.NetworkWorldHealthBar
+  _worldOffset: {x: 0, y: 2.25, z: 0}
+  _viewOffset: {x: 0, y: 0, z: 0}
+  _screenOffset: {x: 0, y: 0}
 --- !u!114 &7000000000000000002
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -370,7 +374,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 9a3e0c8b7d6f4e2a9b1c5d7f8e0a2b44, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: CoinGame.Gameplay.Player::CharacterAnimatorUtility
   _parameters: {fileID: 11400000, guid: 7b8e1c4d6f9a2b3c5d7e8f0a1b2c3d45, type: 2}
   _animator: {fileID: 0}

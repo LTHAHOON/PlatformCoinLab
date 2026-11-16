@@ -643,7 +643,7 @@ flowchart TD
 
 핵심 권한 경계는 **이동은 소유자, 수집·피해·아이템·승패는 서버**다. `PlayerInputState`는 현재 실제 입력 경로에서 사용하지만 구조체 자체를 서버로 보내는 방식은 아니다. 서버에 필요한 행동 요청은 개별 RPC로 전달한다.
 
-`RoundOutcomeEvaluator`는 테스트되는 독립 규칙 유틸리티이며 현재 `NetworkRoundState`에서 직접 호출되지 않는다. 실제 라운드 승패 로직은 `NetworkRoundState`에 구현되어 있다. 투사체는 현재 `Instantiate+Spawn`으로 생성하며 종료 시 Despawn 유틸리티를 사용한다. 상자 스포너는 Start에서 한 번 생성하고, 공개 라운드 생성 API와 자동 호출 여부는 구분한다.
+`RoundOutcomeEvaluator`는 테스트되는 독립 규칙 유틸리티이며 현재 `NetworkRoundState`에서 직접 호출되지 않는다. 실제 라운드 승패 로직은 `NetworkRoundState`에 구현되어 있다. 투사체는 현재 `Instantiate+Spawn`으로 생성하며 종료 시 Despawn 유틸리티를 사용한다. 상자 스포너는 서버 라운드 상태 이벤트를 구독하며 라운드 번호가 변경될 때 기존 네트워크 상자를 정리한 뒤 새 상자를 생성한다. InGame 맵 grid 측정 도구를 추가했고, 현재 Environment 89개와 Grass 16개의 Collider를 분석한 결과 Ground 로컬 기준 복셸 footprint와 후보 셀 간격은 약 2.857이며 16×16 셀 범위로 추정된다. Border_6_7 기준 월드 간격 약 1.8과 원점을 사용해 장식 블록 26개의 X·Z 위치를 보정했고, 재측정 결과 105개 Collider가 하나의 lattice 잔차로 정렬되었다. Ground Renderer bounds는 비정사각형 mesh 특성 때문에 grid bounds의 기준으로 사용하지 않는다. `GridSpawnMap.asset`을 16×16으로 베이크했으며, 전체 셀 256개·정적 차단 셀 102개·플레이어 영역 16개·코인 영역 43개·상자 영역 12개를 기록했다. 경계 접촉만으로 인접 셀을 차단하지 않도록 점유 판정을 조정했다. 스폰너 런타임 연결과 실제 네트워크 플레이 검증은 아직 남아 있다.
 
 씬 서비스는 현재 `GameManager.ConfigureInGameSceneServices()` 기준으로 **InGame Camera와 Persistent EventSystem**을 사용한다. Persistent의 `Main Camera`와 InGame의 `EventSystem`을 비활성화한다.
 

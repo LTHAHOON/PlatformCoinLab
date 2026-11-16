@@ -25,6 +25,8 @@ namespace CoinGame.Utilities
         private List<BoxCollider> _collectorPlayerZones = new();
         [SerializeField]
         private List<BoxCollider> _disruptorPlayerZones = new();
+        [SerializeField]
+        private GridSpawnMap _gridSpawnMap;
         private readonly List<int> _zoneRemaining = new();
         private int _lastZoneRound = -1;
         private int _lastZoneCount = -1;
@@ -434,6 +436,11 @@ namespace CoinGame.Utilities
                 return false;
             }
 
+            if (_gridSpawnMap != null)
+            {
+                return TryRelocatePlayersOnGrid();
+            }
+
             Physics.SyncTransforms();
             var assignments = new List<(NetworkPlayerController player, Vector3 position, float radius)>();
             foreach (NetworkClient client in NetworkManager.Singleton.ConnectedClientsList)
@@ -515,11 +522,59 @@ namespace CoinGame.Utilities
             return true;
         }
 
+        private bool TryRelocatePlayersOnGrid()
+        {
+            GridSpawnReservation.Configure(_gridSpawnMap);
+            GridSpawnReservation.ReleaseAllPlayers();
+            List<(NetworkPlayerController player, Vector3 position)> assignments = new();
+            foreach (NetworkClient client in NetworkManager.Singleton.ConnectedClientsList)
+            {
+                if (client.PlayerObject == null)
+                {
+                    GridSpawnReservation.ReleaseAllPlayers();
+                    return false;
+                }
+
+                NetworkPlayerController player = client.PlayerObject.GetComponent<NetworkPlayerController>();
+                NetworkPlayerStats stats = client.PlayerObject.GetComponent<NetworkPlayerStats>();
+                Vector3 position;
+                if (player == null || stats == null ||
+                    !GridSpawnReservation.TryReservePlayer(client.ClientId, stats.Role, out position))
+                {
+                    GridSpawnReservation.ReleaseAllPlayers();
+                    return false;
+                }
+
+                assignments.Add((player, position));
+            }
+
+            foreach ((NetworkPlayerController player, Vector3 position) assignment in assignments)
+            {
+                assignment.player.RelocateForGameRpc(assignment.position);
+            }
+
+            return true;
+        }
+
         public bool TryRelocatePlayer(NetworkPlayerController player)
         {
             if (NetworkManager.Singleton == null || !NetworkManager.Singleton.IsServer || player == null)
             {
                 return false;
+            }
+
+            if (_gridSpawnMap != null)
+            {
+                NetworkPlayerStats gridStats = player.GetComponent<NetworkPlayerStats>();
+                Vector3 gridPosition;
+                if (gridStats == null || !GridSpawnReservation.TryReservePlayer(
+                    player.OwnerClientId, gridStats.Role, out gridPosition))
+                {
+                    return false;
+                }
+
+                player.RelocateForGameRpc(gridPosition);
+                return true;
             }
 
             CharacterController controller = player.GetComponent<CharacterController>();

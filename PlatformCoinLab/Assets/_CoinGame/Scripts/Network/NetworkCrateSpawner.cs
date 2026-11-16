@@ -13,11 +13,13 @@ namespace CoinGame.Network
     {
         [SerializeField] private NetworkCrate _cratePrefab;
         [SerializeField] private StageConfig _stageConfig;
+        [SerializeField] private GridSpawnMap _gridSpawnMap;
         [SerializeField] private Vector3 _area = new(8f, 0f, 8f);
         [SerializeField] private List<BoxCollider> _spawnZones = new();
         [SerializeField] private LayerMask _blockingLayerMask;
         [SerializeField] private float _checkRadius = 1.2f;
-        private bool _spawned;
+        private NetworkRoundState _roundState;
+        private int _lastSpawnedRound = -1;
         private readonly List<int> _zoneRemaining = new();
         private readonly List<Vector3> _spawnedPositions = new();
         private IEnumerator Start()
@@ -26,11 +28,37 @@ namespace CoinGame.Network
             {
                 yield return null;
             }
-            if (NetworkManager.Singleton.IsServer && !_spawned)
+            if (!NetworkManager.Singleton.IsServer)
             {
-                _spawned = true;
-                SpawnForRoundServer();
+                yield break;
             }
+
+            while (NetworkRoundState.Instance == null || !NetworkRoundState.Instance.IsSpawned)
+            {
+                yield return null;
+            }
+
+            _roundState = NetworkRoundState.Instance;
+            _roundState.StateChanged += OnRoundStateChanged;
+            SpawnForRoundServer();
+        }
+
+        private void OnDestroy()
+        {
+            if (_roundState != null)
+            {
+                _roundState.StateChanged -= OnRoundStateChanged;
+            }
+        }
+
+        private void OnRoundStateChanged(int round, int targetCoins, int remainingCoins, float remainingTime, bool isActive)
+        {
+            if (round <= 0 || round == _lastSpawnedRound)
+            {
+                return;
+            }
+
+            SpawnForRoundServer();
         }
         public void SpawnForRoundServer()
         {
@@ -39,6 +67,14 @@ namespace CoinGame.Network
             {
                 return;
             }
+
+            int round = NetworkRoundState.Instance != null ? NetworkRoundState.Instance.Round : 0;
+            if (round <= 0 || round == _lastSpawnedRound)
+            {
+                return;
+            }
+
+            DespawnExistingCratesServer();
             int count = _stageConfig.GetCrateCount();
             List<BoxCollider> zones = ResolveCrateZones();
             if (zones.Count == 0)
@@ -47,6 +83,7 @@ namespace CoinGame.Network
                 return;
             }
 
+            _lastSpawnedRound = round;
             BuildZoneAllocation(zones, count);
             for (int i = 0; i < count; i++)
             {
@@ -58,6 +95,17 @@ namespace CoinGame.Network
 
                 NetworkCrate crate = Instantiate(_cratePrefab, position, Quaternion.identity);
                 crate.NetworkObject.Spawn();
+            }
+        }
+
+        private void DespawnExistingCratesServer()
+        {
+            foreach (NetworkCrate crate in FindObjectsByType<NetworkCrate>())
+            {
+                if (crate != null && crate.NetworkObject != null && crate.NetworkObject.IsSpawned)
+                {
+                    crate.NetworkObject.Despawn(true);
+                }
             }
         }
 
