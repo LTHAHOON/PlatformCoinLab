@@ -4,6 +4,7 @@ using UnityEngine;
 namespace CoinGame.Network
 {
     using CoinGame.Gameplay.Combat;
+    using CoinGame.Managers;
 
     [RequireComponent(typeof(NetworkInventory), typeof(NetworkPlayerStats))]
     public class NetworkCombat : NetworkBehaviour
@@ -17,6 +18,8 @@ namespace CoinGame.Network
         [SerializeField]
         private Transform _weaponSocket;
         [SerializeField]
+        private Transform _rifleSocket;
+        [SerializeField]
         private Transform _muzzle;
         [SerializeField]
         private GameObject _gunVisualPrefab;
@@ -26,6 +29,8 @@ namespace CoinGame.Network
         private NetworkProjectile _projectilePrefab;
         private NetworkInventory _inventory;
         private NetworkPlayerStats _stats;
+        private NetworkPlayerController _visibility;
+        private Renderer[] _weaponRenderers = new Renderer[0];
         private GameObject _visual;
         private WeaponKind _visualKind;
         private double _nextAttack;
@@ -36,6 +41,7 @@ namespace CoinGame.Network
         {
             _inventory = GetComponent<NetworkInventory>();
             _stats = GetComponent<NetworkPlayerStats>();
+            _visibility = GetComponent<NetworkPlayerController>();
             if (_gun == null)
             {
                 _gun = CreateDefault(WeaponKind.Gun, 12, 0.3f, 12f, 14f, 12, 60, 1f);
@@ -57,13 +63,25 @@ namespace CoinGame.Network
         }
         private void Update()
         {
-            if (IsSpawned && _visualKind != _inventory.CurrentKind)
+            if (!IsSpawned)
+            {
+                return;
+            }
+
+            if (_visualKind != _inventory.CurrentKind)
             {
                 RefreshVisual();
+            }
+
+            bool hidden = _visibility.IsHiddenFromLocal;
+            foreach (Renderer renderer in _weaponRenderers)
+            {
+                renderer.enabled = !hidden;
             }
         }
         private void RefreshVisual()
         {
+            _weaponRenderers = new Renderer[0];
             if (_visual != null)
             {
                 Destroy(_visual);
@@ -85,7 +103,15 @@ namespace CoinGame.Network
             {
                 return;
             }
-            _visual = Instantiate(prefab, _weaponSocket);
+            Transform socket = _weaponSocket;
+            if (_visualKind == WeaponKind.Gun)
+            {
+                socket = _rifleSocket;
+            }
+
+            _visual = Instantiate(prefab, socket);
+            // Weapon visuals are instantiated at runtime, so cache this instance once.
+            _weaponRenderers = _visual.GetComponentsInChildren<Renderer>(true);
             WeaponData data = _visualKind == WeaponKind.Gun ? _gun : _sword;
             _visual.transform.localPosition = data != null ? data.HandOffset : Vector3.zero;
             _visual.transform.localRotation = data != null ? Quaternion.Euler(data.HandRotation) : Quaternion.identity;
@@ -150,8 +176,15 @@ namespace CoinGame.Network
         [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Owner)]
         private void AttackRpc(Vector3 direction)
         {
-            if (!IsServer || _stats == null || !_stats.IsAlive || _stats.IsInvulnerable ||
+            if (!IsServer || _stats == null || !_stats.IsAlive ||
                 NetworkManager.Singleton.ServerTime.Time < _nextAttack)
+            {
+                return;
+            }
+
+            // GameManager becomes ready after its asynchronous config load.
+            bool canDealDamage = GameManager.Instance != null && !GameManager.Instance.IsWaitingSceneLoaded;
+            if (canDealDamage && _stats.IsInvulnerable)
             {
                 return;
             }
@@ -164,6 +197,12 @@ namespace CoinGame.Network
             }
 
             _nextAttack = NetworkManager.Singleton.ServerTime.Time + data.AttackInterval;
+            if (!canDealDamage)
+            {
+                _attackVersion.Value++;
+                return;
+            }
+
             if (kind == WeaponKind.Gun && !_inventory.TryConsumeAmmoServer())
             {
                 return;

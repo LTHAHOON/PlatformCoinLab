@@ -506,6 +506,10 @@ namespace CoinGame.Managers
             !string.IsNullOrEmpty(_inGameSceneRef.ScenePath) &&
             SceneManager.GetSceneByPath(_inGameSceneRef.ScenePath).isLoaded;
 
+        public bool IsWaitingSceneLoaded => _waitingSceneRef != null &&
+            !string.IsNullOrEmpty(_waitingSceneRef.ScenePath) &&
+            SceneManager.GetSceneByPath(_waitingSceneRef.ScenePath).isLoaded;
+
         public StageSession CurrentStageSession => _stageSession;
         public float RemainingTime => _remainingTime;
         public bool IsRoundStarted => _isRoundStarted;

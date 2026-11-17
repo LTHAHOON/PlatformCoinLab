@@ -1,0 +1,19 @@
+Playing=True Screen=1920x1080 safe=(x:0.00, y:0.00, width:1920.00, height:1080.00)
+DisruptorNames text=CollectorPlayer#1000
+가나다라마바사아자차카타파하가나#9999
+Player2#1001
+Player3#1002 rect=(x:0.00, y:-160.00, width:320.00, height:160.00) world=(1570.00, 490.00, 0.00);(1570.00, 650.00, 0.00);(1890.00, 650.00, 0.00);(1890.00, 490.00, 0.00) font=18.45 bounds=Center: (159.82, -53.43, 0.00), Extents: (159.82, 53.43, 0.00) preferred=398.47x133.22 alpha=1 fontAsset=NotoSansKR_Dynamic Runtime persisted=False
+DisruptorNames rect=(x:0.00, y:-160.00, width:320.00, height:160.00) position=(1570.00, 650.00, 0.00)
+RoleRoster rect=(x:-320.00, y:-440.00, width:320.00, height:440.00) position=(1890.00, 910.00, 0.00)
+HUD rect=(x:-960.00, y:-540.00, width:1920.00, height:1080.00) position=(960.00, 540.00, 0.00)
+root rect=(x:-960.00, y:-540.00, width:1920.00, height:1080.00) position=(960.00, 540.00, 0.00)
+InGame_Canvas rect=(x:-960.00, y:-540.00, width:1920.00, height:1080.00) position=(960.00, 540.00, 0.00)
+CollectorNames text=CollectorPlayer#1000
+가나다라마바사아자차카타파하가나#9999
+Player2#1001
+Player3#1002 rect=(x:0.00, y:-160.00, width:320.00, height:160.00) world=(1570.00, 710.00, 0.00);(1570.00, 870.00, 0.00);(1890.00, 870.00, 0.00);(1890.00, 710.00, 0.00) font=18.45 bounds=Center: (159.82, -53.43, 0.00), Extents: (159.82, 53.43, 0.00) preferred=398.47x133.22 alpha=1 fontAsset=NotoSansKR_Dynamic Runtime persisted=False
+CollectorNames rect=(x:0.00, y:-160.00, width:320.00, height:160.00) position=(1570.00, 870.00, 0.00)
+RoleRoster rect=(x:-320.00, y:-440.00, width:320.00, height:440.00) position=(1890.00, 910.00, 0.00)
+HUD rect=(x:-960.00, y:-540.00, width:1920.00, height:1080.00) position=(960.00, 540.00, 0.00)
+root rect=(x:-960.00, y:-540.00, width:1920.00, height:1080.00) position=(960.00, 540.00, 0.00)
+InGame_Canvas rect=(x:-960.00, y:-540.00, width:1920.00, height:1080.00) position=(960.00, 540.00, 0.00)

@@ -66,7 +66,8 @@ namespace CoinGame.Network
 
         public void ApplyDamageServer(DamageInfo info)
         {
-            if (!IsServer || NetworkManager.Singleton == null || !IsAlive || IsInvulnerable || info.Amount <= 0)
+            if (!IsServer || NetworkManager.Singleton == null || !IsAlive || IsInvulnerable || info.Amount <= 0 ||
+                GameManager.Instance == null || GameManager.Instance.IsWaitingSceneLoaded)
             {
                 return;
             }

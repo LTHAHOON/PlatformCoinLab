@@ -541,7 +541,7 @@ Assets/
 
 현재 공격 실행은 `WeaponBase → Gun/Sword` 인스턴스를 거치지 않고 `NetworkCombat`이 `WeaponData`를 읽어 처리한다. 데이터 정의와 실제 실행 코드를 구분해서 읽어야 한다.
 
-파트 1 애니메이터 연결: `AC_YurowmPlayer.controller`는 `Speed`, `IsMoving`, `WeaponType`, `Attack`, `Reload`, `Hit`, `IsDead`, `Revive` 파라미터를 사용한다. 이동은 각 클라이언트가 `NetworkTransform` 위치 변화로 계산하고, 공격·장전은 서버 증가 버전, 피격·사망·부활은 서버 동기화 생명 상태를 각 클라이언트 Animator에 반영한다. 무기 외형은 기존 `WeaponSocket/Muzzle` 구조를 유지하고 Yurowm 손 본 기준으로 보정한다.
+현재 플레이어 애니메이터는 `Assets/_CoinGame/Animation/Player/AC_Player.controller`다. 기존 KayKit Idle/Walk의 `MoveSpeed` BlendTree를 유지하고, 상체 마스크의 Rifle 레이어와 전신 Reactions 레이어를 추가했다. `WeaponType`은 실제 `WeaponKind` 값(Fist=0, Gun=1, Sword=2)을 사용한다. 이동은 각 클라이언트가 위치 변화로 계산하고, 발사·장전은 서버 버전, Hit·Death·복귀는 서버 체력/생명 상태로 재생한다. 라이플에는 조준/반동/장전을 연결하고, Death가 Hit보다 우선한다. 총은 오른손 `RifleSocket/Muzzle`에 연결하고 검은 기존 `WeaponSocket`을 사용한다. 스테이지별 무기 자동 변경은 아직 구현하지 않았다.
 
 ### 파트 1 변경 요약
 - `CrateData`와 상자 열림/추가 타격 상태를 추가했다.
@@ -729,9 +729,9 @@ flowchart TD
 | 프로젝트 소개 | 게임 이름·장르·대상 플랫폼·핵심 플레이 |
 | 개발 정보 | 제작자·개발 기간·Unity 및 주요 패키지 버전 |
 | 실행 자료 | 대표 이미지·플레이 영상·실행 파일과 소스의 위치 |
-| 주요 구현 기능 | 기능의 목적·구현 방식·자료 구조와 처리 순서·핵심 코드 위치. Score 없이 Remaining Coin·경기 누적 Kills·WIN/LOSS를 표시하며 Disruptor는 Remaining Coin을 숨긴다. 이름 저장 분리·이름#번호·UserName·역할 목록은 실제 MPP Main+Player2로 검증했다. Player/Crate Ground 접촉은 로컬 Host 검증 |
+| 주요 구현 기능 | 기능의 목적·구현 방식·자료 구조와 처리 순서·핵심 코드 위치. Score 없이 Remaining Coin·경기 누적 Kills·WIN/LOSS를 표시하며 Disruptor는 Remaining Coin을 숨긴다. 이름 저장 분리·이름#번호·UserName·역할 목록은 실제 MPP Main+Player2로 검증했다. Player/Crate Ground 접촉은 로컬 Host 검증. Canvas 추적 체력 바・씬 고정 HUD를 사용한다. Toon Shaders Pro 머티리얼·아웃라인과 잔디 디더링·서버 권한 위장을 추가했고 실제 MPP Host/Client 양방향에서 본체·무기·체력 바 숨김 및 퇴장 복구를 검증했다 |
 | 플랫폼 대응 | 플랫폼별 입력·화면·저장·생명주기·콘텐츠 처리와 실행 결과 |
-| 추가·개선한 부분 | 수업 구현과의 차이·필요한 이유·구현 방법·동작 결과 |
+| 추가·개선한 부분 | 수업 구현과의 차이·필요한 이유·구현 방법·동작 결과. 상자 드롭 높이를 0.35m로 조정해 실제 습득을 확인했다. KayKit 라이플 발사·Hit·Death를 프로젝트 Animator에 연결하고 실제 MPP Host/Player2에서 발사 동기화·피격 중 사망·사망 재접속·부활 복귀를 확인했다. 대기 씬에서는 공격 모션만 동기화하고 피해·탄약 소모·투사체 생성을 차단하며, 대기 씬 종료 후 정상 공격 복귀를 Host/Player2에서 확인했다. 스테이지별 총 자동 변경은 후속 작업 |
 | 문제 해결 사례 | 실제 문제와 재현 조건·원인·수정 내용·재검증 결과 |
 | 성능 개선 | 측정 환경·변경 내용·수정 전후 값·기능 유지 여부·측정 한계 |
 | 실행·복원 방법과 한계 | 시작 씬·조작법·콘텐츠 및 Player 빌드 순서·서버 실행 방법·알려진 문제·미확인 환경 |
@@ -757,6 +757,35 @@ flowchart TD
 5. 최소 한 개의 대표 기기와 에디터 측정 환경에서 프로파일 결과를 저장하고 변경 전후 수치를 문서에 반영한다.
 
 ### 16.3 구현된 공용 기반과 검증 상태
+
+- 2026-11-17 대기 씬 공격 미리보기: `GameManager.IsWaitingSceneLoaded`가 Inspector의 기존 대기 씬 참조로 로드 여부를 판단한다. 서버 `NetworkCombat`는 대기 씬에서 무기 공격 간격과 AttackVersion 동기화만 처리하고, 탄약 소비·투사체 생성·명중 판정·공격에 따른 은신 해제를 실행하지 않는다. `NetworkPlayerStats.ApplyDamageServer`와 `NetworkCrate.ApplyWeaponHitServer`도 대기 씬에서 피해를 차단해 이전 투사체나 다른 피해 호출에 대비한다. GameManager의 비동기 설정 초기화 중에도 피해는 차단하며, 인게임과 대기 씬이 함께 로드된 전환 구간에는 대기 씬 보호가 유지된다.
+  - Unity 6000.6.7f1 컴파일 후 실제 MPP Host+Player2 로컬 Transport에서 Player2 공격 RPC와 Rifle_Shoot 재생을 확인했다. 대기 씬에서 플레이어 HP 100·상자 HP 3·탄약 12가 유지되고 AttackVersion만 1로 증가했으며, 투사체는 생성되지 않았다. 직접 서버 피해 호출도 차단됐다. 인게임 additive 로드 중에도 HP 100을 유지했다. 양쪽 대기 씬을 언로드한 뒤 동일 피해 호출은 HP 88·상자 HP 2, 실제 Player2 공격 RPC는 탄약 11·AttackVersion 2로 변경됐으며 Player2의 HP/탄약/공격 버전 수신도 확인했다.
+  - 컴파일 오류와 최종 인게임 구간 Console 오류는 0개다. 대기 씬 최초 로드 시 기존 Missing Script 경고 3개는 별도 정리가 필요하다. 검증용 런타임 객체는 Play 종료로 정리했고 씬/프리팹은 저장하지 않았다. Relay 세션 및 실제 PC/Android/Web Player 검증은 미실행이다. 350자 예외: 기존 Unity/NGO 수명주기·직렬화 참조를 보존하는 통합 파일에 씬 판별 프로퍼티와 서버 조기 반환만 추가했으며, 관련 없는 구조 분리는 하지 않았다.
+
+- 2026-11-17 KayKit 라이플·피격·사망 애니메이션: Player에 프로젝트 전용 `Animation/Player/AC_Player.controller`를 연결했다. 기존 Idle/Walk BlendTree 위에 상체 `RifleUpperBody.mask`의 Rifle 레이어(조준/발사/장전), 전신 Reactions 레이어(Hit/Death)를 구성했다. `Ranged_2H_Aiming`의 준비 동작 이후 12~48프레임을 루프 조준으로 사용하고, 이미 조준한 자세에서 시작하는 `Ranged_2H_Shooting`의 0~8프레임(30fps, 약 0.267초)을 한 발 반동으로 사용해 기존 총 간격 0.3초에 맞췄다. 장전은 `Ranged_2H_Reload`, 피격은 `A_Hit`, 사망은 `A_Death` 복사본을 사용한다. 프로젝트 라이플 복사본의 Spine/Chest Twist 곡선을 보정해 총구 방향을 전방으로 맞추고, Death의 Y 이동을 자세에 베이크해 Root Motion 없이 쓰러지도록 했다. 패키지 원본은 수정하지 않았다.
+  - 빈 Rifle/Reactions 상태에서는 `AnimatorLayerWeight`가 weight를 0으로 되돌려 피격/사망 자세가 남지 않도록 한다. Death는 AnyState의 IsDead bool로 가장 먼저 진입하고 비루프 끝 자세를 유지한다. 비치명 체력 감소만 Hit를 발생시키며, 부활하면 Normal/조준으로 복귀한다. Spawn 시 공격·장전 버전을 현재 값으로 초기화하고, 생사 변경 시 남은 트리거를 지워 후발 접속/재사용/부활에서 과거 공격 재생을 막는다. 이동 속도/보간/판정 기준은 기존 값 4/12/0.05를 AnimatorParameterSet SO로 옮겼다.
+  - `CharacterAnimatorUtility`의 Animator를 Inspector에서 필수 연결하고 런타임 탐색 fallback을 제거했다. 총은 오른손 hand.r의 새 RifleSocket에 장착하며 기존 검 소켓은 유지한다. `Weapon_Gun.asset`의 HandScale=(0.7,0.4,0.8), HandOffset=(0,-0.03,0.18)과 메시 끝점으로 계산한 MuzzleOffset을 적용했다. Player Animator는 AlwaysAnimate를 사용해 서버/원격의 화면 밖 플레이어도 손 본과 총구 위치를 갱신한다. 스테이지 이동·무기 자동 변형 로직은 추가하지 않았다.
+  - Unity 6000.6.7f1 컴파일 성공 후 Controller의 무장/비무장·Aim→Shoot→Aim·장전·Hit 복귀·Death 우선/끝 자세 유지·부활 레이어 복귀를 프리뷰에서 확인했다. 실제 MPP Host+Player2(로컬 Transport)에서 서버 발사 버전 1을 양쪽 Rifle_Shoot로 재생하고 Aim으로 복귀함을 확인했다. 서버 피해 HP 100→88은 양쪽 Hit, 0.2초 후 치명 피해는 양쪽 Death/Spectating으로 전환됐다. 사망 중 Player2를 재접속(clientId 2)해 IsDead=true·Death weight=1·이전 AttackVersion=1 baseline 초기화를 확인했다. 서버 라운드 클리어 부활 메서드 호출 후 양쪽 HP 50·Rifle weight 1·Reactions weight 0과 Aim 복귀를 확인했다.
+  - 최종 라이플 크기/손잡이 보정 후 로컬 Host 시각 확인 구간의 Console Error/Warning은 0개다. 검증 화면은 `Captures/player-rifle-aim.png`, `Captures/player-death.png`에 저장했다. Player2에는 기존 MPP Play 중 씬 저장 알림 예외와 인증 네트워크 재시도 경고가 남아 있어 게임 애니메이션 결과와 구분한다. Relay 세션·실제 PC/Android/Web Player·다수 캐릭터 CPU/GC 프로파일은 미실행이며, 기존 HasParameter의 Animator.parameters 배열 접근 비용은 별도 측정 대상이다.
+  - 350자 예외: NetworkPlayerAnimator는 서버 상태 관찰/수명 초기화와 Animator 연결을 명시하면서 기존 파일보다 축소했다. 파라미터 SO·공용 Animator 호출·레이어 진입 weight 동작·Controller/클립/마스크를 실제 책임별로 분리했다. Unity 콜백 시그니처·직렬화 참조·가독성을 보존하기 위해 관련 스크립트의 350자 초과를 허용한다. AnimatorLayerWeight는 단일 StateMachineBehaviour 책임만 갖는다.
+
+- 2026-11-17 상자 드롭 높이 조정: `Assets/_CoinGame/ScriptableObject/ItemData/Crate_Default.asset`의 `DropOffset`을 (0, 1.6, 0.4)에서 (0, 0.35, 0.4)로 변경했다. 상자를 연 뒤 추가 1회 타격으로 습득을 활성화하는 기존 서버 흐름은 유지한다. Unity 6000.6.7f1 로컬 Host에서 상자 Y=-0.45일 때 아이템 초기 Y=-0.10으로 생성됨, 추가 타격 후 SphereCollider 활성화, 바닥 높이의 플레이어와 습득 영역 겹침, 실제 접촉 후 예비 탄약 0→24 및 픽업/상자 Despawn을 확인했다. Console Error/Warning은 0개다. SO 값만 수정했으며 새 스크립트/패키지/씬 배치 변경은 없다. 별도 Client 및 실제 Player 빌드 검증은 미실행이다.
+
+- 2026-11-17 툰 렌더링·잔디 위장: 맵(일반 90개·잔디 96개 Renderer), Player/Mannequin, Coin/Crate, 드롭 아이템과 장착 무기·투사체를 프로젝트 전용 툰 머티리얼 16개로 연결했다. 원본 텍스처·색을 가져오고 3단 조명·약한 림·낮은 광택을 적용했다. `Assets/_CoinGame/Materials/Toon/`의 머티리얼과 `InGameSceneProfile.asset`의 Toon Shaders Pro Outlines(HQ object mask, 2px)에서 조절한다. PC/Mobile Renderer의 `Grass Toon Surface`는 잔디를 깊이 쓰기 없이 그리고, `Players Above Grass`는 LessEqual 깊이 검사를 유지해 플레이어가 잔디보다 앞에 보이도록 재렌더한다. 잔디의 Depth/Normal prepass도 제외하며, 벽의 깊이는 유지한다. 잎 전체가 검게 덮이는 Grass hull outline은 제거하고 잔디를 전역 아웃라인 마스크에서 제외했다.
+  - `ToonGrass.shader`는 설치된 Toon Shaders Pro의 BRDF/밴딩 함수를 재사용하며 디더링과 ZWrite Off를 추가한 프로젝트 셰이더다. `GrassPatch`는 Inspector의 BoxCollider 영역과 Renderer 참조를 사용한다. 로컬 플레이어 진입 시 해당 잔디의 `_GrassOpacity`를 0.5까지 0.2초 동안 전환하고 퇴장하면 1로 복구한다. 수치는 `GrassVisualSettings.asset`에서 조절하며 투명도가 안정된 프레임에는 MaterialPropertyBlock 갱신을 생략한다.
+  - `NetworkGrassConcealment`는 서버가 수신한 플레이어 위치를 검사해 별도 NetworkVariable로 위장 여부를 복제한다. 기존 시간제 아이템 은신과 분리했다. 자신·같은 역할의 아군은 보이며, 상대 역할에게는 본체·새로 장착하는 총/검·그림자·체력 바를 숨긴다. Controller의 Inspector 본체 렌더러와 Combat의 런타임 장착 외형이 같은 표시 정책을 사용하며, 체력 바는 위장 순간 alpha를 즉시 0으로 바꾼다.
+  - Unity 6000.6.7f1 컴파일과 Grass 셰이더 메시지 오류 0개를 확인했다. 실제 MPP Main Host + Player2 Client(로컬 Transport)에서 양쪽 플레이어의 진입/퇴장, 자신의 opacity 0.5 및 가시성 유지, 상대 Renderer 7개(본체 6+무기 1) 비활성화, 피격 HP 100→88 후 체력 바 alpha 0 유지, 위장 중 Gun→Sword 교체, 퇴장 후 opacity 1과 렌더러 7개 복구를 확인했다. 재접속 후 새 clientId에서도 동기화됐고, Domain/Scene Reload 비활성 상태의 두 번째 Play에서 잔디 16개 registry 판정도 확인했다. Coin/Crate 및 Ammo/Boost/Health/Gun/Sword를 실제 Spawn해 툰 머티리얼을 확인했다.
+  - 각 잔디의 중심·내부 경계·외부 경계 96개 판정도 모두 통과했다. 상자의 Shader Graph 전용 슬롯 `Texture2D_DF3839AD`/`Texture2D_F3A2A1B9`는 각각 툰 `_BaseMap`/`_BumpMap`으로 명시적으로 연결해 원본 알베도·노멀을 보존했다. 셰이더 원본과 외부 머티리얼은 수정하지 않았다.
+  - 최종 소스 재컴파일 완료 후 로컬 Host에서 잔디 진입(위장 true·자신의 Renderer 7개 표시·opacity 0.5), 코인/상자/아이템 재생성 및 상자 텍스처 복구를 재확인했다. 이 마지막 Play 구간의 Console Error/Warning은 0개이며 `Captures/toon-final-preview.png`에 최종 모습을 남겼다. 검증용 런타임 객체는 Play 종료로 정리하고 에디터는 시작 시의 Persistent 씬으로 되돌렸다.
+  - 검증 한계: MPP에 기존 씬 저장 알림이 Play 중 전달되면서 `EditorSceneManager.OpenScene` 예외·일시정지가 발생했고 다시 연결해 검증했다. MCP 화면 캡처 중 PlayerLoop 재진입 경고와 재컴파일 후 WebSocket 재연결 경고도 기록됐다. 게임 코드의 컴파일/셰이더 오류와 구분한다. 정상 Relay 로비→매치, Android/Web/PC Player 빌드와 GPU/GC 프로파일링은 미실행이다. 화면 자료는 `Captures/toon-host-in-grass.png`, `toon-client-own-grass.png`, `toon-client-enemy-hidden.png`에 있다.
+  - 350자 예외: 기존 Controller/Combat의 네트워크·직렬화 수명을 보존하고 변경은 표시 정책으로 제한했다. 신규 책임은 잔디 영역/로컬 표현, 서버 위장 복제, 시각 설정 SO, 셰이더로 분리했다. 동적 장착 외형은 Inspector에 존재하지 않으므로 생성 직후 Renderer를 한 번 수집한다.
+
+- 2026-11-17 Canvas 체력 바와 HUD: `NetworkWorldHealthBar`의 WorldSpace Canvas 생성과 미연결 Slider를 제거하고 `PlayerHealthBarLayer`/`PlayerHealthBarView`/`PlayerHealthBar.prefab`으로 분리했다. InGame Camera의 투영 좌표를 Canvas 로컬 좌표로 변환한다. 상대 체력이 감소하면 3초 표시하고 0.25초에 걸쳐 페이드하며, 체력 보간은 0.15초를 사용한다. 수치는 `PlayerHealthBarSettings.asset`에서 설정한다. 은신한 상대 바는 숨기고 자신의 바는 상시 표시한다. 로컬 Host의 서버 피해 처리에서 HP 100→75→50, Slider/Fill 1→0.75→0.5, 상대 alpha 1→0.58→0 및 자신의 alpha 1 유지를 확인했다. 해당 실행의 Console Error/Warning은 0개였다. `InGameHudView`는 `InGame_Canvas/root/HUD/InGame_HUD`의 Inspector 참조를 사용하며 중복 HealthBar/HealthText와 런타임 HUD 생성을 제거했다.
+  - 이름 목록은 마지막의 불필요한 줄바꿈을 제거하고 목록 폭 320·높이 160으로 확장했다. 자동 축소는 유지하고 Ellipsis 대신 Overflow를 사용해 말줄임에 의한 이름 잘림을 피한다. 진단 중 동적 폰트에 새 한글을 추가하면 같은 폰트의 다른 이름이 일부 글자만 표시되는 현상을 관찰해, `RuntimeFontAtlas`가 InGame의 동적 폰트 대상 8개에 별도의 런타임 FontAsset/Atlas를 공급하도록 분리했다. FontAsset의 크기·패딩·렌더 모드는 기존 폰트 설정을 따른다. Player2의 실제 PlayMode에서 16자 한글+번호 및 영문 이름 4행과 왼쪽 이름의 정상 표시, 런타임 폰트가 저장 에셋과 분리됨을 확인했다(`Captures/player2-roster-probe.png`). 원래 제보된 오른쪽 목록 절반 가림과 동일한 재현인지는 미확인이다. 별도 Client의 피해 동기화·PC/Android/Web Player 빌드는 미실행이다.
+  - 최종 Unity 6000.6.7f1 컴파일 및 로컬 Host PlayMode 진입/종료 스모크에서 Console Error/Warning 0개를 확인했다. 추적 View 1개·자신의 alpha 1·정적 InGame_HUD 1개·Player 하위 WorldSpace Canvas 0개와 Fill 참조를 확인했다. 진단용 Editor 스크립트는 제거했다.
+  - 이후 namespace using 정리와 에셋 공백 검사 후 요청한 마지막 Refresh는 MCP 준비 대기 시간 초과 및 ping 무응답으로 완료 상태를 다시 읽지 못했다. 앞선 성공한 스모크와 구분한다. 진단 과정에서는 기존 두 씬을 additive로 함께 열어 실행해 Editor.log에 AudioListener 중복 메시지가 남았으며, 정상 로비→인게임 전환의 오디오 검증은 이번 범위에서 실행하지 않았다. 동적 폰트 캐시는 기존 사용자 변경을 보존한 채 진단에 사용된 글리프가 추가됐다.
+  - 350자 예외: Canvas 좌표 변환·피격 표시 수명·Unity 직렬화 참조를 보존하는 UI 통합 코드는 350자를 초과한다. 네트워크 연결, 화면 레이어, 체력 View, 설정 데이터, 동적 폰트 수명을 분리하고 기존 HUD 생성 코드는 제거했다. 기존 RoleRosterView는 소유자별 목록 구성 책임을 유지하며 마지막 줄바꿈만 제거했다.
+
 - 2026-11-17 스포너 통합: Crate_Spawner를 NetworkSpawner로 이전하고 Crate를 Local_Core Addressable에 등록했다. 기존 플레이어 스폰 경로는 유지했다. 실제 맵 배치 100회/82개 Y방향/전면 fallback 0건, 로컬 Host의 코인 10+상자 10 생성·상자 몸체 겹침 0·Environment 전면 차단 0, 다음 라운드 중복 호출 후 이전 상자 0·동적 예약 20을 확인했다. 상자 0개 설정·빠른 라운드 교체 취소·회전 상자 드롭/습득·막힌 전면 fallback·몸체 충돌 거부도 실행했다. 비활성화/재활성화 후 즉시 라운드 교체 검사에서는 기존 StageConfig(상자 7~10개)에서 선택된 7개와 실제 상자 7개·코인 10개·예약 17개가 일치했다. EditMode 기존 3개 테스트도 통과했다. 생성·검증 중 Console 오류/경고 0개이며 별도 Client의 회전 일치와 Player 빌드는 미실행이다.
 
 - 2026-11-17 상자 외형 수정: Crate의 7종 픽업 참조가 NetworkItemPickup 대신 애니메이션 컴포넌트 fileID를 가리켜 null로 처리되던 원인을 Unity에서 확인하고 교정했다. Gun/Sword 전용 픽업·NGO 등록과 공용 fallback 제거를 반영했다. 로컬 Host PlayMode에서 실제 SpawnPickupServer를 9종에 실행해 프리팹 이름·동기화 ItemKind·고유 해시·습득 활성화 전환을 검사했고 전부 통과했다. 외형 스크린샷 확인 및 테스트 중 Console Error/Warning 0개를 확인했다. 별도 Client 검증은 미실행이다.
@@ -770,6 +799,11 @@ flowchart TD
 - `SoundPlayer`는 AudioSource와 AudioClip을 분리해 효과음을 재생한다. 실제 사운드 에셋 연결과 볼륨 UX는 미확인이다.
 - `Assembly-CSharp.csproj` 빌드는 오류 0개, 기존 경고 1개로 통과했다. Grid 예약 확장은 Unity Editor에서 Persistent + InGame additive PlayMode 스모크 후 정상 종료와 Console Error/Warning 0개를 확인했다. EditMode 전체 3/3도 통과했다. Host/Client·재접속·PC Player·Android Player·Profiler 수치는 아직 실행 전이다.
 ## 17. 웹 플랫폼 지원 및 Lands 맵 제작 규칙 `[확정]`
+
+### 툰 머티리얼과 잔디 표현 적용 (2026-11-17)
+
+- `InGame_CoinGameScene`과 프로젝트의 `Map_Palmov_A`, Grass/맵 소품 프리팹에 툰 머티리얼을 연결했다. 기존 Ground/Environment 90개와 Grass 16패치(자식 Renderer 96개)를 유지하며, 잔디 자식의 렌더 레이어를 Grass(9)로 맞췄다. 배치 좌표·Grid 셀·BoxCollider의 크기/중심과 금지 구역·예약 규칙은 유지한다.
+- 기존 씬의 Grass BoxCollider 월드 범위에서 플레이어 발 위치가 포함됨과 실제 Host/Client 위장·복구를 확인했다. 새 맵 생성이나 Grid 재베이크는 수행하지 않았다. Android/Web의 실제 Player 렌더링·셰이더 변형·프레임 성능과 Lands 2×2 새 맵 제작 검증은 이번 변경에서 실행하지 않았다.
 
 - 지원 플랫폼은 PC, Android와 Web을 포함한다. Web 빌드는 입력·화면 비율·Safe Area·저장·Addressables 원격 콘텐츠·HTTPS 파일 서버 경로를 WebGL 제약에 맞춰 검증한다.
 - Web에서 파일 시스템 직접 접근을 사용하지 않고 브라우저 저장소와 HTTP(S) 콘텐츠 경로를 사용한다. WebGL에서는 스레드·소켓·인증서 처리 차이를 고려해 실패 안내와 재시도 결과를 기록한다.

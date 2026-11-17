@@ -50,6 +50,111 @@ MonoBehaviour:
   dirtIntensity:
     m_OverrideState: 0
     m_Value: 0
+--- !u!114 &-7108566070520380768
+MonoBehaviour:
+  m_ObjectHideFlags: 3
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 41657620d74c4464e834491f5ba99000, type: 3}
+  m_Name: OutlineSettings
+  m_EditorClassIdentifier: Assembly-CSharp::ToonShadersPro.URP.OutlineSettings
+  active: 1
+  renderPassEvent:
+    m_OverrideState: 1
+    m_Value: 1
+  outlineType:
+    m_OverrideState: 1
+    m_Value: 2
+  outlineColor:
+    m_OverrideState: 1
+    m_Value: {r: 0.01886791, g: 0.01886791, b: 0.01886791, a: 1}
+  colorSensitivity:
+    m_OverrideState: 1
+    m_Value: 1
+  colorStrength:
+    m_OverrideState: 1
+    m_Value: 0.625
+  depthSensitivity:
+    m_OverrideState: 1
+    m_Value: 0.01
+  depthStrength:
+    m_OverrideState: 1
+    m_Value: 0.75
+  normalSensitivity:
+    m_OverrideState: 1
+    m_Value: 0.5
+  normalStrength:
+    m_OverrideState: 1
+    m_Value: 0.6
+  depthThreshold:
+    m_OverrideState: 1
+    m_Value: 1
+  objectMask:
+    m_OverrideState: 1
+    m_Value:
+      serializedVersion: 2
+      m_Bits: 385
+  maskDrawingMode:
+    m_OverrideState: 1
+    m_Value: 0
+  lightModes:
+    m_OverrideState: 1
+    m_Value: 00000000i
+  renderQueue:
+    m_OverrideState: 1
+    m_Value: 0
+  maskIgnoreDepth:
+    m_OverrideState: 1
+    m_Value: 0
+  useDepthNormals:
+    m_OverrideState: 0
+    m_Value: 0
+  maskedOutlineThickness:
+    m_OverrideState: 1
+    m_Value: 1
+  maskedOutlineSmoothing:
+    m_OverrideState: 1
+    m_Value: 0.1
+  outlineDrawSides:
+    m_OverrideState: 1
+    m_Value: 2
+  outlineFadeStart:
+    m_OverrideState: 1
+    m_Value: 80
+  outlineFadeEnd:
+    m_OverrideState: 1
+    m_Value: 120
+  outlineThickness:
+    m_OverrideState: 1
+    m_Value: 0.02
+  outlineTransparency:
+    m_OverrideState: 1
+    m_Value: 0
+  outlineLighting:
+    m_OverrideState: 1
+    m_Value: 0
+  flipOutlineDirection:
+    m_OverrideState: 1
+    m_Value: 1
+  outlineMinLighting:
+    m_OverrideState: 1
+    m_Value: 0
+  useNoiseOffsets:
+    m_OverrideState: 0
+    m_Value: 0
+  noiseScale:
+    m_OverrideState: 1
+    m_Value: 351
+  noiseOffset:
+    m_OverrideState: 1
+    m_Value: 3.67
+  noiseStrength:
+    m_OverrideState: 1
+    m_Value: 0.1
 --- !u!114 &-3357603926938260329
 MonoBehaviour:
   m_ObjectHideFlags: 3
@@ -93,7 +198,7 @@ MonoBehaviour:
   active: 1
   postExposure:
     m_OverrideState: 1
-    m_Value: 1.3
+    m_Value: 1.2
   contrast:
     m_OverrideState: 0
     m_Value: 0
@@ -124,6 +229,7 @@ MonoBehaviour:
   - {fileID: 7391319092446245454}
   - {fileID: -3357603926938260329}
   - {fileID: -2776289090452768645}
+  - {fileID: -7108566070520380768}
 --- !u!114 &849379129802519247
 MonoBehaviour:
   m_ObjectHideFlags: 3

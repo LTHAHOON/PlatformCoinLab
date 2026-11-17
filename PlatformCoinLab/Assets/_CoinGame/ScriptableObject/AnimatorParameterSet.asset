@@ -23,3 +23,6 @@ MonoBehaviour:
   Damage: Damage
   Death: Death
   Revive: Revive
+  FullMoveSpeed: 4
+  MoveBlendResponse: 12
+  MovingThreshold: 0.05

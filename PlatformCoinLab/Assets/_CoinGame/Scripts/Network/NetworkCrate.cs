@@ -5,6 +5,7 @@ namespace CoinGame.Network
 {
     using CoinGame.Gameplay.Combat;
     using CoinGame.Gameplay.Items;
+    using CoinGame.Managers;
     using CoinGame.Player;
     using CoinGame.Utilities;
 
@@ -64,7 +65,8 @@ namespace CoinGame.Network
 
         public void ApplyWeaponHitServer(int crateDamage, ulong attacker)
         {
-            if (!IsServer || _state.Value == CrateState.Destroyed)
+            if (!IsServer || _state.Value == CrateState.Destroyed ||
+                GameManager.Instance == null || GameManager.Instance.IsWaitingSceneLoaded)
             {
                 return;
             }

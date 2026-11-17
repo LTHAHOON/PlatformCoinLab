@@ -63,7 +63,7 @@ PrefabInstance:
     - target: {fileID: -7511558181221131132, guid: d43530ba94306194c8c70bc5f43645c0, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
       value: 
-      objectReference: {fileID: 2100000, guid: 580d7e954bbff174794836248c2cc077, type: 2}
+      objectReference: {fileID: 2100000, guid: 6bfd4ca3d0b074d498ab221cc9a3eca3, type: 2}
     - target: {fileID: 919132149155446097, guid: d43530ba94306194c8c70bc5f43645c0, type: 3}
       propertyPath: m_Name
       value: Item_Stealth

@@ -1,4 +1,4 @@
-﻿using Unity.Netcode;
+using Unity.Netcode;
 using UnityEngine;
 
 namespace CoinGame.Network
@@ -12,7 +12,6 @@ namespace CoinGame.Network
         private AnimatorParameterSet _parameterSet;
         [SerializeField]
         private CharacterAnimatorUtility _animatorUtility;
-
         private NetworkPlayerStats _stats;
         private NetworkInventory _inventory;
         private NetworkCombat _combat;
@@ -28,134 +27,92 @@ namespace CoinGame.Network
             _stats = GetComponent<NetworkPlayerStats>();
             _inventory = GetComponent<NetworkInventory>();
             _combat = GetComponent<NetworkCombat>();
-            if (_animatorUtility == null)
-            {
-                _animatorUtility = GetComponent<CharacterAnimatorUtility>();
-            }
         }
 
         public override void OnNetworkSpawn()
         {
             _lastPosition = transform.position;
-            _lastHealth = _stats != null ? _stats.Health : 0;
-            _lastLifeState = _stats != null ? _stats.LifeState : PlayerLifeState.Alive;
+            _lastHealth = _stats.Health;
+            _lastLifeState = _stats.LifeState;
+            _lastAttack = _combat.AttackVersion;
+            _lastReload = _combat.ReloadVersion;
+            _moveParameter = 0f;
+            ResetTransientTriggers();
+            _animatorUtility.SetMove(0f);
+            _animatorUtility.SetBool(_parameterSet.IsDead, !_stats.IsAlive);
         }
 
         private void Update()
         {
-            if (_animatorUtility == null || _stats == null)
+            if (!IsSpawned || Time.deltaTime <= 0f)
             {
                 return;
             }
 
-            Vector3 delta = transform.position - _lastPosition;
-            delta.y = 0f;
-            float speed = delta.magnitude / Mathf.Max(Time.deltaTime, 0.001f);
-            float targetMoveParameter = Mathf.Clamp01(speed / 4f);
-            float blend = 1f - Mathf.Exp(-12f * Time.deltaTime);
-            _moveParameter = Mathf.Lerp(_moveParameter, targetMoveParameter, blend);
-            _animatorUtility.SetMove(_moveParameter);
-            SetFloat(GetParameter("Speed", "Speed"), speed);
-            SetBool(GetParameter("IsMoving", "IsMoving"), speed > 0.05f);
-            SetInteger(GetParameter("WeaponType", "WeaponType"), _inventory != null && _inventory.CurrentKind == WeaponKind.Sword ? 1 : 0);
-            SetBool(GetParameter("IsDead", "IsDead"), !_stats.IsAlive);
-
-            if (_combat != null)
+            UpdateMovement();
+            _animatorUtility.SetInteger(_parameterSet.WeaponType, (int)_inventory.CurrentKind);
+            _animatorUtility.SetBool(_parameterSet.IsDead, !_stats.IsAlive);
+            if (_lastLifeState != _stats.LifeState)
             {
-                if (_combat.AttackVersion != _lastAttack)
-                {
-                    _animatorUtility.Trigger(GetParameter("Attack", "Attack"));
-                }
-                if (_combat.ReloadVersion != _lastReload)
-                {
-                    _animatorUtility.Trigger(GetParameter("Reload", "Reload"));
-                }
-                _lastAttack = _combat.AttackVersion;
-                _lastReload = _combat.ReloadVersion;
+                ResetTransientTriggers();
             }
 
-            if (_stats.Health < _lastHealth)
+            if (_stats.IsAlive)
             {
-                _animatorUtility.Trigger(GetParameter("Hit", "Hit"));
-                _animatorUtility.Trigger(GetParameter("Damage", "Damage"));
-            }
-            if (_lastLifeState != _stats.LifeState && !_stats.IsAlive)
-            {
-                _animatorUtility.Trigger(GetParameter("Death", "Death"));
-            }
-            if (_lastLifeState != _stats.LifeState && _stats.IsAlive)
-            {
-                _animatorUtility.Trigger(GetParameter("Revive", "Revive"));
+                UpdateActions();
             }
 
+            _lastAttack = _combat.AttackVersion;
+            _lastReload = _combat.ReloadVersion;
             _lastHealth = _stats.Health;
             _lastLifeState = _stats.LifeState;
             _lastPosition = transform.position;
         }
 
-        private void SetFloat(string parameter, float value)
+        private void UpdateMovement()
         {
-            _animatorUtility.SetFloat(parameter, value);
+            Vector3 delta = transform.position - _lastPosition;
+            delta.y = 0f;
+            float speed = delta.magnitude / Time.deltaTime;
+            if (!_stats.IsAlive)
+            {
+                speed = 0f;
+            }
+
+            float target = Mathf.Clamp01(speed / _parameterSet.FullMoveSpeed);
+            float blend = 1f - Mathf.Exp(-_parameterSet.MoveBlendResponse * Time.deltaTime);
+            _moveParameter = Mathf.Lerp(_moveParameter, target, blend);
+            _animatorUtility.SetMove(_moveParameter);
+            _animatorUtility.SetFloat(_parameterSet.Speed, speed);
+            _animatorUtility.SetBool(_parameterSet.IsMoving, speed > _parameterSet.MovingThreshold);
         }
 
-        private void SetBool(string parameter, bool value)
+        private void UpdateActions()
         {
-            _animatorUtility.SetBool(parameter, value);
+            if (_inventory.CurrentKind == WeaponKind.Gun)
+            {
+                if (_combat.AttackVersion != _lastAttack)
+                {
+                    _animatorUtility.Trigger(_parameterSet.Attack);
+                }
+
+                if (_combat.ReloadVersion != _lastReload)
+                {
+                    _animatorUtility.Trigger(_parameterSet.Reload);
+                }
+            }
+
+            if (_stats.Health < _lastHealth)
+            {
+                _animatorUtility.Trigger(_parameterSet.Hit);
+            }
         }
 
-        private void SetInteger(string parameter, int value)
+        private void ResetTransientTriggers()
         {
-            _animatorUtility.SetInteger(parameter, value);
-        }
-
-        private string GetParameter(string name, string fallback)
-        {
-            if (_parameterSet == null)
-            {
-                return fallback;
-            }
-
-            if (name == "Speed")
-            {
-                return _parameterSet.Speed;
-            }
-            if (name == "IsMoving")
-            {
-                return _parameterSet.IsMoving;
-            }
-            if (name == "WeaponType")
-            {
-                return _parameterSet.WeaponType;
-            }
-            if (name == "IsDead")
-            {
-                return _parameterSet.IsDead;
-            }
-            if (name == "Attack")
-            {
-                return _parameterSet.Attack;
-            }
-            if (name == "Reload")
-            {
-                return _parameterSet.Reload;
-            }
-            if (name == "Hit")
-            {
-                return _parameterSet.Hit;
-            }
-            if (name == "Damage")
-            {
-                return _parameterSet.Damage;
-            }
-            if (name == "Death")
-            {
-                return _parameterSet.Death;
-            }
-            if (name == "Revive")
-            {
-                return _parameterSet.Revive;
-            }
-            return fallback;
+            _animatorUtility.ResetTrigger(_parameterSet.Attack);
+            _animatorUtility.ResetTrigger(_parameterSet.Reload);
+            _animatorUtility.ResetTrigger(_parameterSet.Hit);
         }
     }
 }

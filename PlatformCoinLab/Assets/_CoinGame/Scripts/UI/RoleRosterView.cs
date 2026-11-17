@@ -70,12 +70,22 @@ namespace CoinGame.UI
 
             if (stats.Role == PlayerRole.Collector)
             {
-                _collectorNames.AppendLine(name);
+                AppendName(_collectorNames, name);
             }
             else if (stats.Role == PlayerRole.Disruptor)
             {
-                _disruptorNames.AppendLine(name);
+                AppendName(_disruptorNames, name);
             }
+        }
+
+        private static void AppendName(StringBuilder names, string name)
+        {
+            if (names.Length > 0)
+            {
+                names.AppendLine();
+            }
+
+            names.Append(name);
         }
 
         private static int CompareOwners(NetworkObject left, NetworkObject right)

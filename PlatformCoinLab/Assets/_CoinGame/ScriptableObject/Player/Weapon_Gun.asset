@@ -21,7 +21,7 @@ MonoBehaviour:
   ReserveAmmo: 60
   ArcAngle: 70
   CrateDamage: 1
-  HandScale: {x: 1, y: 1, z: 1}
-  HandOffset: {x: 0, y: 0, z: 0}
+  HandScale: {x: 0.7, y: 0.4, z: 0.8}
+  HandOffset: {x: 0, y: -0.03, z: 0.18}
   HandRotation: {x: 0, y: 0, z: 0}
-  MuzzleOffset: {x: 0, y: 0, z: 0.55}
+  MuzzleOffset: {x: 0.0000879843, y: 0.16237967, z: 0.78539366}

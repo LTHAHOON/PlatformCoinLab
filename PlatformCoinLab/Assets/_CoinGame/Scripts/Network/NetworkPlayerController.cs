@@ -47,7 +47,10 @@ namespace CoinGame.Network
         private CancellationTokenSource _moveCts;
         private float _pushCooldownUntil;
         private float _lockCooldownUntil;
+        [SerializeField]
         private Renderer[] _playerRenderers;
+        [SerializeField]
+        private NetworkGrassConcealment _grassConcealment;
         private MaterialPropertyBlock _playerPropertyBlock;
         private Camera _followCamera;
         private Vector3 _cameraOffset;
@@ -102,7 +105,6 @@ namespace CoinGame.Network
             {
                 _roleAbilityConfig = handle.Result;
             };
-            _playerRenderers = GetComponentsInChildren<Renderer>();
             _playerPropertyBlock ??= new MaterialPropertyBlock();
             _networkPlayerStats = GetComponent<NetworkPlayerStats>();
             _combat = GetComponent<NetworkCombat>();
@@ -189,9 +191,9 @@ namespace CoinGame.Network
                     ? new Color(1f, 0.45f, 0.25f)
                     : Color.white;
 
+            bool hidden = IsHiddenFromLocal;
             foreach (Renderer renderer in _playerRenderers)
             {
-                bool hidden = _networkPlayerStats.IsStealthed && !IsFriendlyLocalPlayer();
                 renderer.enabled = !hidden;
                 _playerPropertyBlock.SetColor("_BaseColor", roleColor);
                 _playerPropertyBlock.SetColor("_Color", roleColor);
@@ -563,6 +565,7 @@ namespace CoinGame.Network
         private float ItemBlockCooldown => _roleAbilityConfig ? _roleAbilityConfig.ItemBlockCooldown : 10f;
         public float PushCooldownRemaining => Mathf.Max(0f, _pushCooldownUntil - Time.time);
         public float SkillCooldownRemaining => Mathf.Max(0f, _lockCooldownUntil - Time.time);
+        public bool IsHiddenFromLocal => !IsOwner && (_networkPlayerStats.IsStealthed || _grassConcealment.IsConcealed) && !IsFriendlyLocalPlayer();
 
     }
 }

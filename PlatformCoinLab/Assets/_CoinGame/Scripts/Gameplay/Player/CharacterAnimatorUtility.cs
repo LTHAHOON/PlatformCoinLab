@@ -9,14 +9,6 @@ namespace CoinGame.Gameplay.Player
         [SerializeField]
         private Animator _animator;
 
-        private void Awake()
-        {
-            if (_animator == null)
-            {
-                _animator = GetComponentInChildren<Animator>();
-            }
-        }
-
         public void SetMove(float value)
         {
             SetFloat(_parameters != null ? _parameters.Move : "MoveSpeed", value);
@@ -51,6 +43,14 @@ namespace CoinGame.Gameplay.Player
             if (HasParameter(parameter, AnimatorControllerParameterType.Trigger))
             {
                 _animator.SetTrigger(parameter);
+            }
+        }
+
+        public void ResetTrigger(string parameter)
+        {
+            if (HasParameter(parameter, AnimatorControllerParameterType.Trigger))
+            {
+                _animator.ResetTrigger(parameter);
             }
         }
 

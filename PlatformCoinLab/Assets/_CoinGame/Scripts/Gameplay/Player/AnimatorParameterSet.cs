@@ -16,5 +16,11 @@ namespace CoinGame.Gameplay.Player
         public string Damage = "Damage";
         public string Death = "Death";
         public string Revive = "Revive";
+        [Min(0.01f)]
+        public float FullMoveSpeed = 4f;
+        [Min(0.01f)]
+        public float MoveBlendResponse = 12f;
+        [Min(0f)]
+        public float MovingThreshold = 0.05f;
     }
 }
