@@ -1,0 +1,29 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bbb281ee3bf0b054c82ac2347e9e782c, type: 3}
+  m_Name: Remote_UIAtlas
+  m_EditorClassIdentifier: Unity.Addressables.Editor::UnityEditor.AddressableAssets.Settings.AddressableAssetGroup
+  m_GroupName: Remote_UIAtlas
+  m_GUID: 41eb3351a20c71d4784162238dd67117
+  m_SerializeEntries:
+  - m_GUID: 1eaee135ce037439d925cee5e41ce026
+    m_Address: Assets/2D Casual UI/Sprite/GUI.png
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - required
+    FlaggedDuringContentUpdateRestriction: 0
+  m_ReadOnly: 0
+  m_Settings: {fileID: 11400000, guid: 07a49db2446faef4aab6e4be37f87228, type: 2}
+  m_SchemaSet:
+    m_Schemas:
+    - {fileID: 11400000, guid: 55d067cbe95996540a66936e144054e5, type: 2}
+    - {fileID: 11400000, guid: b340c4985ebabf64bb445a6fcafce5aa, type: 2}

@@ -16,6 +16,6 @@ MonoBehaviour:
   OpenedHitCount: 1
   LidOpenAngle: 105
   LidOpenDuration: 0.35
-  LidRotationAxis: {x: 1, y: 0, z: 0}
+  LidRotationAxis: {x: -1, y: 0, z: 0}
   DropOffset: {x: 0, y: 0.35, z: 0.4}
   DestroyDuration: 0.2

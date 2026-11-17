@@ -29,8 +29,6 @@ namespace CoinGame.Network
         private MultiplayerSession _multiplayerSession;
         [SerializeField]
         private SessionConnector _sessionConnector;
-        [SerializeField]
-        private string _contentServerHealthUrl = "https://localhost:5443/health";
 
         private RoomSessionService _sessionService;
         private ISession _session;
@@ -62,10 +60,11 @@ namespace CoinGame.Network
         private void Awake()
         {
             Instance = this;
+            Application.wantsToQuit += OnWantsToQuit;
             _sessionService = new RoomSessionService(_multiplayerSession, _sessionConnector);
             _sessionService.Connected += OnSessionConnected;
             _sessionService.Failed += OnSessionFailed;
-            _contentService = new RoomLobbyContentService(_contentServerHealthUrl);
+            _contentService = new RoomLobbyContentService();
         }
 
         private void OnEnable()
@@ -112,6 +111,7 @@ namespace CoinGame.Network
                 await UniTask.WaitUntil(() => _servicesReady, cancellationToken: destroyCancellationToken);
                 if (!await _contentService.IsAvailableAsync(destroyCancellationToken))
                 {
+                    _view.SetStatus("게임을 다시 시작해 필수 리소스를 다운로드해 주세요.");
                     _roomActionInProgress = false;
                     return false;
                 }
@@ -134,12 +134,26 @@ namespace CoinGame.Network
             SetOutGameCanvasVisible(false);
         }
 
-        public void ShutdownDevelopmentSession()
+        public UniTask ShutdownSessionAsync(bool applicationExit = false)
         {
-            if (IsDevelopmentQuickStartActive)
+            _isShuttingDown = true;
+            return _sessionService.DisposeAsync(applicationExit);
+        }
+
+        private bool OnWantsToQuit()
+        {
+            if (!_sessionService.IsSessionReady)
             {
-                _sessionService?.DisposeAsync().Forget();
+                return true;
             }
+            QuitAfterSessionAsync().Forget();
+            return false;
+        }
+
+        private async UniTask QuitAfterSessionAsync()
+        {
+            await ShutdownSessionAsync();
+            Application.Quit();
         }
 
         private void Update()
@@ -223,6 +237,7 @@ namespace CoinGame.Network
 
                 if (!await _contentService.IsAvailableAsync(destroyCancellationToken))
                 {
+                    _view.SetStatus("게임을 다시 시작해 필수 리소스를 다운로드해 주세요.");
                     return;
                 }
 
@@ -262,6 +277,7 @@ namespace CoinGame.Network
 
                 if (!await _contentService.IsAvailableAsync(destroyCancellationToken))
                 {
+                    _view.SetStatus("게임을 다시 시작해 필수 리소스를 다운로드해 주세요.");
                     return;
                 }
 
@@ -490,6 +506,7 @@ namespace CoinGame.Network
 
         private void OnDestroy()
         {
+            Application.wantsToQuit -= OnWantsToQuit;
             _isShuttingDown = true;
             if (Instance == this)
             {
@@ -561,6 +578,7 @@ namespace CoinGame.Network
             }
         }
 
+        public bool HasActiveSession => _sessionService != null && _sessionService.IsSessionReady;
         public RoomSettings Settings => _roomSettings;
         public bool IsHost => _isHost;
         public bool IsSessionReady => _sessionReady;

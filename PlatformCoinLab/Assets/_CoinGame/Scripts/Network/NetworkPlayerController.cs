@@ -109,7 +109,10 @@ namespace CoinGame.Network
             _networkPlayerStats = GetComponent<NetworkPlayerStats>();
             _combat = GetComponent<NetworkCombat>();
             _inventory = GetComponent<NetworkInventory>();
+            _playerInput = GetComponent<PlayerInput>();
+            _playerInput.enabled = IsOwner;
             _inputProvider = GetComponent<PlayerInputStateProvider>();
+            _inputProvider.enabled = IsOwner;
             if (_networkPlayerStats == null)
             {
                 Debug.LogError("NetworkPlayerController requires a NetworkPlayerStats component.", this);
@@ -237,6 +240,8 @@ namespace CoinGame.Network
 
         public override void OnNetworkDespawn()
         {
+            _inputProvider.enabled = false;
+            _playerInput.enabled = false;
             if (!IsOwner)
             {
                 return;
@@ -523,20 +528,26 @@ namespace CoinGame.Network
 
         private void ProcessWeaponSelection()
         {
-            if (Keyboard.current == null || _combat == null)
+            if (_combat == null)
             {
                 return;
             }
 
-            if (Keyboard.current.digit1Key.wasPressedThisFrame)
+            PlayerInputState state = default;
+            if (_inputProvider != null)
+            {
+                state = _inputProvider.Current;
+            }
+
+            if (state.SelectFist || Keyboard.current != null && Keyboard.current.digit1Key.wasPressedThisFrame)
             {
                 _combat.RequestSelectWeapon(Gameplay.Combat.WeaponKind.Fist);
             }
-            else if (Keyboard.current.digit2Key.wasPressedThisFrame)
+            else if (state.SelectGun || Keyboard.current != null && Keyboard.current.digit2Key.wasPressedThisFrame)
             {
                 _combat.RequestSelectWeapon(Gameplay.Combat.WeaponKind.Gun);
             }
-            else if (Keyboard.current.digit3Key.wasPressedThisFrame)
+            else if (state.SelectSword || Keyboard.current != null && Keyboard.current.digit3Key.wasPressedThisFrame)
             {
                 _combat.RequestSelectWeapon(Gameplay.Combat.WeaponKind.Sword);
             }

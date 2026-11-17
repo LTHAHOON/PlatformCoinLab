@@ -1,0 +1,123 @@
+{
+  "target": 19,
+  "remoteBytes": 8847719,
+  "duplicateAssets": 2,
+  "assets": [
+    {
+      "path": "Assets/_CoinGame/Prefabs/PlayerHealthBar.prefab",
+      "size": 1132
+    },
+    {
+      "path": "Assets/Settings/InGameSceneProfile.asset",
+      "size": 1004
+    },
+    {
+      "path": "Assets/_CoinGame/Materials/Toon/block_28147981_-1340270957083844871_Toon.mat",
+      "size": 1328
+    },
+    {
+      "path": "Assets/TextMesh Pro/Resources/Fonts & Materials/LiberationSans SDF.asset",
+      "size": 1078564
+    },
+    {
+      "path": "Assets/_CoinGame/Materials/Toon/block_fc4de434_-1340270957083844871_Toon.mat",
+      "size": 1328
+    },
+    {
+      "path": "Assets/_CoinGame/Fonts/NotoSansKR_Dynamic.asset",
+      "size": 1054608
+    },
+    {
+      "path": "Assets/_CoinGame/Materials/Toon/mat_main_e5c8ac60_2100000_Grass.mat",
+      "size": 604
+    },
+    {
+      "path": "Assets/_CoinGame/Materials/Toon/mat_main_e5c8ac60_2100000_Toon.mat",
+      "size": 1320
+    },
+    {
+      "path": "Assets/_CoinGame/Fonts/NotoSansKR.ttf",
+      "size": 10414986
+    },
+    {
+      "path": "Assets/TextMesh Pro/Resources/Fonts & Materials/LiberationSans SDF - Fallback.asset",
+      "size": 3340
+    },
+    {
+      "path": "Assets/TextMesh Pro/Fonts/LiberationSans.ttf",
+      "size": 352734
+    },
+    {
+      "path": "Assets/_CoinGame/Animation/OUT_OnPlayCoinGame_Timeline.playable",
+      "size": 2744
+    },
+    {
+      "path": "Assets/_CoinGame/Generated/GridSpawnMap.asset",
+      "size": 6292
+    },
+    {
+      "path": "Assets/Palmov Island/Low Poly Atmospheric Locations Pack/Textures/texture main.png",
+      "size": 43928
+    },
+    {
+      "path": "Assets/2D Casual UI/Sprite/GUI.png",
+      "size": 10053652
+    },
+    {
+      "path": "Assets/KayKit_BlockBits_1.0_FREE/Assets/fbx/block_bits_texture.png",
+      "size": 699296
+    },
+    {
+      "path": "Assets/_CoinGame/CoinGame_Actions.inputactions",
+      "size": 12416
+    },
+    {
+      "path": "Assets/_CoinGame/Animation/AC_InGameCanvas.controller",
+      "size": 364
+    },
+    {
+      "path": "Assets/Toon Shaders Pro/Shaders/Toon/Toon.shader",
+      "size": 534452
+    },
+    {
+      "path": "Assets/TextMesh Pro/Shaders/TMP_SDF-Mobile.shader",
+      "size": 12000
+    },
+    {
+      "path": "Assets/_CoinGame/Shaders/ToonGrass.shader",
+      "size": 18784
+    },
+    {
+      "path": "Assets/Palmov Island/Low Poly Atmospheric Locations Pack/Models/Lands/land wild west railway station.fbx",
+      "size": 23796
+    },
+    {
+      "path": "Assets/KayKit_BlockBits_1.0_FREE/Assets/fbx/decorative_block_yellow.fbx",
+      "size": 97800
+    },
+    {
+      "path": "Assets/Palmov Island/Low Poly Atmospheric Locations Pack/Models/Plants/Grass/grass 3.fbx",
+      "size": 13072
+    },
+    {
+      "path": "Assets/_CoinGame/ScriptableObject/Spawn/CratePlacement.asset",
+      "size": 112
+    },
+    {
+      "path": "Assets/_CoinGame/ScriptableObject/Player/GrassVisualSettings.asset",
+      "size": 60
+    },
+    {
+      "path": "Assets/_CoinGame/ScriptableObject/Player/PlayerHealthBarSettings.asset",
+      "size": 80
+    },
+    {
+      "path": "Assets/_CoinGame/ScriptableObject/Spawn/CoinPlacement.asset",
+      "size": 112
+    },
+    {
+      "path": "Assets/_CoinGame/ScriptableObject/Spawn/CrateRotation.asset",
+      "size": 72
+    }
+  ]
+}

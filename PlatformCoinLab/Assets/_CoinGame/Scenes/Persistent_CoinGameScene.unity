@@ -462,7 +462,7 @@ MonoBehaviour:
     m_DisabledTrigger: Disabled
   m_Interactable: 1
   m_TargetGraphic: {fileID: 103947566}
-  m_TextViewport: {fileID: 0}
+  m_TextViewport: {fileID: 103947563}
   m_TextComponent: {fileID: 1146618815}
   m_Placeholder: {fileID: 1048136658}
   m_VerticalScrollbar: {fileID: 0}
@@ -3074,7 +3074,6 @@ MonoBehaviour:
   _networkRoundStatePrefab: {fileID: 4597449833319584482, guid: 58f01d0a75e2f9b4984caa32b2109f91, type: 3}
   _multiplayerSession: {fileID: 11400000, guid: 6ec00dd2b9df06046aa782c0cc4ec58e, type: 2}
   _sessionConnector: {fileID: 11400000, guid: 228940271b5f4b74b84d08e573544ecb, type: 2}
-  _contentServerHealthUrl: https://localhost:5443/health
 --- !u!1 &745349916
 GameObject:
   m_ObjectHideFlags: 0
@@ -3406,7 +3405,7 @@ MonoBehaviour:
     m_DisabledTrigger: Disabled
   m_Interactable: 1
   m_TargetGraphic: {fileID: 881001550}
-  m_TextViewport: {fileID: 0}
+  m_TextViewport: {fileID: 881001547}
   m_TextComponent: {fileID: 268914492}
   m_Placeholder: {fileID: 1306853934}
   m_VerticalScrollbar: {fileID: 0}
@@ -3608,7 +3607,7 @@ MonoBehaviour:
     m_DisabledTrigger: Disabled
   m_Interactable: 1
   m_TargetGraphic: {fileID: 882878039}
-  m_TextViewport: {fileID: 0}
+  m_TextViewport: {fileID: 882878036}
   m_TextComponent: {fileID: 1106028941}
   m_Placeholder: {fileID: 1403114456}
   m_VerticalScrollbar: {fileID: 0}
@@ -3810,7 +3809,7 @@ MonoBehaviour:
     m_DisabledTrigger: Disabled
   m_Interactable: 1
   m_TargetGraphic: {fileID: 887288256}
-  m_TextViewport: {fileID: 0}
+  m_TextViewport: {fileID: 887288253}
   m_TextComponent: {fileID: 593910161}
   m_Placeholder: {fileID: 434760094}
   m_VerticalScrollbar: {fileID: 0}
@@ -4392,7 +4391,7 @@ MonoBehaviour:
     m_DisabledTrigger: Disabled
   m_Interactable: 1
   m_TargetGraphic: {fileID: 914335082}
-  m_TextViewport: {fileID: 0}
+  m_TextViewport: {fileID: 914335079}
   m_TextComponent: {fileID: 1686601387}
   m_Placeholder: {fileID: 224288297}
   m_VerticalScrollbar: {fileID: 0}
@@ -4516,6 +4515,7 @@ GameObject:
   - component: {fileID: 1031861938}
   - component: {fileID: 1031861937}
   - component: {fileID: 1031861936}
+  - component: {fileID: 1031861939}
   m_Layer: 0
   m_Name: Status
   m_TagString: Untagged
@@ -4586,8 +4586,8 @@ MonoBehaviour:
       m_Calls: []
   m_text: Initializing services...
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
-  m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 46724d1dabdd62642a5715257bf6c7d4, type: 2}
+  m_sharedMaterial: {fileID: -2521164991800404047, guid: 46724d1dabdd62642a5715257bf6c7d4, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -4664,6 +4664,21 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1031861934}
   m_CullTransparentMesh: 1
+--- !u!114 &1031861939
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1031861934}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8cb0eeb06e3d4f24c907147a3b82365d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CoinGame.UI.RuntimeFontAtlas
+  _source: {fileID: 11400000, guid: 46724d1dabdd62642a5715257bf6c7d4, type: 2}
+  _texts:
+  - {fileID: 1031861937}
 --- !u!1 &1048136655
 GameObject:
   m_ObjectHideFlags: 0
@@ -5088,7 +5103,7 @@ MonoBehaviour:
     m_DisabledTrigger: Disabled
   m_Interactable: 1
   m_TargetGraphic: {fileID: 1138855211}
-  m_TextViewport: {fileID: 0}
+  m_TextViewport: {fileID: 1138855208}
   m_TextComponent: {fileID: 474792507}
   m_Placeholder: {fileID: 1662787350}
   m_VerticalScrollbar: {fileID: 0}
@@ -6732,7 +6747,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1473892370}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 62899f850307741f2a39c98a8b639597, type: 3}
   m_Name: 
@@ -8045,7 +8060,7 @@ MonoBehaviour:
     m_DisabledTrigger: Disabled
   m_Interactable: 1
   m_TargetGraphic: {fileID: 1776785956}
-  m_TextViewport: {fileID: 0}
+  m_TextViewport: {fileID: 1776785953}
   m_TextComponent: {fileID: 1292105014}
   m_Placeholder: {fileID: 616149303}
   m_VerticalScrollbar: {fileID: 0}
@@ -8516,7 +8531,7 @@ MonoBehaviour:
     m_DisabledTrigger: Disabled
   m_Interactable: 1
   m_TargetGraphic: {fileID: 1899915390}
-  m_TextViewport: {fileID: 0}
+  m_TextViewport: {fileID: 1899915387}
   m_TextComponent: {fileID: 186197542}
   m_Placeholder: {fileID: 150885547}
   m_VerticalScrollbar: {fileID: 0}

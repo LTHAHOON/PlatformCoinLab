@@ -19,7 +19,7 @@ namespace CoinGame.Network
         private readonly SessionConnector _sessionConnectorAsset;
         private readonly MultiplayerSession _multiplayerSessionAsset;
         private bool _isConnecting;
-        private bool _isDisposing;
+        private UniTaskCompletionSource _disposeCompletion;
         private string _requestedSessionId;
 
         public ISession Session { get; private set; }
@@ -79,7 +79,7 @@ namespace CoinGame.Network
 
         public async UniTask ConnectAsync(RoomSettings settings, bool isCreate, CancellationToken cancellationToken)
         {
-            if (!IsServicesReady || IsSessionReady || _isConnecting)
+            if (!IsServicesReady || IsSessionReady || _isConnecting || _disposeCompletion != null)
             {
                 return;
             }
@@ -190,22 +190,27 @@ namespace CoinGame.Network
             }
         }
 
-        public async UniTask DisposeAsync()
+        public UniTask DisposeAsync(bool applicationExit = false)
         {
-            if (_isDisposing)
+            if (_disposeCompletion == null)
             {
-                return;
+                _disposeCompletion = new UniTaskCompletionSource();
+                CloseSessionAsync(applicationExit).Forget();
             }
+            return _disposeCompletion.Task;
+        }
 
-            _isDisposing = true;
+        private async UniTask CloseSessionAsync(bool applicationExit)
+        {
             ISession session = Session;
             Session = null;
             _isConnecting = false;
-            if (session != null)
+            DisposeConnector();
+            if (session != null && session.State == SessionState.Connected)
             {
                 try
                 {
-                    if (session.IsHost)
+                    if (session.IsHost && !applicationExit)
                     {
                         await session.AsHost().DeleteAsync();
                     }
@@ -214,15 +219,28 @@ namespace CoinGame.Network
                         await session.LeaveAsync();
                     }
                 }
+                catch (Exception exception) when (applicationExit && IsDisposedDuringExit(exception))
+                {
+                    // The SDK's lobby event channel may already be disposed by Editor shutdown.
+                }
                 catch (Exception exception)
                 {
-                    Debug.LogWarning($"Failed to close development session: {exception.Message}");
+                    Debug.LogWarning($"Failed to close session: {exception.Message}");
                 }
             }
 
-            DisposeConnector();
             Connected = null;
             Failed = null;
+            _disposeCompletion.TrySetResult();
+        }
+
+        private static bool IsDisposedDuringExit(Exception exception)
+        {
+            if (exception is ObjectDisposedException)
+            {
+                return true;
+            }
+            return exception is SessionException && exception.Message.Contains("Cannot access a disposed object", StringComparison.Ordinal);
         }
 
         public void Dispose()

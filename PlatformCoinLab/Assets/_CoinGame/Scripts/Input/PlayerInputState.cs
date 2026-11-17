@@ -11,6 +11,9 @@ namespace CoinGame.Input
         public bool Interact;
         public bool WeaponPrevious;
         public bool WeaponNext;
+        public bool SelectFist;
+        public bool SelectGun;
+        public bool SelectSword;
         public bool Reload;
         public bool Boost;
         public bool Revive;

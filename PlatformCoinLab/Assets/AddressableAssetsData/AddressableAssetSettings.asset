@@ -15,14 +15,14 @@ MonoBehaviour:
   m_DefaultGroup: 435311f4a406a5d4a850c4cfc42b4914
   m_currentHash:
     serializedVersion: 2
-    Hash: 00000000000000000000000000000000
+    Hash: 5cd6b0699a2f0d533440d33fc8fb287d
   m_ExtractTypeTreeData: 0
   m_DisableWriteTypeTree: 0
   m_OptimizeCatalogSize: 0
   m_BuildRemoteCatalog: 1
   m_BundleLocalCatalog: 0
   m_CatalogRequestsTimeout: 0
-  m_DisableCatalogUpdateOnStart: 0
+  m_DisableCatalogUpdateOnStart: 1
   m_InternalIdNamingMode: 0
   m_InternalBundleIdMode: 1
   m_AssetLoadMode: 0
@@ -65,8 +65,12 @@ MonoBehaviour:
   m_overridePlayerVersion: '[UnityEditor.PlayerSettings.bundleVersion]'
   m_GroupAssets:
   - {fileID: 11400000, guid: 5769e0000793d8f4c920cfeff0ac808f, type: 2}
+  - {fileID: 11400000, guid: cde87edd084e85545a71353b92d61f5f, type: 2}
+  - {fileID: 11400000, guid: 10996c442968c354fa21c5145616e5cf, type: 2}
   - {fileID: 11400000, guid: ecc05e771d3edfb48a140dde0bf5d16c, type: 2}
   - {fileID: 11400000, guid: 1a7044a0801083249b6a86d29ea611c7, type: 2}
+  - {fileID: 11400000, guid: 8ca4d32bb989b924dac977a3affe9c9f, type: 2}
+  - {fileID: 11400000, guid: d164d9ff383f9e848bbdae1f9c3bd116, type: 2}
   m_BuildSettings:
     m_LogResourceManagerExceptions: 1
     m_BundleBuildPath: Temp/com.unity.addressables/AssetBundles
@@ -91,9 +95,23 @@ MonoBehaviour:
       m_ProfileName: CoinGame_Profile
       m_Values:
       - m_Id: 5766eab1c2d1ec74e8991e92a0b776e5
-        m_Value: 'https://localhost:5443/[BuildTarget]'
+        m_Value: 'http://localhost:5250/[BuildTarget]'
       - m_Id: b686a805c0bf5a344a5c1e25152ec1a0
-        m_Value: 'ServerData/[BuildTarget]'
+        m_Value: '../ContentServer/Content/[BuildTarget]'
+      - m_Id: bff69e61d04171b4fa569ec85a7f2de2
+        m_Value: '{UnityEngine.AddressableAssets.Addressables.RuntimePath}/[BuildTarget]'
+      - m_Id: db4a73cabe1991a42889cc509097dd0a
+        m_Value: '[UnityEditor.EditorUserBuildSettings.activeBuildTarget]'
+      - m_Id: e996f747e245a2a40b2afd53e59cbc48
+        m_Value: '[UnityEngine.AddressableAssets.Addressables.BuildPath]/[BuildTarget]'
+    - m_InheritedParent: 
+      m_Id: 6e8e7157a49f8974fa03bdcb54a311e0
+      m_ProfileName: CoinGame_Android
+      m_Values:
+      - m_Id: 5766eab1c2d1ec74e8991e92a0b776e5
+        m_Value: 'http://222.120.162.193:5250/[BuildTarget]'
+      - m_Id: b686a805c0bf5a344a5c1e25152ec1a0
+        m_Value: '../ContentServer/Content/[BuildTarget]'
       - m_Id: bff69e61d04171b4fa569ec85a7f2de2
         m_Value: '{UnityEngine.AddressableAssets.Addressables.RuntimePath}/[BuildTarget]'
       - m_Id: db4a73cabe1991a42889cc509097dd0a
@@ -120,6 +138,7 @@ MonoBehaviour:
   m_LabelTable:
     m_LabelNames:
     - default
+    - required
   m_SchemaTemplates: []
   m_GroupTemplateObjects:
   - {fileID: 11400000, guid: 8c1e759eddfa0a047916069f42fefafa, type: 2}

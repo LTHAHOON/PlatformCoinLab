@@ -79,7 +79,7 @@ namespace CoinGame.Utilities
 
         protected virtual void Awake()
         {
-            _spawnPrefabInitializationTask = InitializeSpawnPrefabAsync(destroyCancellationToken).Preserve();
+            _spawnPrefabInitializationTask = InitializeSpawnPrefabAsync(destroyCancellationToken).ToAsyncLazy().Task;
             _spawnPrefabInitializationTask.Forget();
         }
 

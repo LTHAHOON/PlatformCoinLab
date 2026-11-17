@@ -489,8 +489,8 @@ Assets/
 | `RoomLobbyController.cs` | UI 입력, 콘텐츠 확인, 방 생성/참가, 역할·설정 변경과 시작 흐름을 조율한다. |
 | `RoomLobbyView.cs` | 로비 입력 필드·버튼·참가 코드·상태 표시 등 화면 요소를 갱신한다. |
 | `RoomStartCountdown.cs` | 서버가 공유한 시작 시점의 남은 초를 표시한다. 독립 타이머 시작·취소 API도 보존되어 있다. |
-| `RoomLobbyContentService.cs` | Addressables에서 원격 HTTP(S) 콘텐츠 사용 여부를 조사하고 필요할 때 서버 상태를 확인한다. |
-| `ContentServerHealthProbe.cs` | 설정된 health URL에 HTTP 요청을 보내 콘텐츠 서버 가용 여부를 반환한다. |
+| `RoomLobbyContentService.cs` | 로비 진입 후 Addressables 필수 콘텐츠의 남은 다운로드 용량을 확인한다. |
+| `ContentBootstrap.cs` / `RoomLobbyContentService.cs` | 부트스트랩에서 Addressables 카탈로그와 필수 번들을 다운로드하며 로비는 남은 다운로드 용량을 확인한다. 별도 health 요청은 사용하지 않는다. |
 | `DevQuickStart.cs` | 개발용 빠른 호스트/클라이언트 시작 경로를 제공한다. |
 
 #### 게임 판정과 동기화: Network/
@@ -618,7 +618,7 @@ Assets/
 flowchart TD
     View[RoomLobbyView] --> Lobby[RoomLobbyController]
     Lobby --> Content[RoomLobbyContentService]
-    Content --> Health[ContentServerHealthProbe]
+    Content --> Cache[Addressables 필수 다운로드 캐시]
     Lobby --> Connector[NetworkConnector]
     Connector --> Session[RoomSessionService]
     Session --> Services[Unity Services Session / Relay]
@@ -730,11 +730,12 @@ flowchart TD
 | 개발 정보 | 제작자·개발 기간·Unity 및 주요 패키지 버전 |
 | 실행 자료 | 대표 이미지·플레이 영상·실행 파일과 소스의 위치 |
 | 주요 구현 기능 | 기능의 목적·구현 방식·자료 구조와 처리 순서·핵심 코드 위치. Score 없이 Remaining Coin·경기 누적 Kills·WIN/LOSS를 표시하며 Disruptor는 Remaining Coin을 숨긴다. 이름 저장 분리·이름#번호·UserName·역할 목록은 실제 MPP Main+Player2로 검증했다. Player/Crate Ground 접촉은 로컬 Host 검증. Canvas 추적 체력 바・씬 고정 HUD를 사용한다. Toon Shaders Pro 머티리얼·아웃라인과 잔디 디더링·서버 권한 위장을 추가했고 실제 MPP Host/Client 양방향에서 본체·무기·체력 바 숨김 및 퇴장 복구를 검증했다 |
-| 플랫폼 대응 | 플랫폼별 입력·화면·저장·생명주기·콘텐츠 처리와 실행 결과 |
+| 플랫폼 대응 | 자유형 터치 조이스틱과 모바일 공격·장전·무기·아이템·방해 스킬 HUD, 배치·크기 JSON 저장을 구현했다. Editor 로컬 Host에서 이동·공격·무기·부활·배치 복원을 확인했고 1920×1080·2160×1080 배치를 확인했다. 실제 Android 원격 다운로드·로비 진입은 사용자 확인, 새 모바일 조작·노치·전체 경기·Web은 미검증  대기 씬은 모바일 이동 조이스틱만 제공하며, 로컬 Host 이동·해제 및 PC 숨김을 확인했다  WebGL 개발 Player 빌드 및 settings/catalog/번들 HTTP 200을 확인했고 실제 브라우저 화면 검증은 도구 제한으로 미완료다 |
 | 추가·개선한 부분 | 수업 구현과의 차이·필요한 이유·구현 방법·동작 결과. 상자 드롭 높이를 0.35m로 조정해 실제 습득을 확인했다. KayKit 라이플 발사·Hit·Death를 프로젝트 Animator에 연결하고 실제 MPP Host/Player2에서 발사 동기화·피격 중 사망·사망 재접속·부활 복귀를 확인했다. 대기 씬에서는 공격 모션만 동기화하고 피해·탄약 소모·투사체 생성을 차단하며, 대기 씬 종료 후 정상 공격 복귀를 Host/Player2에서 확인했다. 스테이지별 총 자동 변경은 후속 작업 |
-| 문제 해결 사례 | 실제 문제와 재현 조건·원인·수정 내용·재검증 결과 |
+| 문제 해결 사례 | Android NUnit Linker·카탈로그/HTTP 설정과 Editor 종료 순서·초기화 중복 대기를 보완했다. 2026-11-18 인게임 조명 Normal Bias 과다로 발생한 그림자 구멍은 씬별 bias override로 보정하고 PC 렌더링 화면에서 확인했다. 아래 날짜별 기록에 재현 조건과 검증 범위를 구분한다  Web 방 생성/참가의 콘텐츠 준비 판정과 한글 상태 폰트를 보완했다 |
 | 성능 개선 | 측정 환경·변경 내용·수정 전후 값·기능 유지 여부·측정 한계 |
-| 실행·복원 방법과 한계 | 시작 씬·조작법·콘텐츠 및 Player 빌드 순서·서버 실행 방법·알려진 문제·미확인 환경 |
+| 참가자 이동 입력 보완 | PlayerInput을 소유자 스폰 시에만 활성화하고 Provider의 액션 연결 시점을 OnEnable로 맞췄다. Editor 로컬 서버·클라이언트에서 참가자의 키보드·모바일 입력 이동과 서버 위치 반영을 확인했다. 실제 Web↔Android 재검증은 남아 있으며 이번 작업에서는 Player 빌드를 실행하지 않았다. |
+| 실행·복원 방법과 한계 | Bootstrap_CoinGameScene에서 카탈로그 확인·필수 다운로드·재시도 후 Persistent 진입. 씬/환경/UI/폰트 원격 그룹과 로컬 공유 그룹으로 분리해 Windows Editor 다운로드/캐시/원격 씬 및 Android 번들 생성·중복 0개를 확인했다. 콘텐츠는 ContentServer/Content/[BuildTarget]에 직접 출력한다. 실제 Android 다운로드·로비 진입은 사용자 확인했으며 PC/Web Player와 원격 Host+Client 전체 경기는 미실행. CONTENT_PIPELINE.md 참조 |
 
 ### 16.1 현재 프로젝트 기준 작성 내용
 
@@ -746,7 +747,7 @@ flowchart TD
 - **추가·개선한 부분**: M1~M3의 서버 권한 판정, 모바일 입력 추상화, 콘텐츠 서버 복구, JSON 기본값 처리처럼 수업 구현과 다른 부분은 이유·방법·동작 결과를 함께 남긴다.
 - **문제 해결 사례**: Addressables 로드 실패, HTTPS 파일 서버 연결 실패, JSON 손상, 씬 재진입·네트워크 재접속 등 실제 재현 가능한 사례만 기록한다. Unity Multiplayer Play Mode에서 호스트와 클라이언트가 같은 인증 프로필을 사용해 Lobby SDK의 `SessionConnector.InvokeFailed: Object reference not set`가 발생하던 문제는 에디터 인스턴스별 `CoinDevHost`/`CoinDevClient` 프로필을 사용하도록 수정했다. 상자·능력 판정은 서버 거리 계산으로 제한하고, 호스트 대상 밀치기는 서버에서 직접 이동하도록 수정했다. 수정 후 Assembly-CSharp 빌드 오류는 0개이며 실제 두 인스턴스 Join과 상자·O·L 동작 재검증은 남아 있다. 문서는 UTF-8로 복구하고 저장 시 ANSI/CP949 변환을 사용하지 않는다.
 - **성능 개선**: 동일한 기기·빌드 설정에서 Profiler/Frame Timing/Memory Profiler 측정값을 수정 전후로 기록하고 GC Alloc·로딩·프레임 유지 여부와 측정 한계를 적는다.
-- **실행·복원 방법과 한계**: 시작 씬(`Persistent_CoinGameScene`), 조작법, Addressables 빌드·콘텐츠 서버 실행·Player 빌드 순서, 알려진 문제와 미확인 기기를 명시한다. `InGame_CoinGameScene`을 단독 실행할 때는 `InGamePersistentBootstrap`이 Persistent 씬을 additive 로드하지만, 실제 Host/Client와 라운드 시작은 로비 역할 선택·네트워크 연결 절차가 필요하다.
+- **실행·복원 방법과 한계**: 시작 씬(`Bootstrap_CoinGameScene`), 조작법, Addressables 빌드·콘텐츠 서버 실행·Player 빌드 순서, 알려진 문제와 미확인 기기를 명시한다. `InGame_CoinGameScene`을 단독 실행할 때는 `InGamePersistentBootstrap`이 Persistent 씬을 additive 로드하지만, 실제 Host/Client와 라운드 시작은 로비 역할 선택·네트워크 연결 절차가 필요하다.
 
 ### 16.2 필수 검증 체크리스트
 
@@ -793,7 +794,7 @@ flowchart TD
 - 2026-11-17 Score 제거: 코인 점수 증가, 점수 동기화/RPC, 점수 탈취, 저장 키 및 잔여 UI 참조를 제거했다. Remaining Coin 감소·클리어·WIN/LOSS 경로는 유지한다. 정적 빌드는 오류 0개·기존 외부 셰이더 경고 1개로 확인했다. 이번 변경의 Unity Editor 컴파일·PlayMode·Host/Client 검증은 MCP 응답 중단으로 미확인이다.
 
 - `StageLoader`는 Addressables 비동기 생성 실패 시 최대 재시도 후 오류를 안내하고, 성공·실패 핸들을 해제한다. `AddressableRetryLoader`는 일반 자산 로드에도 같은 재시도·해제 규칙을 제공한다.
-- `ContentServerHealthProbe`는 localhost HTTPS 인증서를 개발 환경에서 처리하고, `RoomLobbyContentService`에서 지수형 지연 재시도를 수행한다. 실제 ASP.NET Core 서버 중단·복구 결과는 아직 미확인이다.
+- `ContentBootstrap`은 카탈로그 갱신·필수 용량·바이트 진행률·재시도를 표시한다. `RoomLobbyContentService`는 캐시의 남은 필수 다운로드 용량만 확인하며 별도 health API를 요청하지 않는다. 원격 경로와 검증 범위는 `CONTENT_PIPELINE.md`에 기록한다.
 - `JsonSettingsStorage`는 버전 봉투, JSON 예외 처리, 검증 실패 시 안전한 읽기 실패 반환을 제공한다. 실제 게임 설정 적용 연결은 후속 작업이다.
 - `ApplicationLifecycleService`는 앱 중단·포커스 변경 때 저장을 호출하고 복귀 이벤트를 제공한다. `SafeAreaLayout`은 해상도·Safe Area 변경을 추적한다. 실제 Android 기기 확인은 미확인이다.
 - `SoundPlayer`는 AudioSource와 AudioClip을 분리해 효과음을 재생한다. 실제 사운드 에셋 연결과 볼륨 UX는 미확인이다.
@@ -835,3 +836,102 @@ flowchart TD
 - 실제 Player2 재접속 후 PlayerTwo#1002 수신을 확인했다. 같은 기본 이름을 입력했을 때도 양쪽에서 MainName#1000/MainName#1002로 구분됐으며 Client 소유자 UI는 MainName#1002였다. 공용 저장 키에 외부 값을 써도 확정한 메모리 이름이 바뀌지 않는 검사도 통과했다.
 - 검증 중 스크린샷 도구가 Virtual Player에 없는 Game 메뉴를 호출한 경고와 일시정지 중 transport receive queue 경고/연결 끊김이 있었다. 다시 연결해 화면 캡처 없이 검증한 구간은 Host/Client Console 오류·경고 0개였다. 최종 재컴파일도 성공했다. Relay 세션 경로, 플랫폼 Player 빌드, Android/Web은 이번 이름 수정에서 미검증이다.
 - 테스트용 이름을 복원하고 임시 MCP 연결 Editor 스크립트 및 meta를 제거했다. 테스트용으로 켠 Player2는 원래 비활성 상태로 되돌렸다. PlayerProfileStorage는 저장 키 식별 한 책임으로 분리했으며 MPP 인자 처리/조건부 컴파일을 명시하기 위해 350자 규칙 예외로 기록한다.
+
+
+
+### 부트스트랩과 원격 콘텐츠 (2026-11-17)
+
+- `Local_Core`의 기존 NGO Player/Coin/Crate 및 규칙 설정은 로컬에 유지한다. Bootstrap/Persistent/Waiting은 Player 씬이다. 기존 Remote_Required는 GUID를 보존해 `Remote_Scenes`로 변경하고 `Remote_Environment`, `Remote_UIAtlas`, `Remote_Fonts`로 큰 의존 에셋을 분리했다. 원격 그룹은 모두 `required` 라벨을 사용하며 입력·공용 셰이더는 `Local_Shared`에서 공유한다. GameManager의 AddressableSceneLoader가 기존 주소로 additive 씬 핸들을 관리한다. 맵과 Lands 배치는 변경하지 않았다.
+- Remote.BuildPath는 `../ContentServer/Content/[BuildTarget]`이다. Android 빌드는 Content/Android에 직접 출력한다. Android 에뮬레이터 프로필은 10.0.2.2:5250이며 실제 기기는 접근 가능한 서버 URL로 변경해야 한다. HTTP는 Development Build에서만 허용한다. 배포용 HTTPS와 Android/Web Player는 별도 검증한다.
+- 세션 종료는 중복 호출을 합치고 Editor 종료 시 SDK 자동 종료 전에 LeaveAsync를 시작한다. 실제 앱 종료는 wantsToQuit에서 정상 종료를 기다린다. MPP 전환을 취소하지 않는다. Editor 종료 중 SDK의 폐기된 채널 예외만 예상 종료로 처리한다.
+- 설정/UI/다운로드/씬 핸들/Editor 빌드/종료 책임을 분리했다. 명시적 직렬화와 비동기 수명주기를 위해 350자 규칙 예외를 기록한다. 기존 긴 통합 컴포넌트는 GUID와 생명주기를 보존하는 최소 변경을 적용했다.
+- 실행 절차와 실제 검증 결과·남은 항목은 `CONTENT_PIPELINE.md`에 기록한다.
+
+### Addressables 그룹 분리 (2026-11-17)
+
+- 에셋 구성 기준은 `AddressablesLayout.json`이다. `ContentGroupLayout` Editor 도구가 그룹 생성·기존 그룹 이름 변경·GUID/주소 보존·로컬/원격 경로·라벨을 적용한다. `BootstrapProjectSetup`도 같은 구성을 재사용한다. 직렬화된 JSON 정의와 Editor 전용 설정 로직은 350자 규칙 예외이며 Player 런타임 코드는 변경하지 않았다.
+- Windows 빌드 리포트에서 기존 단일 원격 8,847,719 bytes → 분리한 원격 합계 8,481,126 bytes, 씬 번들 1,550,364 bytes를 확인했다. 번들 간 중복 에셋은 입력·Toon 셰이더 2개에서 0개가 됐다. 일반 Player 씬/Resources의 직접 참조 중복까지 제거한 결과는 아니다.
+- 실제 Use Existing Build에서 분리된 필수 콘텐츠 다운로드·남은 용량 0·로비 진입·원격 InGame 로드/언로드·맵/HUD 화면과 Missing Material 0개를 확인했고 해당 구간 Console 오류/경고 0개였다. 씬만 바꾼 증분 배포의 실제 전송량은 미측정이며 플랫폼 Player와 원격 2인 검증은 별도 항목이다.
+- 새 Local_Shared 의존성이 있으므로 이 구성으로 이전할 때 콘텐츠와 Player를 함께 다시 빌드한다. 기존 Player에 새 원격 카탈로그만 적용하지 않는다. Android 빌드 결과와 전체 절차는 CONTENT_PIPELINE.md에 기록한다.
+
+### Android 테스트 어셈블리 분리 (2026-11-17)
+
+- 재현: Android IL2CPP Player 빌드의 ManagedStripped 단계에서 DropGuaranteePolicyTests를 처리하다 IL1005와 nunit.framework AssemblyResolutionException으로 실패했다.
+- 원인: asmdef가 없는 프로젝트에서 Tests/EditMode는 Editor 전용 폴더가 아니므로 게임 규칙 테스트 2개가 Assembly-CSharp에 포함됐다. NUnit은 일반 Android Player의 런타임 의존성이 아니다.
+- 수정: Unity AssetDatabase.MoveAsset으로 Assets/_CoinGame/Tests/EditMode를 Tests/Editor로 이동했다. 테스트 2개와 meta의 파일 해시가 원본과 같아 코드 내용·GUID를 보존했음을 확인했다. 게임 런타임 구조·패키지·스트리핑 설정은 변경하지 않았다.
+- 검증: CompilationPipeline의 Player 컴파일 목록에 프로젝트 테스트 0개, Assembly-CSharp-Editor에 테스트 파일 2개를 확인했다. EditMode 전체 7/7개(게임 규칙 4개 포함)가 통과했다. 기존 Android 빌드 프로필로 UnityLinker·IL2CPP·Gradle 빌드를 완료했고 BuildReport Succeeded, 오류 0개·경고 7개, 약 249초를 확인했다. Build/Android/CoinGame.apk는 69,102,553 bytes다. 경고는 Diagnostics 심벌, Toon 셰이더, TMP 네이티브 컴파일 분리, MCP 연결 로그 등이며 이번 테스트 분리 오류와 구분한다. 실제 기기 설치·실행은 미검증이다.
+
+### 에디터 카탈로그 형식과 실행 타깃 정합성 (2026-11-17)
+
+- ContentServer는 기존 프로세스에서 HTTP localhost:5250 및 HTTPS localhost:5443으로 실행 중이었고 health·Android/Windows 카탈로그에 HTTP 200으로 응답했다. 같은 명령을 다시 실행하면 포트 중복 오류가 발생하므로 서버를 한 번만 실행한다. 이번 수정에서 서버 코드·포트·인증서를 변경하지 않았다.
+- 실제 Unity 오류는 Enable Json Catalog가 켜진 상태에서 바이너리 리더로 JSON을 읽으려는 형식 불일치였다. Android 빌드 프로필의 Player Settings override에는 JSON 심벌이 없었고 활성 컴파일 심벌 목록에도 ENABLE_JSON_CATALOG가 없었다. 전역 ProjectSettings의 심벌만으로 해당 프로필의 실제 컴파일 상태를 판단하지 않는다.
+- Android™ 프로필의 Scripting Defines를 활성화하고 ENABLE_JSON_CATALOG를 추가했다. 재컴파일 후 활성 컴파일 심벌에 반영됨을 확인했다. 기존 다른 프로필 값과 런타임 스크립트는 보존했다. 기존 APK는 이 변경 전 빌드이므로 Android 재빌드 및 별도 실행 검증이 필요하다.
+- 에디터 검증은 Android 커스텀 프로필을 비활성화하고 StandaloneWindows64·CoinGame_Profile로 전환해 Windows Addressables를 다시 빌드했다. HTTP localhost:5250과 Use Existing Build를 사용했다. 부트스트랩 다운로드·남은 필수 용량 0·로비 진입·원격 InGame 로드/언로드·Missing Material 0개와 마지막 구간 Console 오류/경고 0개를 확인했다. Simulator를 활성 뷰로 사용하고 임시 검증용 Game 창은 닫았다.
+- Android 프로필이 덮어쓰는 HTTP 허용 정책과 실제 기기의 접근 가능한 서버 주소는 별도 확인 사항이다. 이번 결과는 에디터 검증이며 Android 에뮬레이터/실기기 실행 성공으로 확대하지 않는다.
+
+### Android 프로필 유지 상태의 에디터 실행 (2026-11-17)
+
+- 추가 재현: Android™ 프로필의 HTTP 정책이 NotAllowed여서 Addressables의 카탈로그 확인·다운로드가 Insecure connection not allowed로 실패했다. 해당 개발 프로필의 Allow downloads over HTTP를 AlwaysAllowed로 저장했다. 공용 Player Settings와 ContentServer 코드는 변경하지 않았다.
+- Editor Play Mode Script는 Use Asset Database로 설정했다. Android 타깃과 Android™ 프로필을 유지한 채 부트스트랩→로비→InGame 로드/언로드를 확인했고 Console 오류/경고는 0개였다. UnityWebRequest의 ContentServer health 요청도 Success/HTTP 200이었다.
+- Asset Database 모드는 필수 에셋을 로컬에서 읽어 다운로드 용량이 0이므로 Android 네이티브 번들 다운로드 검증으로 취급하지 않는다. Windows 에디터에서 원격 다운로드를 검증할 때는 Windows 타깃/콘텐츠와 Use Existing Build를 사용한다. 실제 Android APK는 Packed Player Build와 Android 원격 경로를 사용한다.
+- adb devices에서 연결된 기기/에뮬레이터가 없어 실제 Android 실행·다운로드는 미확인이다. 이번 설정과 JSON 심벌을 반영한 APK 재빌드 결과는 CONTENT_PIPELINE.md에 기록한다. Android 에뮬레이터는 현재 10.0.2.2 주소를 사용하며 실제 기기는 접근 가능한 개발 서버 주소가 필요하다.
+- APK 재빌드: Android™ 프로필로 Succeeded, 오류 0개·경고 4개, 약 145초를 확인했다. Build/Android/CoinGame.apk는 69,080,589 bytes다. Player의 Unity.Addressables 컴파일 심벌에 ENABLE_JSON_CATALOG가 있으며 Android 프로필의 HTTP 정책은 AlwaysAllowed로 유지했다. Editor용 Play Mode Script는 Use Asset Database를 유지한다. 기존 Toon 셰이더/TMP 컴파일 경고와 실제 기기 실행 미검증은 별도로 남긴다.
+
+### 다른 네트워크 실제 Android의 콘텐츠 접속 (2026-11-17)
+
+- 실제 휴대폰은 APK에 기록된 에뮬레이터 전용 주소 10.0.2.2에 접근할 수 없고, 기존 ContentServer도 localhost에만 수신했다. PC 주소와 외부 조회 공인 주소가 모두 222.120.162.193인 것을 확인했다.
+- CoinGame_Android의 Remote.LoadPath를 http://222.120.162.193:5250/[BuildTarget]으로 변경하고 카탈로그·번들·APK를 재생성했다. ContentServer/appsettings.json의 Urls는 http://0.0.0.0:5250으로 저장했다. 외부 서버/클라우드나 API 서버는 추가하지 않았다.
+- 관리자 권한으로 ContentServer.exe의 TCP 5250에만 수신 허용 규칙을 추가했다. 재설정용 Enable-ContentServerFirewall.ps1을 제공하고 netsh로 규칙 활성·프로그램 경로·허용 포트를 확인했다. 방화벽 전체를 끄거나 다른 포트를 열지 않았다.
+- 다른 네트워크의 휴대폰 브라우저에서 /health의 status ok를 사용자가 확인했다. Android 새 카탈로그의 원격 번들 4개 URL을 검사했고 APK 재빌드는 오류/경고 0개로 성공했다. 사용자가 PC와 다른 네트워크의 실제 휴대폰에 최신 APK를 설치해 다운로드 완료·로비 진입을 확인했다. ADB 로그·전체 경기·재접속·성능은 미검증이다. 서버는 실제 다운로드를 위해 실행 상태로 유지한다.
+
+### 2026-11-17 모바일 전용 컨트롤 구현
+
+- 5.2의 왼쪽 이동·오른쪽 행동 배치를 인게임 씬의 기존 MobileControls 아래에 연결했다. 자유형 조이스틱은 왼쪽 아래 터치 영역에서 누른 위치를 원점으로 사용하며, 미사용 시 숨긴다. Show 0.08초/Hide 0.1초의 unscaled alpha·scale 전환을 사용하고, 손을 떼면 이동 입력은 즉시 0으로 초기화한다. 다른 pointer의 드래그·해제는 무시한다. 반경·dead zone·등장/퇴장 시간·투명도·크기 범위는 MobileControlsSettings.asset에서 조절한다.
+- 공격·장전·주먹/총/검·부스트/부활·밀치기·코인 봉쇄 버튼 9종은 공통 PlayerInputState를 통해 기존 Owner 입력과 서버 RPC 판정을 사용한다. 무기/아이템 보유·생사에 따라 사용 가능 표시를 갱신하고, 방해자 전용 버튼과 원형 쿨타임을 표시한다. 부활 가능 시간에는 부활 슬롯을 강조한다. 기존 P 상호작용은 실제 대상/처리 코드가 없고 아이템은 접촉 습득이므로 작동하지 않는 터치 버튼은 만들지 않았다. 별도 에임 드래그는 5.3의 후순위 제안으로 남긴다.
+- 배치 버튼에서 행동 버튼을 드래그하고 크기를 변경하며, 완료 시 버전 1 JSON을 PlayerPrefs에 저장한다. 손상·범위 밖 데이터는 기본 배치로 복구하며 화면비·Safe Area 변경 후 위치를 화면 안으로 제한한다. PC에서는 터치 UI를 숨긴다. 원격 동적 Player에 의해 입력 pulse가 소비되지 않도록 PlayerInputStateProvider는 Owner만 활성화하며 Despawn 시 초기화한다. 포커스 상실·앱 중단·비활성화 시 조이스틱과 입력을 정리한다.
+- Unity 6000.6.7f1 Editor 로컬 Host에서 터치 무기 선택, 공격 버전 0→1·총 탄약 12→11, 조이스틱 이동, 다른 손가락 해제 무시, 해제 후 Move=(0,0)·alpha=0을 확인했다. 관전 상태의 부활 버튼으로 체력 0→50·부활 아이템 소모를 확인했다(검증 시간을 확보하기 위해 이 시험의 부활 deadline만 임시 연장했으며 저장하지 않았다). 배치 편집 후 다음 Play에서 위치(-175,255)·scale 1.1 복원을 확인했고 검증용 PlayerPrefs/미리보기/해상도는 복구했다.
+- Editor 1920×1080·2160×1080에서 버튼 화면 경계, PC 숨김과 입력 registry 해제를 확인했다. 확인 이미지는 Captures/mobile-controls-landscape.png 및 mobile-controls-floating.png다. 실제 Android 멀티터치·노치·중단/복귀·Host+Client 전체 경기 및 Web Player는 미검증이다. Editor의 기존 native ALLOC_TEMP 메모리 경고가 관찰되어 게임 코드 컴파일/입력 검증과 구분한다.
+- 350자 예외: 직렬화 필드·Unity pointer/수명주기 콜백과 가독성을 보존하기 위해 관련 스크립트는 350자를 넘는다. 입력 큐, 조이스틱, 버튼, 표시 상태, 레이아웃 저장, 설정 데이터, Editor 배치 도구로 실제 책임을 분리했다. 기존 NetworkPlayerController는 무기 선택·Owner 입력 수명주기에 필요한 부분만 수정했다.
+- 최종 검증: 기존 EditMode 7/7 통과. Android 원격 콘텐츠를 ContentServer/Content/Android에 재생성했고, 모바일 입력 스크립트를 포함한 CoinGame.apk 재빌드는 Succeeded(오류 0·경고 4, 약 149초, 69,111,633 bytes)다. 경고는 Diagnostics Debug Symbols 안내 1개와 TMP IL2CPP 분할 컴파일 안내 3개이며 NUnit Linker 오류는 없다. 기존 콘텐츠 C# 3개는 잘못 덮어쓴 뒤 최초 작성 및 후속 수정 기록을 순서대로 재적용해 복원했고 이 상태에서 컴파일·콘텐츠·APK 빌드가 통과했다.
+
+- 최종 씬 YAML의 기존 객체 순서를 보존해 관련 UI 외 대량 재정렬을 줄였고, object ID 중복 0·버튼 스크립트 참조 9·preview=false 및 공백 검사를 확인했다. 빌드 후 마지막 Unity 재임포트/재열기 요청은 MCP ping 응답이 없어 완료 확인을 못 했다. Windows Computer Use도 native pipe 미연결(os error 2)로 최종 화면을 다시 확인하지 못했으며, 앞서 확보한 Play 입력·스크린샷·APK BuildReport 결과와 구분한다.
+
+### 2026-11-18 Console native 덤프·그림자 보정·소개 문서 갱신
+
+- 사용자 확인: 실제 Relay 방 생성·참가와 서버 통신, 플레이어 이동 동기화가 정상 동작한다. README 상단에 프로토타입임을 표시하고 제작자 행과 사용자가 지정한 한계 3개 항목을 삭제했다. 모바일 이미지는 실제 적용된 UI의 검증 화면으로 설명했으며, 생성 당시 Editor 로컬 Host 캡처라는 출처는 이 기록에 보존한다. 제작 기간·영상·성능 수치는 새로 추정하지 않았다.
+- 이미지의 16진수 Console 줄은 native 메모리 버퍼 덤프다. 기존 Logs/Editor.log의 종료 스택은 UnityTransport.Shutdown에서 닫힌 connection 4294967296로 SendBatchedMessages를 시도한 오류였고, 이후 같은 버퍼와 ALLOC_TEMP_MAIN 42574 메시지가 반복됐다. 게임 중 정상 Relay 통신과 구분한다. 에디터를 같은 6000.6.7f1로 재시작해 잔존 버퍼를 정리했으며, 패키지/Unity 버전은 변경하지 않았다. SessionPlayModeShutdown은 ExitingPlayMode에서 미전송 게임 메시지를 버리는 Shutdown(true)를 요청해 자동 종료 시 불필요한 전송을 줄인다. Play 종료를 취소하거나 MPP 전환을 되돌리지 않는다.
+- 인게임의 Directional Light가 URP 전역 bias(PC Normal 0.5/Mobile Normal 1)를 사용하고 있었다. 같은 구도에서 조명 override 후 Normal Bias를 낮추는 A/B 비교로 구멍이 줄고 Normal 0에서 사라짐을 확인했다. 해당 조명만 Use Pipeline Settings=false, Depth Bias=0.05, Normal Bias=0으로 저장했다. 실제 씬 변경은 Light와 UniversalAdditionalLightData 두 컴포넌트뿐이다. 전역 URP 설정·맵 메시·잔디 위장 셰이더는 변경하지 않았다. Captures/shadows-before.png와 shadows-fixed-pc.png에 비교 화면을 보존했다. 실제 Android 기기 화면 검증은 이번 작업에 포함하지 않았다.
+- Relay Host 재검증 중 기존 BaseSpawner 초기화 작업을 Forget와 SpawnAsync가 동시에 기다릴 때 Already continuation registered 오류를 확인했다. Preserve는 완료 전 동시 대기를 공유하지 못하므로 설치된 UniTask의 ToAsyncLazy().Task로 바꿔 공유 완료 소스를 사용한다. 기존 초기화·풀링·취소 흐름과 스폰 규칙은 유지했다. 350자 예외: 직렬화/수명주기를 가진 기존 통합 스크립트에서 해당 초기화 한 줄만 변경했다.
+- 종료 시험: 같은 Editor 안의 임시 서버와 클라이언트로 연결한 뒤 클라이언트 메시지 256개를 넣고 즉시 Play를 종료한 시험에서 기존 Send 오류/native 덤프는 재발하지 않았다. 이 인공 시험의 두 NetworkManager 때문에 Singleton 종료 경고 2개는 별도로 기록한다. 정상 단일 Host 실행·종료 구간은 Console Error/Warning 0개였다. 실제 개발용 Relay Host 연결도 확인했으나, 해당 종료 구간에는 SDK Wire 수신 프레임/Relay inactivity 경고가 관찰돼 원격 전체 종료 검증 완료로 간주하지 않는다.
+- 최종 코드에서는 수동 NetworkUpdate를 제거하고 NGO 본래 종료 콜백이 정리하도록 유지했다. 이 상태에서 연결 완료한 클라이언트의 대기 메시지 256개와 즉시 Play 종료를 다시 시험해 Console Error/Warning 0개를 확인했다. 실제 Relay Host 재실행은 Round 1까지 Console Error/Warning 0개였고 BaseSpawner 중복 continuation 오류가 재발하지 않았다. Relay 종료 시에는 별도 SDK Wire 수신 프레임 경고 1건이 남았으며 native Send 오류/ALLOC_TEMP 덤프는 재발하지 않았다.
+- 최종 검증: EditMode 7/7 통과, 수정 범위 diff 공백 검사 통과. Android 원격 씬 번들을 재생성했고 2026-11-18 00:40 KST APK 빌드는 Succeeded(오류 0·경고 4, 약 56초)다. Build/Android/CoinGame.apk는 69112945 bytes이며 기존 Diagnostics/TMP 컴파일 안내 4개와 실제 오류를 구분한다. 이번 런타임 BaseSpawner 수정은 새 APK에 포함했다. 실제 Android 기기의 그림자 화면은 이번 검증에 포함하지 않았다.
+
+### 2026-11-18 InputField 드래그·상자 열림·대기 씬 모바일 이동
+
+- Persistent 씬의 RoomName/RoomId/MaxPlayers/MaxCollectors/MaxDisruptors/JoinRoomId/MaxRounds/CoinMultiplier 입력창 8개에 TMP_InputField.textViewport가 비어 있었다. 기존 NameInput과 같은 구조로 각 입력창 자신의 RectTransform을 Inspector Viewport에 연결했다. 텍스트/플레이스홀더·값·이벤트·UI 위치는 보존했고, 런타임 탐색/보정 코드는 추가하지 않았다. 수정한 8개 필드 각각에 실제 OnPointerDown/OnBeginDrag/OnDrag(뷰포트 바깥)/OnEndDrag를 전달하고 4프레임씩 기다린 Play 검증에서 완료 8/8·Console Error/Warning 0개를 확인했다. NameInput 포함 씬의 9개 입력창 모두 Viewport 참조가 존재한다.
+- Crate_Default.asset의 LidRotationAxis만 (1,0,0)에서 (-1,0,0)으로 바꿨다. 프리팹 뒤쪽 경첩과 원본 chest_opening 애니메이션의 음수 X 회전에 맞췄으며, 105도·0.35초와 피벗/네트워크/드롭 규칙은 유지한다. 로컬 Host에서 서버 Opened 상태를 설정해 정상 OnStateChanged/ApplyState/Update 보간을 실행했고, 뚜껑 앞방향의 Y=0.97 상승과 화면을 확인했다. 대기 씬의 피해 차단은 그대로 유지하기 위해 이 시각 시험에서는 피해 입력 대신 서버 상태를 설정했다. Captures/crate-closed.png와 crate-opened-fixed.png에 전후 화면을 저장했다.
+- RoomWaiting_CoinGameScene의 기존 Safe Area 아래 MobileMovementControls를 배치하고 인게임의 FloatingJoystick·MobileControlInput·MobileControlsSettings를 재사용했다. 행동 버튼/인벤토리/스킬 UI는 추가하지 않았으며, 왼쪽 아래 누른 위치에 나타나는 동일한 자유형 조이스틱만 제공한다. 모바일 연결/이동 허용 상태가 아니면 조이스틱 입력을 초기화하고, PC에서는 기본적으로 숨긴다. 기존 키보드·NetworkPlayerController·PlayerInputStateProvider 코드는 변경하지 않았다.
+- Editor 로컬 Host의 대기 씬에서 이동 입력 (0.99,0.13)과 실제 15.64m 위치 변화를 확인했고, 공격/장전/무기/아이템/스킬 입력은 모두 false였다. 해제 후 Move=(0,0), 조이스틱 alpha=0을 확인했다. PC 시작 시 터치 UI 비활성·MobileControlInput.Active=null, 씬 Missing Script 0개·행동 버튼 0개를 확인했다. 모바일 미리보기는 QA에서만 임시 활성화했으며 저장된 Preview In Editor=false는 보존했다. Captures/waiting-movement-joystick.png는 검증용 소품을 제거한 대기 UI 화면이다.
+- Unity 6000.6.7f1 컴파일 및 위 Play 구간의 Console Error/Warning 0개, 기존 EditMode 7/7 통과를 확인했다. 검증용 카메라/상자/네트워크 객체와 임시 미리보기는 Play 종료로 정리했다. 실제 Android 기기의 터치와 원격 Host+Client 동시 표시 검증은 이번 시험에 포함하지 않았다.
+- 350자 예외: MobileMovementControls는 플랫폼별 표시와 연결/이동 가능 상태에 따른 조이스틱 초기화만 담당한다. 필수 직렬화 참조와 Unity Awake/Update 콜백의 명시성을 유지하기 위해 350자를 넘으며, 입력 처리/애니메이션/설정은 기존 컴포넌트를 공유한다.
+- 배포 검증: Android 콘텐츠 재빌드 완료, 2026-11-18 01:05 KST APK 재빌드 Succeeded(오류 0·경고 5, 약 144초). Build/Android/CoinGame.apk는 69114493 bytes다. Persistent/RoomWaiting 씬과 새 MobileMovementControls가 Player에 포함되므로 실제 휴대폰에는 새 APK 설치가 필요하다.
+
+### 2026-11-18 Web Addressables 초기화 파일 404 수정
+
+- Web Player가 localhost:58135/StreamingAssets/aa/settings.json을 요청했지만 404였고 Addressables RuntimeData가 null로 초기화에 실패했다. 실제 Build/Web/StreamingAssets에는 UnityServices 설정만 존재했으며 Library/com.unity.addressables/aa에도 WebGL 콘텐츠가 없었다. 전역 DoNotBuildWithPlayer 설정으로 타깃 전용 콘텐츠 생성이 생략된 것이 직접 원인이다. Android 데이터 복사로 대체하지 않았다.
+- Editor 전용 WebAddressablesBuild를 추가했다. WebGL Player 빌드에서만 Addressables 콘텐츠를 먼저 생성하며, 콘텐츠 오류 또는 settings.json 미생성 시 Player 빌드를 중단한다. 이후 패키지의 AddressablesPlayerBuildProcessor가 이 데이터를 StreamingAssets/aa로 포함한다. 기존 BuildWithPlayer가 명시돼 있으면 패키지 자동 빌드에 맡긴다. Android 빌드 방식·CoinGame_Android의 URL·프로필은 변경하지 않았고 전역 DoNotBuildWithPlayer도 유지했다.
+- Web Desktop/Mobile × Development/Release 4개 프로필의 JSON 카탈로그 심벌도 보완했다. 각 프로필의 기존 심벌을 유지하며 ENABLE_JSON_CATALOG와 해당 override를 활성화했다. 활성 Web Desktop Development의 실제 Unity.Addressables Player 컴파일 심벌에서 JSON 지원을 확인했다.
+- Unity 6000.6.7f1, 기존 Web - Desktop - Development 프로필로 Build/Web 재빌드에 성공했다(오류 0·경고 12, 약 112초). 경고는 Editor URP 배열/디버그 셰이더 stripping·Toon 키워드·TMP 컴파일 안내이며 이번 누락 파일 오류와 구분한다. 생성된 settings.json은 BuildTarget=WebGL, 5,091 bytes다. 로컬 카탈로그와 로컬 번들 4개, ContentServer/Content/WebGL의 원격 번들 4개를 확인했다.
+- 빌드 도중 기존 Unity 임시 Web 서버가 종료되어, 기존 ContentServer 실행 파일을 재사용해 Build/Web만 제공하는 localhost:58135 루프백 서버를 실행했다. 기존 원격 콘텐츠 서버 localhost:5250은 유지했다. settings.json 및 카탈로그 내 로컬/원격 번들 8개 모두 HTTP 200을 확인했고 Web.wasm은 application/wasm으로 제공됨을 확인했다. 원격 카탈로그 hash 응답의 CORS Allow-Origin=*도 확인했다. 기존 열린 페이지는 새 Wasm/JSON 코드를 사용하도록 새로고침해야 한다.
+- 기존 EditMode 7/7이 통과했다. 브라우저 화면 검증은 Computer Use가 Windows 브라우저의 현재 URL을 충분히 확인하지 못해 정책상 자동 중단됐다. 이후 브라우저 입력/화면 자동화는 진행하지 않았으며 HTTP 검증을 실제 다운로드 UI·로비 진입·Web Relay 경기 검증으로 간주하지 않는다.
+- 350자 예외: 새 스크립트는 Web Player의 콘텐츠 준비와 실패 차단만 담당하며, Editor 빌드 콜백·명시적 오류 처리·기존 패키지에 위임하는 흐름의 가독성을 위해 350자를 넘는다. 런타임 초기화 로직은 변경하지 않았다.
+### 2026-11-18 Web 로비 콘텐츠 준비 판정·한글 상태 표시
+
+- CoinGame_Profile의 Remote.LoadPath 포트 5250은 ContentServer의 카탈로그/번들 제공 포트다. Web Player 페이지의 localhost:58135와 달라도 CORS가 허용되면 사용할 수 있다. localhost는 같은 PC에서 테스트할 때의 개발 주소이며 다른 기기/외부 배포에서는 클라이언트가 실제 접근할 수 있는 콘텐츠 호스트가 필요하다. 방 생성·접속은 Unity Services Session/Relay를 이용하므로 콘텐츠 포트를 방 통신 포트로 사용하지 않는다.
+- Web 생성 코드와 실제 Unity.ResourceManager Player 심벌에서 ENABLE_CACHING이 없는 것을 확인했다. AssetBundleRequestOptions.ComputeSize는 이 조건에서 원격 번들 크기를 그대로 반환하므로 DownloadDependencies 성공 후에도 GetDownloadSizeAsync(required)가 0보다 클 수 있다. 기존 RoomLobbyContentService는 이를 다운로드 미완료로 간주해 방 생성·참가를 모두 차단했다. 차단 문구의 '주세요'가 LiberationSans SDF의 한글 누락 경고로 가려졌다.
+- RequiredContentState는 Bootstrap이 유효한 필수 라벨의 용량 0 또는 다운로드 성공을 확인하고 로비에 진입할 때만 준비 완료 라벨을 기록한다. RoomLobbyContentService는 이 완료 결과를 먼저 확인하고, 없으면 기존 용량 검사로 판단한다. 새 콘텐츠 확인/실패 및 SubsystemRegistration에서 초기화하며, 정상 씬 전환의 OnDestroy에서는 지우지 않는다. PlayerPrefs에 영구 플래그를 저장하거나 WebGL을 무조건 통과시키지 않는다. 취소 토큰은 완료 표시가 있어도 먼저 확인한다.
+- Persistent와 RoomWaiting의 Status를 NotoSansKR_Dynamic으로 연결하고 기존 RuntimeFontAtlas를 재사용해 런타임 한글 glyph를 생성한다. 각 씬의 Status 텍스트/컴포넌트 참조와 폰트 아틀라스 컴포넌트만 변경했으며 다른 UI 위치·입력창 값·키보드 동작은 유지했다. 원본 font asset을 Play 중 수정하지 않도록 런타임 복사본을 사용한다.
+- Play 검증에서 원격 리소스 크기가 7,620,004 bytes인 조건으로 방 입장 판정을 시험했다. 준비 전 false, 다른 라벨 false, required 준비 완료 후 true, Reset 후 false, 취소 토큰은 OperationCanceledException으로 처리됐다. 검증용 locator는 종료 전에 제거했다. '게임을 다시 시작해 필수 리소스를 다운로드해 주세요.' 전체 문구를 NotoSansKR_Dynamic Runtime으로 생성해 missing glyph 없음·HasCharacters=true를 확인했다. 기존 EditMode 7/7을 통과했다. 에디터의 WebGL 번들 호환/URP 배열 경고는 별도로 관찰됐다.
+- 설치 SDK의 RelayProtocol.Default는 WebGL에서 이미 WSS이며, JoinById도 Host의 DTLS를 강제 상속하지 않고 로컬 기본 WSS로 연결한다. 프로토콜/포트/Android 프로필은 임의 변경하지 않았다. 실제 브라우저 방 생성·참가와 Android↔Web 연결은 이번 소스/Play 판정 시험과 구분하며, 새 빌드에서 추가 확인이 필요하다.
+- 350자 예외: 완료 상태는 콘텐츠 라벨 한 개로 보존하고, 앱 시작 초기화와 Bootstrap/로비 간 완료 전달만 담당하는 별도 스크립트로 분리했다. Unity 초기화 attribute·명시적 메서드·가독성을 위해 350자를 넘는다. 기존 ContentBootstrap과 RoomLobbyContentService는 해당 상태 전달에 필요한 부분만 수정했다.
+- 배포 검증: Web Desktop Development 재빌드 Succeeded(오류 0·경고 12, 약 44초). localhost:58135의 새 settings.json은 WebGL/HTTP 200이며, 새 카탈로그의 로컬·원격 번들 8개 모두 HTTP 200을 확인했다. 새 상태 판정/폰트가 Wasm·Player 씬에 포함되므로 기존 페이지는 Ctrl+F5로 다시 로드해야 한다.

@@ -13,6 +13,7 @@ namespace ContentServer
         public static void Main(string[] args)
         {
             WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
+            builder.Services.AddCors(options => options.AddDefaultPolicy(policy => policy.AllowAnyOrigin().AllowAnyHeader().WithMethods("GET", "HEAD")));
 
             // 제공할 파일 폴더 하나를 정합니다. Unity 프로젝트 전체를 지정하지 않습니다.
             // --FilesRoot 인수가 없으면 ??의 오른쪽인 Content 폴더를 사용합니다.
@@ -33,6 +34,7 @@ namespace ContentServer
             // application은 프로그램이 처리할 데이터, octet-stream은 8비트 단위로 이어진 일반 바이너리 데이터를 뜻합니다.
             types.Mappings[".bundle"] = "application/octet-stream";
             types.Mappings[".hash"] = "text/plain";
+            types.Mappings[".bin"] = "application/octet-stream";
             types.Mappings[".json"] = "application/json";
             types.Mappings[".html"] = "text/html";
             types.Mappings[".js"] = "application/javascript";
@@ -44,6 +46,7 @@ namespace ContentServer
             types.Mappings[".svg"] = "image/svg+xml";
 
             WebApplication app = builder.Build();
+            app.UseCors();
             // Web 빌드의 index.html도 같은 서버로 열 수 있게 합니다.
             app.UseDefaultFiles(new DefaultFilesOptions { FileProvider = files });
             // 기본 문서 경로를 먼저 고른 뒤, 실제 파일과 확장자에 맞는 응답 형식을 제공합니다.
@@ -60,7 +63,11 @@ namespace ContentServer
 
             Console.WriteLine("파일 제공 폴더: " + root);
             // 네트워크 과정에서 준비한 localhost 개발 인증서를 사용합니다.
-            app.Run("https://localhost:5443");
+            if (string.IsNullOrEmpty(builder.Configuration["urls"]))
+            {
+                app.Urls.Add("http://localhost:5250");
+            }
+            app.Run();
         }
     }
 }

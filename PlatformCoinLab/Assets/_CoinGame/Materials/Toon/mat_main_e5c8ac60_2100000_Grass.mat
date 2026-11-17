@@ -30,7 +30,7 @@ Material:
     m_Ints: []
     m_Floats:
     - _GIStrength: 1
-    - _GrassOpacity: 0.889
+    - _GrassOpacity: 1
     - _OutlineWidth: 0.012
     - _RimExtension: 0
     - _SpecularBoost: 0.1

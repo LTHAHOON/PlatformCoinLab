@@ -51,29 +51,6 @@ namespace CoinGame.Network
             RoomLobbyController.IsDevelopmentQuickStartActive = ShouldRun;
         }
 
-#if UNITY_EDITOR
-        private void OnEnable()
-        {
-            EditorApplication.playModeStateChanged += OnPlayModeStateChanged;
-        }
-
-        private void OnDisable()
-        {
-            EditorApplication.playModeStateChanged -= OnPlayModeStateChanged;
-        }
-
-        private void OnPlayModeStateChanged(PlayModeStateChange state)
-        {
-            if (_isDirectLaunch && state == PlayModeStateChange.ExitingPlayMode)
-            {
-                if (RoomLobbyController.Instance != null)
-                {
-                    RoomLobbyController.Instance.ShutdownDevelopmentSession();
-                }
-            }
-        }
-#endif
-
         public void Begin()
         {
             if (!ShouldRun || _hasBegun)

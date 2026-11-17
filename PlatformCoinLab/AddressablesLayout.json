@@ -1,0 +1,43 @@
+{
+  "Groups": [
+    {
+      "Name": "Remote_Scenes",
+      "PreviousName": "Remote_Required",
+      "Remote": true,
+      "PackSeparately": true,
+      "Assets": ["Assets/_CoinGame/Scenes/InGame_CoinGameScene.unity"]
+    },
+    {
+      "Name": "Remote_Environment",
+      "Remote": true,
+      "Assets": [
+        "Assets/_CoinGame/Materials/Toon/block_28147981_-1340270957083844871_Toon.mat",
+        "Assets/_CoinGame/Materials/Toon/block_fc4de434_-1340270957083844871_Toon.mat",
+        "Assets/_CoinGame/Materials/Toon/mat_main_e5c8ac60_2100000_Grass.mat",
+        "Assets/_CoinGame/Materials/Toon/mat_main_e5c8ac60_2100000_Toon.mat",
+        "Assets/Palmov Island/Low Poly Atmospheric Locations Pack/Textures/texture main.png",
+        "Assets/KayKit_BlockBits_1.0_FREE/Assets/fbx/block_bits_texture.png",
+        "Assets/_CoinGame/Shaders/ToonGrass.shader"
+      ]
+    },
+    {
+      "Name": "Remote_UIAtlas",
+      "Remote": true,
+      "Assets": ["Assets/2D Casual UI/Sprite/GUI.png"]
+    },
+    {
+      "Name": "Remote_Fonts",
+      "Remote": true,
+      "Assets": ["Assets/_CoinGame/Fonts/NotoSansKR_Dynamic.asset"]
+    },
+    {
+      "Name": "Local_Shared",
+      "Remote": false,
+      "Assets": [
+        "Assets/_CoinGame/CoinGame_Actions.inputactions",
+        "Assets/Toon Shaders Pro/Shaders/Toon/Toon.shader",
+        "Assets/TextMesh Pro/Shaders/TMP_SDF-Mobile.shader"
+      ]
+    }
+  ]
+}

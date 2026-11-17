@@ -1,0 +1,65 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bbb281ee3bf0b054c82ac2347e9e782c, type: 3}
+  m_Name: Remote_Environment
+  m_EditorClassIdentifier: Unity.Addressables.Editor::UnityEditor.AddressableAssets.Settings.AddressableAssetGroup
+  m_GroupName: Remote_Environment
+  m_GUID: a2d93c02593afa3419628c47c36b6cd9
+  m_SerializeEntries:
+  - m_GUID: 447021d2661bfb04da23353e3ddd9cb9
+    m_Address: Assets/Palmov Island/Low Poly Atmospheric Locations Pack/Textures/texture main.png
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - required
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 853ec48c2d8fb7649a07ff99b75561c6
+    m_Address: Assets/_CoinGame/Materials/Toon/block_fc4de434_-1340270957083844871_Toon.mat
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - required
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 9478133f74ede7447becfca72ee45940
+    m_Address: Assets/_CoinGame/Materials/Toon/mat_main_e5c8ac60_2100000_Toon.mat
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - required
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: a9d34397fe033c040b82bf80ff9b9169
+    m_Address: Assets/_CoinGame/Materials/Toon/block_28147981_-1340270957083844871_Toon.mat
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - required
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: b958175fd48d5944caa941e6055f2caa
+    m_Address: Assets/_CoinGame/Shaders/ToonGrass.shader
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - required
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: bf5e5c2f47f10b345b7d13e228561347
+    m_Address: Assets/_CoinGame/Materials/Toon/mat_main_e5c8ac60_2100000_Grass.mat
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - required
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: ea7e267a392efab4ba3de8cdd8eb6f53
+    m_Address: Assets/KayKit_BlockBits_1.0_FREE/Assets/fbx/block_bits_texture.png
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - required
+    FlaggedDuringContentUpdateRestriction: 0
+  m_ReadOnly: 0
+  m_Settings: {fileID: 11400000, guid: 07a49db2446faef4aab6e4be37f87228, type: 2}
+  m_SchemaSet:
+    m_Schemas:
+    - {fileID: 11400000, guid: 102f33696ea9bc74fb942a24dd256cd0, type: 2}
+    - {fileID: 11400000, guid: 5a75d24fc080c3d4397127e2ef963edc, type: 2}

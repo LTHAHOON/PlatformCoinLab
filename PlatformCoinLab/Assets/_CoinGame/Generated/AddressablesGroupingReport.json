@@ -1,0 +1,132 @@
+{
+  "windows": {
+    "baselineRemoteBytes": 8847719,
+    "baselineDuplicateAssets": 2,
+    "current": {
+      "target": 19,
+      "error": "",
+      "remoteBytes": 8481126,
+      "duplicateAssets": 0,
+      "bundles": [
+        {
+          "group": "Default Local Group",
+          "bytes": 157294,
+          "name": "9a6bd3d7eaa976e15bdb419c2bb95f73_unitybuiltinassets_ee21e9ae217444f6031b29c744a0bb33.bundle",
+          "dependencies": []
+        },
+        {
+          "group": "Default Local Group",
+          "bytes": 5575,
+          "name": "9a6bd3d7eaa976e15bdb419c2bb95f73_monoscripts_7122ef7a13c8eefcc0bea32c7c31a858.bundle",
+          "dependencies": []
+        },
+        {
+          "group": "Remote_Scenes",
+          "bytes": 1550364,
+          "name": "remote_scenes_scenes_assets__coingame_scenes_ingame_coingamescene.unity_09ae2e0d2ff25182475dfc4c8842840a.bundle",
+          "dependencies": [
+            "remote_environment_assets_all_8f47e79a4885977eac51d1526340704b.bundle",
+            "remote_fonts_assets_all_b1fe23b43955de8f64eccff0accb9a57.bundle",
+            "remote_uiatlas_assets_all_9f41c1dffd5dc9089eccd5568cc604a5.bundle",
+            "local_core_assets_all_a73b986dc96c720f8ac9a5367d7ba7d4.bundle",
+            "local_shared_assets_all_1b3328bf16f8973f0a42340ba54958f9.bundle",
+            "9a6bd3d7eaa976e15bdb419c2bb95f73_unitybuiltinassets_ee21e9ae217444f6031b29c744a0bb33.bundle",
+            "9a6bd3d7eaa976e15bdb419c2bb95f73_monoscripts_7122ef7a13c8eefcc0bea32c7c31a858.bundle"
+          ]
+        },
+        {
+          "group": "Remote_Fonts",
+          "bytes": 6079759,
+          "name": "remote_fonts_assets_all_b1fe23b43955de8f64eccff0accb9a57.bundle",
+          "dependencies": [
+            "local_shared_assets_all_1b3328bf16f8973f0a42340ba54958f9.bundle",
+            "9a6bd3d7eaa976e15bdb419c2bb95f73_monoscripts_7122ef7a13c8eefcc0bea32c7c31a858.bundle"
+          ]
+        },
+        {
+          "group": "Remote_UIAtlas",
+          "bytes": 778319,
+          "name": "remote_uiatlas_assets_all_9f41c1dffd5dc9089eccd5568cc604a5.bundle",
+          "dependencies": []
+        },
+        {
+          "group": "Local_Core",
+          "bytes": 5913089,
+          "name": "local_core_assets_all_a73b986dc96c720f8ac9a5367d7ba7d4.bundle",
+          "dependencies": [
+            "9a6bd3d7eaa976e15bdb419c2bb95f73_monoscripts_7122ef7a13c8eefcc0bea32c7c31a858.bundle",
+            "local_shared_assets_all_1b3328bf16f8973f0a42340ba54958f9.bundle"
+          ]
+        },
+        {
+          "group": "Remote_Environment",
+          "bytes": 72684,
+          "name": "remote_environment_assets_all_8f47e79a4885977eac51d1526340704b.bundle",
+          "dependencies": [
+            "local_shared_assets_all_1b3328bf16f8973f0a42340ba54958f9.bundle"
+          ]
+        },
+        {
+          "group": "Local_Shared",
+          "bytes": 426607,
+          "name": "local_shared_assets_all_1b3328bf16f8973f0a42340ba54958f9.bundle",
+          "dependencies": [
+            "9a6bd3d7eaa976e15bdb419c2bb95f73_monoscripts_7122ef7a13c8eefcc0bea32c7c31a858.bundle"
+          ]
+        }
+      ]
+    }
+  },
+  "android": {
+    "baselineRemoteBytes": 10159134,
+    "baselineDuplicateAssets": 2,
+    "current": {
+      "target": 13,
+      "error": "",
+      "remoteBytes": 8525637,
+      "duplicateAssets": 0,
+      "bundles": [
+        {
+          "group": "Default Local Group",
+          "bytes": 165794,
+          "name": "9a6bd3d7eaa976e15bdb419c2bb95f73_unitybuiltinassets_58c673f372fb8337489d1ce846ee28b3.bundle"
+        },
+        {
+          "group": "Default Local Group",
+          "bytes": 5575,
+          "name": "9a6bd3d7eaa976e15bdb419c2bb95f73_monoscripts_7122ef7a13c8eefcc0bea32c7c31a858.bundle"
+        },
+        {
+          "group": "Remote_Scenes",
+          "bytes": 1550365,
+          "name": "remote_scenes_scenes_assets__coingame_scenes_ingame_coingamescene.unity_09ae2e0d2ff25182475dfc4c8842840a.bundle"
+        },
+        {
+          "group": "Remote_Fonts",
+          "bytes": 6079759,
+          "name": "remote_fonts_assets_all_b1fe23b43955de8f64eccff0accb9a57.bundle"
+        },
+        {
+          "group": "Remote_UIAtlas",
+          "bytes": 778319,
+          "name": "remote_uiatlas_assets_all_9f41c1dffd5dc9089eccd5568cc604a5.bundle"
+        },
+        {
+          "group": "Local_Core",
+          "bytes": 6093131,
+          "name": "local_core_assets_all_1a8988d2f04843c81e15df0b943c2812.bundle"
+        },
+        {
+          "group": "Remote_Environment",
+          "bytes": 117194,
+          "name": "remote_environment_assets_all_7012b5397077229b2cc1d55df04b1bac.bundle"
+        },
+        {
+          "group": "Local_Shared",
+          "bytes": 1709393,
+          "name": "local_shared_assets_all_bfd140a4bfca5428dd375289803eb5c0.bundle"
+        }
+      ]
+    }
+  }
+}

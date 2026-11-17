@@ -39,6 +39,7 @@ namespace CoinGame.Managers
         [SerializeField]
         private NetworkRoundState _networkRoundState;
 
+        private readonly AddressableSceneLoader _inGameSceneLoader = new AddressableSceneLoader();
         private StageConfig _stageConfig;
         private StageSession _stageSession;
         private int _curRound = 1;
@@ -281,19 +282,32 @@ namespace CoinGame.Managers
                 SetPersistentMainCameraActive(false);
             }
 
-            AsyncOperation loadOperation = SceneManager.LoadSceneAsync(sceneRefToLoad.ScenePath, LoadSceneMode.Additive);
-            if (loadOperation == null)
+            try
             {
                 if (gameScene == GameScene.InGame)
                 {
+                    await _inGameSceneLoader.LoadAsync(sceneRefToLoad.ScenePath, destroyCancellationToken);
+                }
+                else
+                {
+                    AsyncOperation loadOperation = SceneManager.LoadSceneAsync(sceneRefToLoad.ScenePath, LoadSceneMode.Additive);
+                    if (loadOperation == null)
+                    {
+                        throw new InvalidOperationException($"Cannot load scene at path '{sceneRefToLoad.ScenePath}'. Check Build Settings.");
+                    }
+                    await loadOperation;
+                }
+            }
+            catch
+            {
+                if (this != null && gameScene == GameScene.InGame)
+                {
                     SetPersistentMainCameraActive(true);
                 }
-
-                Debug.LogError($"Cannot load scene at path '{sceneRefToLoad.ScenePath}'. Check that the scene exists and is included in Build Settings.", this);
-                return;
+                throw;
             }
 
-            await loadOperation;
+            destroyCancellationToken.ThrowIfCancellationRequested();
             if (gameScene == GameScene.InGame)
             {
                 ConfigureInGameSceneServices();
@@ -377,14 +391,21 @@ namespace CoinGame.Managers
                 return;
             }
 
-            AsyncOperation unloadOperation = SceneManager.UnloadSceneAsync(sceneRefToUnload.ScenePath);
-            if (unloadOperation == null)
+            if (gameScene == GameScene.InGame)
             {
-                Debug.LogError($"Cannot unload scene at path '{sceneRefToUnload.ScenePath}'.", this);
-                return;
+                await _inGameSceneLoader.UnloadAsync(sceneRefToUnload.ScenePath, destroyCancellationToken);
+            }
+            else
+            {
+                AsyncOperation unloadOperation = SceneManager.UnloadSceneAsync(sceneRefToUnload.ScenePath);
+                if (unloadOperation == null)
+                {
+                    throw new InvalidOperationException($"Cannot unload scene at path '{sceneRefToUnload.ScenePath}'.");
+                }
+                await unloadOperation;
             }
 
-            await unloadOperation;
+            destroyCancellationToken.ThrowIfCancellationRequested();
             if (gameScene == GameScene.InGame)
             {
                 RestoreOutGameSceneServices();

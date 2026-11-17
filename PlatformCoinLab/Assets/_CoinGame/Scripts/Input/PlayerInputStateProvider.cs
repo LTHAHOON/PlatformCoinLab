@@ -25,11 +25,15 @@ namespace CoinGame.Input
 
         private void Awake()
         {
+            enabled = false;
             if (_playerInput == null)
             {
                 _playerInput = GetComponent<PlayerInput>();
             }
+        }
 
+        private void OnEnable()
+        {
             _map = _playerInput.actions.FindActionMap("Gameplay");
             if (_map == null)
             {
@@ -50,13 +54,13 @@ namespace CoinGame.Input
             _skill = _map.FindAction("Skill");
         }
 
+        private void OnDisable()
+        {
+            _state = default;
+        }
+
         private void Update()
         {
-            if (_map == null)
-            {
-                return;
-            }
-
             if (_move != null)
             {
                 _state.Move = _move.ReadValue<Vector2>();
@@ -74,11 +78,35 @@ namespace CoinGame.Input
             _state.Revive = Pressed(_revive);
             _state.Push = Pressed(_push);
             _state.Skill = Pressed(_skill);
+            _state.SelectFist = false;
+            _state.SelectGun = false;
+            _state.SelectSword = false;
+
+            if (MobileControlInput.Active != null)
+            {
+                MergeMobileState(MobileControlInput.Active.Consume());
+            }
         }
 
-        public void SetMobileState(PlayerInputState state)
+        private void MergeMobileState(PlayerInputState state)
         {
-            _state = state;
+            if (state.Move != Vector2.zero)
+            {
+                _state.Move = state.Move;
+            }
+
+            _state.Attack = _state.Attack || state.Attack;
+            _state.Interact = _state.Interact || state.Interact;
+            _state.WeaponPrevious = _state.WeaponPrevious || state.WeaponPrevious;
+            _state.WeaponNext = _state.WeaponNext || state.WeaponNext;
+            _state.Reload = _state.Reload || state.Reload;
+            _state.Boost = _state.Boost || state.Boost;
+            _state.Revive = _state.Revive || state.Revive;
+            _state.Push = _state.Push || state.Push;
+            _state.Skill = _state.Skill || state.Skill;
+            _state.SelectFist = state.SelectFist;
+            _state.SelectGun = state.SelectGun;
+            _state.SelectSword = state.SelectSword;
         }
 
         private static bool Pressed(InputAction action)

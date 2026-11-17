@@ -1,54 +1,41 @@
-using System;
-using System.Collections.Generic;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using UnityEngine.AddressableAssets;
-using UnityEngine.AddressableAssets.ResourceLocators;
 using UnityEngine.ResourceManagement.AsyncOperations;
-using UnityEngine.ResourceManagement.ResourceLocations;
 
 namespace CoinGame.Network
 {
-    public class RoomLobbyContentService
-    {
-        private readonly ContentServerHealthProbe _healthProbe;
+    using CoinGame.Content;
 
-        public RoomLobbyContentService(string healthUrl)
-        {
-            _healthProbe = new ContentServerHealthProbe(healthUrl);
-        }
+    public sealed class RoomLobbyContentService
+    {
+        private const string RequiredLabel = "required";
 
         public async UniTask<bool> IsAvailableAsync(CancellationToken token)
         {
-            if (!await UsesRemoteContentAsync(token))
+            token.ThrowIfCancellationRequested();
+            if (RequiredContentState.IsReadyFor(RequiredLabel))
             {
                 return true;
             }
-            return await _healthProbe.IsAvailableWithRetryAsync(token);
-        }
 
-        private static async UniTask<bool> UsesRemoteContentAsync(CancellationToken token)
-        {
+            AsyncOperationHandle<long> handle = Addressables.GetDownloadSizeAsync(RequiredLabel);
             try
             {
-                AsyncOperationHandle<IResourceLocator> handle = Addressables.InitializeAsync();
-                await handle.ToUniTask(cancellationToken: token);
-                foreach (IResourceLocator locator in Addressables.ResourceLocators)
-                foreach (object key in locator.Keys)
+                long remainingBytes = await handle.ToUniTask(cancellationToken: token);
+                return remainingBytes == 0;
+            }
+            finally
+            {
+                if (handle.IsDone)
                 {
-                    if (!locator.Locate(key, typeof(object), out IList<IResourceLocation> locations)) continue;
-                    foreach (IResourceLocation location in locations)
-                    if (Uri.TryCreate(location.InternalId, UriKind.Absolute, out Uri uri) &&
-                        (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps)) return true;
+                    Addressables.Release(handle);
+                }
+                else
+                {
+                    handle.Completed += operation => Addressables.Release(operation);
                 }
             }
-            catch (OperationCanceledException) { }
-            catch (Exception exception)
-            {
-                UnityEngine.Debug.LogWarning($"Unable to determine Addressables content mode. {exception.Message}");
-                return true;
-            }
-            return false;
         }
     }
 }

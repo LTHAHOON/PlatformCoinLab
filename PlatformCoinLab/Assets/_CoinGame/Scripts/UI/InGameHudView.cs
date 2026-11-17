@@ -5,6 +5,7 @@ using UnityEngine;
 namespace CoinGame.UI
 {
     using CoinGame.Gameplay.Player;
+    using CoinGame.Input;
     using CoinGame.Network;
 
     public sealed class InGameHudView : MonoBehaviour
@@ -85,11 +86,15 @@ namespace CoinGame.UI
                 return;
             }
             _weaponText.text = $"{_inventory.CurrentKind}  {_inventory.Magazine}/{_inventory.ReserveAmmo}";
-            _quickText.text = $"{(_showPcKeys ? "4 " : "")}Boost: {(_inventory.HasBoost ? "Ready" : "-")}  {(_showPcKeys ? "5 " : "")}Revive: {(_inventory.HasRevive ? "Ready" : "-")}";
+            _quickText.text = $"{(ShowPcKeys ? "4 " : "")}Boost: {(_inventory.HasBoost ? "Ready" : "-")}  {(ShowPcKeys ? "5 " : "")}Revive: {(_inventory.HasRevive ? "Ready" : "-")}";
             _statusText.text = StatusText();
-            _skillText.text = _controller == null ? "" : $"O {_controller.PushCooldownRemaining:0.0}s  L {_controller.SkillCooldownRemaining:0.0}s";
+            _skillText.text = "";
+            if (ShowPcKeys && _controller != null)
+            {
+                _skillText.text = $"O {_controller.PushCooldownRemaining:0.0}s  L {_controller.SkillCooldownRemaining:0.0}s";
+            }
             _reviveText.text = _stats.LifeState == PlayerLifeState.Spectating && _stats.ReviveReadyAt > NetworkManager.Singleton.ServerTime.Time
-                ? $"{(_showPcKeys ? "5" : "Revive")} available in {_stats.ReviveReadyAt - NetworkManager.Singleton.ServerTime.Time:0.0}s" : "";
+                ? $"{(ShowPcKeys ? "5" : "Revive")} available in {_stats.ReviveReadyAt - NetworkManager.Singleton.ServerTime.Time:0.0}s" : "";
         }
         private string StatusText()
         {
@@ -115,5 +120,7 @@ namespace CoinGame.UI
             }
             return text;
         }
+
+        private bool ShowPcKeys => _showPcKeys && MobileControlInput.Active == null;
     }
 }
