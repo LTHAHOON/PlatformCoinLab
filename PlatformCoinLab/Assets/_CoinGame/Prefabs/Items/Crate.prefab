@@ -278,14 +278,15 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::CoinGame.Network.NetworkCrate
   ShowTopMostFoldoutHeaderGroup: 1
   _data: {fileID: 11400000, guid: 5f5f78fd9f9f4a9cb2d7c4c3f4f2a11b, type: 2}
-  _pickupPrefab: {fileID: 6413215496426315854, guid: 9a12f5f6c4eb621409479d02fe690821, type: 3}
-  _ammoPickupPrefab: {fileID: 510478459734884575, guid: 04aa13cf4d9b3dd40a87721e37d22f00, type: 3}
-  _boostPickupPrefab: {fileID: 1527749136741719199, guid: f57087729368edb4b9dade26e1480afe, type: 3}
-  _healthPickupPrefab: {fileID: 8431037216731093152, guid: 7e5f4ffa5e8476b45b94c5472ed86a25, type: 3}
-  _invulnerablePickupPrefab: {fileID: 5842849792798530184, guid: d10a133d4dbee954ca7f688165aa35bf, type: 3}
-  _randomPickupPrefab: {fileID: 7621981584965302771, guid: 0e547b3bfd2dd284a85e2d3e3f7b122e, type: 3}
-  _revivePickupPrefab: {fileID: 4594725583029489272, guid: e353c61e6e6139a41b626eafe88bb340, type: 3}
-  _stealthPickupPrefab: {fileID: 7033391531605794726, guid: 9e19609409504184ea0c3253fb0cea2e, type: 3}
+  _ammoPickupPrefab: {fileID: 7587582700559868412, guid: 04aa13cf4d9b3dd40a87721e37d22f00, type: 3}
+  _boostPickupPrefab: {fileID: 6514962079626624774, guid: f57087729368edb4b9dade26e1480afe, type: 3}
+  _healthPickupPrefab: {fileID: 4971661279954384474, guid: 7e5f4ffa5e8476b45b94c5472ed86a25, type: 3}
+  _invulnerablePickupPrefab: {fileID: 6441655976467658172, guid: d10a133d4dbee954ca7f688165aa35bf, type: 3}
+  _randomPickupPrefab: {fileID: 5104572174111256593, guid: 0e547b3bfd2dd284a85e2d3e3f7b122e, type: 3}
+  _revivePickupPrefab: {fileID: 6830682885343330757, guid: e353c61e6e6139a41b626eafe88bb340, type: 3}
+  _stealthPickupPrefab: {fileID: 3562560920636398486, guid: 9e19609409504184ea0c3253fb0cea2e, type: 3}
+  _gunPickupPrefab: {fileID: 3310959830959748511, guid: 0d00a50663d3ee04ba846319aaa32655, type: 3}
+  _swordPickupPrefab: {fileID: 7544799968416707206, guid: b2ffb74d21b53bf4294d90255f382d0a, type: 3}
   _dropTable:
   - {fileID: 11400000, guid: beb747d558fb48e3a331239cb89fb21d, type: 2}
   - {fileID: 11400000, guid: 31b6e941c47e4ec29d3acc9d8c22edf1, type: 2}
@@ -297,3 +298,4 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 815e98a0b9f245d4a301520a034ee12b, type: 2}
   - {fileID: 11400000, guid: 65cc3a7f5ff048f2b9dfd6c4044c3400, type: 2}
   _lid: {fileID: 2307545198725173234}
+  _showHealthDebug: 1

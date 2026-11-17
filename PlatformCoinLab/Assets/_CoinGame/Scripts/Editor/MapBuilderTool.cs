@@ -64,7 +64,6 @@ namespace CoinGame.Editor
             Transform ground = CreateChild(root.transform, "Ground");
             Transform decor = CreateChild(root.transform, "Decor");
             CreateAnchors(root.transform);
-            CreateZones(root.transform);
             CreateBounds(root.transform, settings.tileSize * settings.tilesX * 0.5f);
             BuildGround(ground, settings);
             BuildDecor(decor, settings, seed);
@@ -122,26 +121,6 @@ namespace CoinGame.Editor
             Transform spawns = CreateChild(parent, "PlayerSpawnPoints");
             CreateChild(spawns, "CollectorSpawn_1").localPosition = new Vector3(-3f, 0f, -17f);
             CreateChild(spawns, "DisruptorSpawn_1").localPosition = new Vector3(3f, 0f, -17f);
-        }
-
-        private static void CreateZones(Transform parent)
-        {
-            Transform coins = CreateChild(parent, "CoinZones");
-            CreateZone(coins, "CoinZone_Center", Vector3.zero, new Vector3(10f, 1f, 10f));
-            CreateZone(coins, "CoinZone_East", new Vector3(13f, 0f, 7f), new Vector3(8f, 1f, 8f));
-            CreateZone(coins, "CoinZone_West", new Vector3(-13f, 0f, 7f), new Vector3(8f, 1f, 8f));
-            Transform crates = CreateChild(parent, "CrateZones");
-            CreateZone(crates, "CrateZone_Center", new Vector3(0f, 0f, 7f), new Vector3(5f, 1f, 5f));
-        }
-
-        private static void CreateZone(Transform parent, string name, Vector3 position, Vector3 size)
-        {
-            GameObject zone = new(name);
-            zone.transform.SetParent(parent, false);
-            zone.transform.localPosition = position;
-            BoxCollider collider = zone.AddComponent<BoxCollider>();
-            collider.isTrigger = true;
-            collider.size = size;
         }
 
         private static void CreateBounds(Transform parent, float halfSize)

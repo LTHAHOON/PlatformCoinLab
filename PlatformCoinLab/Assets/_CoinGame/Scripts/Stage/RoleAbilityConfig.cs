@@ -10,8 +10,6 @@ namespace CoinGame.Stage
         [Min(0.1f)]
         public float LockCooldown = 10f;
         [Min(0.1f)]
-        public float StealCooldown = 10f;
-        [Min(0.1f)]
         public float CoinLockDuration = 5f;
         [Min(0f)]
         public float PushForce = 5f;
@@ -24,8 +22,5 @@ namespace CoinGame.Stage
         [Min(0.1f)]
         public float ItemBlockCooldown = 10f;
         public bool EnableItemBlockSkill = false;
-        public bool EnableScoreSteal = false;
-        [Min(1)]
-        public int StealAmount = 1;
     }
 }

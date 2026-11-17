@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.Threading;
 using System.Text;
 using Cysharp.Threading.Tasks;
@@ -20,6 +19,10 @@ namespace CoinGame.UI
         [SerializeField]
         private TMP_Text _remainingCoinText;
         [SerializeField]
+        private GameObject _remainingCoinPanel;
+        [SerializeField]
+        private TMP_Text _killCountText;
+        [SerializeField]
         private TMP_Text _timerText;
         [SerializeField]
         private TMP_Text _roundText;
@@ -29,17 +32,10 @@ namespace CoinGame.UI
         private PlayerRole _lastRole = PlayerRole.Unselected;
         private bool _isBound;
         [SerializeField]
-        private TMP_Text _scoreboardText;
-        [SerializeField]
-        private TMP_Text _collectorScoreboardText;
-        [SerializeField]
-        private TMP_Text _disruptorScoreboardText;
-        [SerializeField]
         private CanvasGroup _roundBannerGroup;
         [SerializeField]
         private TMP_Text _roundBannerText;
         private CancellationTokenSource _roundBannerCts;
-        private float _nextScoreboardRefresh;
         private float _nextLocalStatsLookup;
         private int _lastBannerRound = -1;
         private int _roundBannerVersion;
@@ -80,16 +76,12 @@ namespace CoinGame.UI
             if (_localStats != null && _lastRole != _localStats.Role)
             {
                 _lastRole = _localStats.Role;
-                if (_remainingCoinText != null)
-                {
-                    _remainingCoinText.transform.parent.gameObject.SetActive(_lastRole != PlayerRole.Disruptor);
-                }
+                _remainingCoinPanel.SetActive(_lastRole != PlayerRole.Disruptor);
             }
 
-            if (Time.unscaledTime >= _nextScoreboardRefresh)
+            if (_localStats != null && _localStats.IsSpawned)
             {
-                _nextScoreboardRefresh = Time.unscaledTime + 0.25f;
-                RefreshScoreboard();
+                _killCountText.SetText(_localStats.KillCount.ToString());
             }
         }
 
@@ -164,70 +156,6 @@ namespace CoinGame.UI
             _sb.Append(curRound);
             _roundText.SetText(_sb);
             _sb.Clear();
-        }
-
-        private void RefreshScoreboard()
-        {
-            TMP_Text collectorText = _collectorScoreboardText != null ? _collectorScoreboardText : _scoreboardText;
-            if (collectorText == null || _disruptorScoreboardText == null || _localStats == null ||
-                _localStats.Role == PlayerRole.Unselected)
-            {
-                if (collectorText != null)
-                {
-                    collectorText.SetText(string.Empty);
-                }
-                if (_disruptorScoreboardText != null)
-                {
-                    _disruptorScoreboardText.SetText(string.Empty);
-                }
-                return;
-            }
-
-            List<NetworkPlayerStats> stats = new();
-            if (NetworkManager.Singleton == null)
-            {
-                collectorText.SetText(string.Empty);
-                _disruptorScoreboardText.SetText(string.Empty);
-                return;
-            }
-
-            foreach (NetworkClient client in NetworkManager.Singleton.ConnectedClientsList)
-            {
-                NetworkPlayerStats playerStats = client.PlayerObject != null
-                    ? client.PlayerObject.GetComponent<NetworkPlayerStats>()
-                    : null;
-                if (playerStats != null)
-                {
-                    stats.Add(playerStats);
-                }
-            }
-            stats.Sort((left, right) => left.OwnerClientId.CompareTo(right.OwnerClientId));
-
-            StringBuilder collectorBuilder = new();
-            StringBuilder disruptorBuilder = new();
-            collectorBuilder.AppendLine("<color=#8FE7FF>COLLECTORS</color>");
-            disruptorBuilder.AppendLine("<color=#FFB86B>DISRUPTORS</color>");
-            foreach (NetworkPlayerStats playerStats in stats)
-            {
-                if (playerStats.Role == PlayerRole.Collector)
-                {
-                    collectorBuilder.Append("P");
-                    collectorBuilder.Append(playerStats.OwnerClientId + 1);
-                    collectorBuilder.Append("  Score ");
-                    collectorBuilder.Append(playerStats.Score);
-                    collectorBuilder.AppendLine();
-                }
-                else if (playerStats.Role == PlayerRole.Disruptor)
-                {
-                    disruptorBuilder.Append("P");
-                    disruptorBuilder.Append(playerStats.OwnerClientId + 1);
-                    disruptorBuilder.Append("  Disrupt ");
-                    disruptorBuilder.Append(playerStats.DisruptionScore);
-                    disruptorBuilder.AppendLine();
-                }
-            }
-            collectorText.SetText(collectorBuilder);
-            _disruptorScoreboardText.SetText(disruptorBuilder);
         }
 
         private async UniTaskVoid ShowRoundBannerAsync(int round, float startDelay)

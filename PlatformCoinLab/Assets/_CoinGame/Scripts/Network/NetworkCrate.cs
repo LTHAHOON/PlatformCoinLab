@@ -6,10 +6,18 @@ namespace CoinGame.Network
     using CoinGame.Gameplay.Combat;
     using CoinGame.Gameplay.Items;
     using CoinGame.Player;
+    using CoinGame.Utilities;
 
 
     public class NetworkCrate : NetworkBehaviour
     {
+        private int _gridReservationId;
+
+        public void SetGridReservation(int reservationId)
+        {
+            _gridReservationId = reservationId;
+        }
+
         private enum CrateState : byte
         {
             Closed,
@@ -19,8 +27,6 @@ namespace CoinGame.Network
 
         [SerializeField]
         private CrateData _data;
-        [SerializeField]
-        private NetworkItemPickup _pickupPrefab;
         [SerializeField]
         private NetworkItemPickup _ammoPickupPrefab;
         [SerializeField]
@@ -35,6 +41,10 @@ namespace CoinGame.Network
         private NetworkItemPickup _revivePickupPrefab;
         [SerializeField]
         private NetworkItemPickup _stealthPickupPrefab;
+        [SerializeField]
+        private NetworkItemPickup _gunPickupPrefab;
+        [SerializeField]
+        private NetworkItemPickup _swordPickupPrefab;
         [SerializeField]
         private ItemData[] _dropTable;
 
@@ -137,6 +147,12 @@ namespace CoinGame.Network
 
         public override void OnNetworkDespawn()
         {
+            if (_gridReservationId != 0)
+            {
+                GridSpawnReservation.ReleaseReservation(_gridReservationId);
+                _gridReservationId = 0;
+            }
+
             _state.OnValueChanged -= OnStateChanged;
         }
 
@@ -225,7 +241,7 @@ namespace CoinGame.Network
                         break;
                     }
                 }
-                if (item != null && GetPickupPrefab(item.Kind) != null)
+                if (item != null)
                 {
                     SpawnPickupServer(item);
                 }
@@ -255,6 +271,7 @@ namespace CoinGame.Network
             NetworkItemPickup pickupPrefab = GetPickupPrefab(item.Kind);
             if (pickupPrefab == null)
             {
+                Debug.LogError($"Missing pickup prefab for {item.Kind} on {name}.", this);
                 return;
             }
 
@@ -268,36 +285,29 @@ namespace CoinGame.Network
 
         private NetworkItemPickup GetPickupPrefab(ItemKind kind)
         {
-            if (kind == ItemKind.Ammo && _ammoPickupPrefab != null)
+            switch (kind)
             {
-                return _ammoPickupPrefab;
+                case ItemKind.Ammo:
+                    return _ammoPickupPrefab;
+                case ItemKind.Boost:
+                    return _boostPickupPrefab;
+                case ItemKind.Health:
+                    return _healthPickupPrefab;
+                case ItemKind.Invulnerable:
+                    return _invulnerablePickupPrefab;
+                case ItemKind.Random:
+                    return _randomPickupPrefab;
+                case ItemKind.Revive:
+                    return _revivePickupPrefab;
+                case ItemKind.Stealth:
+                    return _stealthPickupPrefab;
+                case ItemKind.Gun:
+                    return _gunPickupPrefab;
+                case ItemKind.Sword:
+                    return _swordPickupPrefab;
+                default:
+                    return null;
             }
-            if (kind == ItemKind.Boost && _boostPickupPrefab != null)
-            {
-                return _boostPickupPrefab;
-            }
-            if (kind == ItemKind.Health && _healthPickupPrefab != null)
-            {
-                return _healthPickupPrefab;
-            }
-            if (kind == ItemKind.Invulnerable && _invulnerablePickupPrefab != null)
-            {
-                return _invulnerablePickupPrefab;
-            }
-            if (kind == ItemKind.Random && _randomPickupPrefab != null)
-            {
-                return _randomPickupPrefab;
-            }
-            if (kind == ItemKind.Revive && _revivePickupPrefab != null)
-            {
-                return _revivePickupPrefab;
-            }
-            if (kind == ItemKind.Stealth && _stealthPickupPrefab != null)
-            {
-                return _stealthPickupPrefab;
-            }
-
-            return _pickupPrefab;
         }
 
         private bool CanDropItemServer(ItemData item)

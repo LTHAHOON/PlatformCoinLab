@@ -1,4 +1,4 @@
-﻿# PlatformCoinLab 에이전트 지침
+# PlatformCoinLab 에이전트 지침
 
 이 파일은 이 저장소에서 작업하는 코딩 에이전트의 공통 지침이다.
 
@@ -137,7 +137,7 @@
 
 ## M1 완료 상태
 
-- 기존 `NetworkCoinController`가 서버에서 `NetworkPlayerStats.Role`을 확인해 Collector만 코인을 수집하도록 수정했다. Disruptor의 접촉은 코인, 점수, 잔여 코인에 영향을 주지 않는다.
+- 기존 `NetworkCoinController`가 서버에서 `NetworkPlayerStats.Role`을 확인해 Collector만 코인을 수집하도록 수정했다. Disruptor의 접촉은 코인과 잔여 코인에 영향을 주지 않는다. Score는 제거했다.
 - `StageConfig`의 기존 `BaseCoinCount`/`CoinIncreasePerRound`와 `GetRequiredCoins`/`GetSpawnCoinCount` 분리는 유지하고, 기본값을 10/3으로 맞췄다. 로비의 코인 배율 기능은 유지하며 기본값을 1로 사용한다.
 - `StageView`는 서버의 target/remaining 상태를 바탕으로 수집 진행도를 `n/m`으로 표시한다. 클리어와 시간 초과 판정은 `NetworkRoundState` 서버 권한 흐름을 유지한다.
 - `M1Prototype`은 네트워크가 수신 대기 중이면 자동 비활성화되어 `M1Coin` 로컬 경로와 네트워크 코인 경로가 동시에 실행되지 않는다.
@@ -148,7 +148,7 @@
 - 서버 권한 체력·피해·사망·부활 흐름을 기존 `NetworkPlayerStats`에 확장했다.
 - `NetworkRoundState`에 Collector 전원 사망 승리, 마지막 라운드 생존자 승패, 시간 초과 페널티, `MatchWinner` 동기화를 확장했다.
 - 기존 `NetworkSpawner.TryRelocatePlayers()`는 유지하고 단일 플레이어 안전 지점 재배치를 추가했다.
-- 기존 방해자 능력(`UsePushRpc`, `UseLockRpc`, `UseStealRpc`)과 소유자 이동·`NetworkTransform`을 유지했다.
+- 기존 방해자 능력(`UsePushRpc`, `UseLockRpc`)과 소유자 이동·`NetworkTransform`을 유지했다.
 - 2인 방에서 Collector와 Disruptor가 모두 존재하도록 `RoomSettingsValidator` 검증을 보완했다.
 - `PlayerStatsConfig`의 `.meta`와 ScriptableObject `m_Script` GUID를 복구했다.
 - `Assembly-CSharp.csproj` 컴파일 검증은 오류 0개·경고 0개다.
@@ -169,7 +169,7 @@
 - `WeaponData`, `WeaponBase`, `Gun`, `Sword`를 추가했다. 기본 총은 데미지 12/탄창 12/간격 0.3초, 검은 데미지 20/간격 0.6초/사거리 1.5m다.
 - `NetworkCombat`가 K/R/Q/E 입력을 서버 RPC로 전달하고, 서버가 쿨타임·탄약·팀킬·명중·피해를 판정한다. 투사체 런타임 경로는 `NetworkProjectile`과 `NetworkGameObjectPool`을 사용한다.
 - `NetworkPlayerStats`에 피격 무적 0.3초, 경직 0.1초, 수동 부활 3초, 부활 후 2초 무적, 은신, 이동 부스트, 코인 수집 차단과 선택적 아이템 습득 차단 상태를 확장했다.
-- `NetworkCrate`, `NetworkCrateSpawner`, `NetworkItemPickup`, `ItemData`를 추가했다. 상자 HP와 가중치 드롭, 보유 제한 초과 시 미획득 규칙을 서버에서 처리한다.
+- `NetworkCrate`, `NetworkItemPickup`, `ItemData`를 추가했다. 기존 상자 전용 스포너는 2026-11-17에 Coin/Crate 공통 `NetworkSpawner`로 통합했다. 상자 HP와 가중치 드롭, 보유 제한 초과 시 미획득 규칙을 서버에서 처리한다.
 - 방해자 `L`은 수집가의 코인 수집을 5초 차단하고 10초 후 재사용한다. 아이템 습득 차단은 기능 플래그로 기본 비활성화했다. `O` 밀치기 기본값은 쿨타임 3초/스턴 0.4초로 맞췄다.
 - `M3DebugTools`를 Player 프리팹에 연결했다. Development Build에서 F1~F9로 총/검/탄약/부스트/부활/무적/은신/체력 회복/랜덤 아이템을 지급한다.
 - 패키지 원본은 수정하지 않고 `Assets/_Project/Prefabs/M3`에 BTM 아이템 복사본, Low Poly Guns 기반 총 외형, 기본 Cube 검 외형, Capsule 투사체를 만들었다.
@@ -185,7 +185,7 @@
 - 기획서에 R1~R7과 해석 I1~I5를 반영했다. 시간 초과 체력 페널티와 방해자 리스폰은 폐기하고, 라운드 클리어 시 사망 수집가 부활 흐름을 기록했다.
 - `RoundOutcomeEvaluator`와 `NetworkRoundState`에 시간 초과 방해자 승리, 방해자 전원 탈락 수집가 승리, 마지막 라운드 코인 클리어 판정을 반영했다.
 - 수집가와 방해자 모두 사망 시 관전 상태로 전환하며, 라운드 중 부활 아이템과 라운드 클리어 수집가 부활을 분리했다. 라운드 클리어 부활 체력은 `PlayerStatsConfig`에서 설정한다.
-- L 스킬은 코인 수집 차단으로 유지하고 아이템 습득 차단은 `RoleAbilityConfig.EnableItemBlockSkill` 기본값을 `false`로 두었다. 점수 탈취도 `EnableScoreSteal` 기본값을 `false`로 두었다.
+- L 스킬은 코인 수집 차단으로 유지하고 아이템 습득 차단은 `RoleAbilityConfig.EnableItemBlockSkill` 기본값을 `false`로 두었다. 점수 및 점수 탈취 기능은 제거하고 Remaining Coin만 사용한다.
 - `WeaponKind.Fist`, 역할별 서버 장비 지급, 라운드 1 공격 아이템 보정 정책을 추가했다. 수집가는 비무장, 방해자는 주먹으로 시작한다.
 - `AnimatorParameterSet` ScriptableObject와 `CharacterAnimatorUtility`를 추가하고 `Player.prefab`의 `NetworkPlayerAnimator`가 이동 시 Animator의 `MoveSpeed` 파라미터를 갱신하도록 연결했다.
 - 코인은 `OnTriggerStay`에서도 서버 판정을 재시도해 L 차단 시간이 끝난 뒤 같은 위치에 계속 서 있어도 수집되도록 수정했다. Animator root motion은 끄고 이동량 보간과 이동 방향 `Quaternion.Slerp` 회전을 추가했다.

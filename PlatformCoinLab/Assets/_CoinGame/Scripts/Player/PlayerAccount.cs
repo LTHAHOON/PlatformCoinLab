@@ -45,7 +45,7 @@ namespace CoinGame.Player
 
             if (_playerAccountView != null)
             {
-                _playerAccountView.SetUserNameText(_id.ToString());
+                _playerAccountView.SetUserNameText(LocalPlayerProfile.DisplayName);
             }
             else
             {
@@ -53,12 +53,19 @@ namespace CoinGame.Player
             }
 
             IsOnline = false;
+            LocalPlayerProfile.NameChanged += RefreshName;
+        }
+
+        private void RefreshName()
+        {
+            _playerAccountView.SetUserNameText(LocalPlayerProfile.DisplayName);
         }
 
         private void OnDestroy()
         {
             if (_instance == this)
             {
+                LocalPlayerProfile.NameChanged -= RefreshName;
                 _instance = null;
                 IsOnline = false;
             }

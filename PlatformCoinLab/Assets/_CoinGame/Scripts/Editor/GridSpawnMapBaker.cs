@@ -22,7 +22,7 @@ namespace CoinGame.Editor
             Scene scene = SceneManager.GetActiveScene();
             Transform ground = FindGround(scene);
             List<Collider> staticColliders = FindStaticColliders(scene);
-            List<Collider> zones = FindZoneColliders(scene);
+            List<Collider> playerZones = FindPlayerZoneColliders(scene);
             List<Transform> borders = FindBorders(scene);
             if (ground == null || staticColliders.Count == 0 || borders.Count < 2)
             {
@@ -35,7 +35,7 @@ namespace CoinGame.Editor
             Vector3 origin = new(borders.Min(x => x.position.x), 0f, borders.Min(x => x.position.z));
             int width = GetCount(borders.Select(x => x.position.x), xStep);
             int height = GetCount(borders.Select(x => x.position.z), zStep);
-            GridSpawnCell[] cells = BuildCells(origin, xStep, zStep, width, height, staticColliders, zones);
+            GridSpawnCell[] cells = BuildCells(origin, xStep, zStep, width, height, staticColliders, playerZones);
             GridSpawnMap map = LoadOrCreateAsset();
             map.SetData(scene.path, GetPath(ground), origin, new Vector2(xStep, zStep), width, height, cells);
             EditorUtility.SetDirty(map);
@@ -85,22 +85,6 @@ namespace CoinGame.Editor
                     assigned++;
                 }
 
-                foreach (NetworkCrateSpawner spawner in Resources.FindObjectsOfTypeAll<NetworkCrateSpawner>()
-                    .Where(x => x.gameObject.scene == scene))
-                {
-                    SerializedObject serialized = new(spawner);
-                    SerializedProperty property = serialized.FindProperty("_gridSpawnMap");
-                    if (property == null)
-                    {
-                        continue;
-                    }
-
-                    property.objectReferenceValue = map;
-                    serialized.ApplyModifiedPropertiesWithoutUndo();
-                    EditorUtility.SetDirty(spawner);
-                    assigned++;
-                }
-
                 if (scene.isDirty)
                 {
                     UnityEditor.SceneManagement.EditorSceneManager.SaveScene(scene);
@@ -120,7 +104,7 @@ namespace CoinGame.Editor
         }
 
         private static GridSpawnCell[] BuildCells(Vector3 origin, float xStep, float zStep, int width, int height,
-            List<Collider> staticColliders, List<Collider> zones)
+            List<Collider> staticColliders, List<Collider> playerZones)
         {
             Physics.SyncTransforms();
             List<GridSpawnCell> cells = new();
@@ -130,14 +114,14 @@ namespace CoinGame.Editor
                 {
                     Vector3 position = new(origin.x + x * xStep, origin.y + 50f, origin.z + z * zStep);
                     float groundY = GetGroundHeight(position);
-                    Vector3 worldPosition = new(position.x, groundY + 0.8f, position.z);
+                    Vector3 worldPosition = new(position.x, groundY, position.z);
                     GridCellFlags flags = groundY > float.MinValue ? GridCellFlags.Ground : GridCellFlags.None;
                     if (OverlapsStatic(worldPosition, xStep, zStep, staticColliders))
                     {
                         flags |= GridCellFlags.StaticBlocked;
                     }
 
-                    foreach (Collider zone in zones)
+                    foreach (Collider zone in playerZones)
                     {
                         if (!ContainsXZ(zone.bounds, worldPosition))
                         {
@@ -198,15 +182,6 @@ namespace CoinGame.Editor
             {
                 return GridCellFlags.PlayerZone;
             }
-            if (name.StartsWith("CoinZone", StringComparison.Ordinal))
-            {
-                return GridCellFlags.CoinZone;
-            }
-            if (name.StartsWith("CrateZone", StringComparison.Ordinal))
-            {
-                return GridCellFlags.CrateZone;
-            }
-
             return GridCellFlags.None;
         }
 
@@ -242,11 +217,14 @@ namespace CoinGame.Editor
                 .ToList();
         }
 
-        private static List<Collider> FindZoneColliders(Scene scene)
+        private static List<Collider> FindPlayerZoneColliders(Scene scene)
         {
             return Resources.FindObjectsOfTypeAll<BoxCollider>()
                 .Where(x => x.gameObject.scene == scene &&
-                    (x.name.Contains("Zone", StringComparison.Ordinal) || x.name.Contains("Points", StringComparison.Ordinal)))
+                    (x.name.StartsWith("Collector", StringComparison.Ordinal) ||
+                     x.name.StartsWith("Disruptor", StringComparison.Ordinal) ||
+                     x.name.StartsWith("Player", StringComparison.Ordinal) ||
+                     x.name.EndsWith("_Points", StringComparison.Ordinal)))
                 .Cast<Collider>()
                 .ToList();
         }

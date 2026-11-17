@@ -16,6 +16,12 @@ namespace CoinGame.Network
         private CancellationTokenSource _despawnCts;
         private bool _collected;
         private Renderer[] _renderers;
+        private int _gridReservationId;
+
+        public void SetGridReservation(int reservationId)
+        {
+            _gridReservationId = reservationId;
+        }
 
         public override void OnNetworkSpawn()
         {
@@ -75,6 +81,12 @@ namespace CoinGame.Network
 
         public override void OnNetworkDespawn()
         {
+            if (_gridReservationId != 0)
+            {
+                GridSpawnReservation.ReleaseReservation(_gridReservationId);
+                _gridReservationId = 0;
+            }
+
             if (_triggerEnterCts is not null)
             {
                 _triggerEnterCts.Cancel();
@@ -133,12 +145,10 @@ namespace CoinGame.Network
 
             if (playerStats.IsCoinLocked || playerStats.IsBeingPushed)
             {
-                playerStats.RegisterBlockedCoinAttemptServer();
                 return;
             }
 
             _collected = true;
-            playerStats.AddScoreServer(1);
             if (NetworkRoundState.Instance != null)
             {
                 NetworkRoundState.Instance.CollectCoinServer();

@@ -99,7 +99,6 @@ namespace CoinGame.Managers
 
             _networkRoundState.StateChanged += OnNetworkRoundStateChanged;
             _networkRoundState.RoundFinished += OnNetworkRoundFinished;
-            _networkRoundState.MatchFinished += OnNetworkMatchFinished;
             _networkRoundStateBound = true;
             OnNetworkRoundStateChanged(
                 _networkRoundState.Round,
@@ -474,34 +473,12 @@ namespace CoinGame.Managers
             }
         }
 
-        private void OnNetworkMatchFinished(bool collectorWon)
-        {
-            NetworkPlayerStats localStats = null;
-            if (NetworkManager.Singleton != null)
-            {
-                NetworkObject localObject = NetworkManager.Singleton.SpawnManager.GetLocalPlayerObject();
-                if (localObject != null)
-                {
-                    localStats = localObject.GetComponent<NetworkPlayerStats>();
-                }
-            }
-            if (localStats == null)
-            {
-                return;
-            }
-
-            PlayerPrefsStorage.SetPlayerSessionInt(PlayerSessionKey.SCORE, localStats.Score);
-            PlayerPrefsStorage.SetPlayerSessionInt(PlayerSessionKey.DISTRUPT, localStats.DisruptionScore);
-            PlayerPrefsStorage.SaveAll();
-        }
-
         private void OnDestroy()
         {
             if (_networkRoundStateBound && _networkRoundState != null)
             {
                 _networkRoundState.StateChanged -= OnNetworkRoundStateChanged;
                 _networkRoundState.RoundFinished -= OnNetworkRoundFinished;
-                _networkRoundState.MatchFinished -= OnNetworkMatchFinished;
             }
             if (_roundStartCts != null)
             {

@@ -20,6 +20,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 38c82fc895b4d1944ac471cb31ddbed3
+    m_Address: Crate
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 419af0feaf3e681488458f05965cc734
     m_Address: Coin
     m_ReadOnly: 0

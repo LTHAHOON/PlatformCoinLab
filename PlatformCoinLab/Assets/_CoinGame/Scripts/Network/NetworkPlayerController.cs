@@ -47,7 +47,6 @@ namespace CoinGame.Network
         private CancellationTokenSource _moveCts;
         private float _pushCooldownUntil;
         private float _lockCooldownUntil;
-        private float _stealCooldownUntil;
         private Renderer[] _playerRenderers;
         private MaterialPropertyBlock _playerPropertyBlock;
         private Camera _followCamera;
@@ -296,11 +295,6 @@ namespace CoinGame.Network
                             _lockCooldownUntil = Time.time + Mathf.Max(LockCooldown, ItemBlockCooldown);
                             UseLockRpc(transform.position);
                         }
-                        if (_inputProvider != null && _inputProvider.Current.Interact && Time.time >= _stealCooldownUntil)
-                        {
-                            _stealCooldownUntil = Time.time + StealCooldown;
-                            UseStealRpc(transform.position);
-                        }
                     }
                     else if (_networkPlayerStats.IsAlive)
                     {
@@ -330,7 +324,7 @@ namespace CoinGame.Network
             {
                 if (_networkPlayerStats.Role == PlayerRole.Disruptor && targetStats.Role == PlayerRole.Collector)
                 {
-                    targetStats.SetBeingPushedServer(NetworkManager.Singleton.ServerTime.Time + PushStunDuration, _networkPlayerStats);
+                    targetStats.SetBeingPushedServer(NetworkManager.Singleton.ServerTime.Time + PushStunDuration);
                     Vector3 pushDirection = transform.forward;
                     if (pushDirection.sqrMagnitude < 0.01f)
                     {
@@ -383,7 +377,7 @@ namespace CoinGame.Network
             {
                 if (_networkPlayerStats.Role == PlayerRole.Disruptor && targetStats.Role == PlayerRole.Collector)
                 {
-                    targetStats.SetCoinLockServer(NetworkManager.Singleton.ServerTime.Time + LockDuration, _networkPlayerStats);
+                    targetStats.SetCoinLockServer(NetworkManager.Singleton.ServerTime.Time + LockDuration);
                     if (_roleAbilityConfig != null && _roleAbilityConfig.EnableItemBlockSkill)
                     {
                         targetStats.SetItemBlockedServer(NetworkManager.Singleton.ServerTime.Time + ItemBlockDuration);
@@ -402,21 +396,20 @@ namespace CoinGame.Network
         [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Owner)]
         private void ReviveRpc() { _networkPlayerStats.TryReviveServer(); }
 
-        [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Owner)]
-        private void UseStealRpc(Vector3 origin)
+        [Rpc(SendTo.Owner, InvokePermission = RpcInvokePermission.Server)]
+        public void RestoreAfterReviveRpc()
         {
-            if (!IsServer || _networkPlayerStats == null)
+            if (_controller != null)
             {
-                return;
+                _controller.enabled = true;
             }
-
-            NetworkPlayerController target = FindNearestOpponent(transform.position, AbilityRange);
-            NetworkPlayerStats targetStats = target ? target.GetComponent<NetworkPlayerStats>() : null;
-            NetworkPlayerStats ownStats = GetComponent<NetworkPlayerStats>();
-            if (targetStats != null && ownStats != null && EnableScoreSteal && ownStats.Role == PlayerRole.Disruptor &&
-                targetStats.Role == PlayerRole.Collector && targetStats.TrySpendScore(StealAmount))
+            if (_moveAction != null)
             {
-                ownStats.AddScoreServer(StealAmount);
+                _moveAction.Enable();
+            }
+            if (_attackAction != null)
+            {
+                _attackAction.Enable();
             }
         }
 
@@ -496,7 +489,8 @@ namespace CoinGame.Network
                         Vector3 moveDelta = speed * Time.deltaTime * moveDir.normalized;
                         Vector3 curPlayerPos = _controller.transform.position;
                         Vector3 targetPlayerPos = curPlayerPos + moveDelta;
-                        targetPlayerPos = targetPlayerPos.Clamp(_playerPosMinMaxData.MinVector, _playerPosMinMaxData.MaxVetor);
+                        targetPlayerPos.x = Mathf.Clamp(targetPlayerPos.x, _playerPosMinMaxData.MinVector.x, _playerPosMinMaxData.MaxVetor.x);
+                        targetPlayerPos.z = Mathf.Clamp(targetPlayerPos.z, _playerPosMinMaxData.MinVector.z, _playerPosMinMaxData.MaxVetor.z);
 
                         _controller.Move(targetPlayerPos - curPlayerPos);
                     }
@@ -561,15 +555,12 @@ namespace CoinGame.Network
 
         private float PushCooldown => _roleAbilityConfig ? _roleAbilityConfig.PushCooldown : 2f;
         private float LockCooldown => _roleAbilityConfig ? _roleAbilityConfig.LockCooldown : 10f;
-        private float StealCooldown => _roleAbilityConfig ? _roleAbilityConfig.StealCooldown : 10f;
         private float LockDuration => _roleAbilityConfig ? _roleAbilityConfig.CoinLockDuration : 5f;
         private float PushForce => _roleAbilityConfig ? _roleAbilityConfig.PushForce : 5f;
         private float AbilityRange => _roleAbilityConfig ? _roleAbilityConfig.AbilityRange : 2.5f;
         private float PushStunDuration => _roleAbilityConfig ? _roleAbilityConfig.PushStunDuration : 1f;
-        private int StealAmount => _roleAbilityConfig ? _roleAbilityConfig.StealAmount : 1;
         private float ItemBlockDuration => _roleAbilityConfig ? _roleAbilityConfig.ItemBlockDuration : 5f;
         private float ItemBlockCooldown => _roleAbilityConfig ? _roleAbilityConfig.ItemBlockCooldown : 10f;
-        private bool EnableScoreSteal => _roleAbilityConfig != null && _roleAbilityConfig.EnableScoreSteal;
         public float PushCooldownRemaining => Mathf.Max(0f, _pushCooldownUntil - Time.time);
         public float SkillCooldownRemaining => Mathf.Max(0f, _lockCooldownUntil - Time.time);
 

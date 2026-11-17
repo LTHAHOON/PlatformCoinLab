@@ -39,7 +39,7 @@ namespace CoinGame.Utilities
         protected bool _isLoop;
 
         [SerializeField]
-        [Range(1, 100)]
+        [Range(0, 100)]
         protected int _spawnCount = 10;
 
         [SerializeField]
@@ -62,9 +62,6 @@ namespace CoinGame.Utilities
 
         [SerializeField]
         protected LayerMask _blockingLayerMask;
-
-        [SerializeField]
-        protected List<BoxCollider> _spawnZones = new();
 
         [SerializeField]
         protected bool _canUseObjectPool;
@@ -117,7 +114,10 @@ namespace CoinGame.Utilities
                     return;
                 }
 
-                _spawnCts = CancellationTokenSource.CreateLinkedTokenSource(destroyCancellationToken);
+                if (_spawnCts == null)
+                {
+                    _spawnCts = CancellationTokenSource.CreateLinkedTokenSource(destroyCancellationToken);
+                }
                 if (_isLoop)
                 {
                     _spawnedTokens = new();
@@ -184,24 +184,46 @@ namespace CoinGame.Utilities
             }
 
             _stageSessionBound = false;
+            if (!_isLoop && _spawnCts != null)
+            {
+                CancelSpawn();
+                _lastSpawnedStageRound = -1;
+            }
         }
 
         private void OnStageSessionChanged(StageSession stageSession, bool isStart)
         {
-            SetSpawnCount(CoinGame.Network.NetworkRoundState.Instance != null ? CoinGame.Network.NetworkRoundState.Instance.SpawnCoins : stageSession.RequiredCoins);
             if (!isStart || _lastSpawnedStageRound == stageSession.Round)
             {
                 return;
             }
 
             _lastSpawnedStageRound = stageSession.Round;
-            _spawnCts ??= CancellationTokenSource.CreateLinkedTokenSource(destroyCancellationToken);
+            CancelSpawn();
+            SetSpawnCount(GetRoundSpawnCount(stageSession));
+            _spawnCts = CancellationTokenSource.CreateLinkedTokenSource(destroyCancellationToken);
             SpawnAsync(_spawnCts.Token, _spawnCount, _spawnFirstDelay).Forget();
+        }
+
+        protected virtual int GetRoundSpawnCount(StageSession stageSession)
+        {
+            return stageSession.RequiredCoins;
+        }
+
+        private void CancelSpawn()
+        {
+            CancellationTokenSource previous = _spawnCts;
+            _spawnCts = null;
+            if (previous != null)
+            {
+                previous.Cancel();
+                previous.Dispose();
+            }
         }
 
         public void SetSpawnCount(int spawnCount)
         {
-            _spawnCount = Mathf.Max(1, spawnCount);
+            _spawnCount = Mathf.Max(0, spawnCount);
         }
 
         public void Spawn()
@@ -244,12 +266,9 @@ namespace CoinGame.Utilities
             }
             finally
             {
-                if (!_isLoop)
+                if (!_isLoop && _spawnCts != null && _spawnCts.Token == token)
                 {
-                    if (_spawnCts != null)
-            {
-                _spawnCts.Dispose();
-            }
+                    _spawnCts.Dispose();
                     _spawnCts = null;
                 }
             }
@@ -319,14 +338,7 @@ namespace CoinGame.Utilities
                 Addressables.Release(_spawnPrefabHandle);
             }
 
-            if (_spawnCts != null)
-            {
-                _spawnCts.Cancel();
-            }
-            if (_spawnCts != null)
-            {
-                _spawnCts.Dispose();
-            }
+            CancelSpawn();
         }
 
         public bool IsDefaultPlayerSpawner => _isDefaultPlayerSpawner;

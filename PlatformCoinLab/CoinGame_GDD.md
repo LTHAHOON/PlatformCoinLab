@@ -248,6 +248,16 @@
 
 ---
 
+### 상자 스폰 배치 설정 (2026-11-17 구현)
+
+- `Coin_Spawner`와 `Crate_Spawner`는 같은 `NetworkSpawner`를 사용한다. `Spawn Kind`로 Coin/Crate를 구분하고, 상자 개수는 기존 StageConfig를 유지한다. 상자 풀링과 반복 리스폰은 사용하지 않는다.
+- `ScriptableObject/Spawn/CrateRotation.asset`의 `_minVector`/`_maxVector`는 Euler 각도 범위다. 기본 Min=(0,0,0), Max=(0,360,0)으로 Y축만 무작위 회전한다. 기존 VectorMinMaxData를 재사용한다.
+- `CratePlacement.asset`에서 LocalForward(+Z), BlockingMask(Default/Environment/Grass), RotationAttempts(16), FrontDistance(1.2m), FrontHalfWidth(0.4m), FrontHalfHeight(0.3m), CollisionPadding(0.02m)을 Inspector로 조정한다. 각 설정은 서버 배치에 적용한다.
+- 회전한 BoxCollider가 겹치는 후보를 제외하고, 전면 BoxCast로 접근 공간이 열린 방향을 선택한다. 전면이 모든 후보에서 막힌 경우에는 겹침 없는 후보 중 여유가 가장 큰 방향을 사용하고 경고한다. 겹침 없는 후보 자체가 없으면 생성 실패를 기록하고 예약을 남기지 않는다.
+- CoinPlacement는 기존 위치 보정과 프리팹 회전을 유지한다. 풀 객체도 Spawn 전에 위치·회전을 다시 적용한다. 두 종류 모두 전체 Ground Grid를 사용하며 전용 Zone을 만들지 않는다.
+- 기존 BaseSpawner/NetworkSpawner는 직렬화 및 플레이어 생성 수명주기를 보존하기 위해 길이 규칙의 예외로 유지하고, 새 배치 판정·설정·배치 정리 책임은 별도 코드로 분리했다.
+- 통합 후 남은 미사용 `NetworkCrateSpawner.cs`와 `.meta`를 제거했다. 이전 예약 API 호출로 발생한 CS0117 두 건을 해결했으며, 씬·프리팹 GUID 참조가 없음을 확인했다. Unity 6000.6.7f1 재컴파일 성공 및 Console 오류·경고 0개를 확인했다. 이번 정리는 컴파일 검증만 수행했다.
+
 ## 7. 전투 시스템
 
 ### 7.1 공통 `[제안]`
@@ -279,9 +289,9 @@
 - 수집한 코인은 팀 진행도 바에 표시: "코인 7/13".
 
 #### 파트 1 확정 보완 `[확정]`
-- 코인은 맵의 `CoinZones` 아래 구역별 `Coin_Spawner` 규격으로 배치한다.
-- 후보 좌표는 장애물 겹침, Ground 레이캐스트, 코인 간 최소 거리와 시작 지점 간격을 검사한다.
-- 시도 상한을 넘으면 다른 구역으로 재분배하고 경고를 기록한다. 전체 생성 수는 `StageConfig` 계산값과 일치해야 한다.
+- `CoinZones`와 `CrateZones`는 생성하지 않는다. Grid Spawn 경로의 `Coin_Spawner`와 `Crate_Spawner` 후보 범위는 전체 `Ground` 셀이다.
+- 후보 셀은 `Ground`이면서 `StaticBlocked`가 아니어야 하고, 서버의 공용 예약으로 플레이어·코인·상자 간 중복을 막는다.
+- Grid 자산이 없는 legacy 경로에서만 기존 Zone 탐색, 장애물 겹침, Ground 레이캐스트, 최소 거리 검사를 사용한다.
 
 ### 8.2 스테이지 설계 `[제안]`
 스테이지는 `StageMapPool`에 등록된 여러 맵 프리팹에서 서버가 랜덤 선택한다. 직전 라운드 맵과 다른 맵을 우선 선택하고, 등록 맵이 하나뿐이면 같은 맵을 허용한다.
@@ -299,7 +309,7 @@
 
 #### 파트 1 확정/제안 보완
 - Palmov Island `Location with environment`는 원본을 수정하지 않고 `_CoinGame/Prefabs/Maps`의 복사본에서 사용한다. `[확정]`
-- 맵 프리팹 표준 자식은 `StartAnchor`, `ExitAnchor`, `PlayerSpawnPoints`, `CoinZones`, `CrateZones`, `Bounds`, `Decor`, `Ground`이다. `[확정]`
+- 맵 프리팹 표준 자식은 `StartAnchor`, `ExitAnchor`, `PlayerSpawnPoints`, `Bounds`, `Decor`, `Ground`이다. `[확정]`
 - 맵 높이 pitch는 고정하고 하단·상단 앵커를 같은 X/Z 정렬 규칙으로 배치한다. `[확정]`
 - `Map_Palmov_A/B/C` 변형은 같은 에셋의 배치 차이로 순환한다. `[제안]`
 
@@ -317,7 +327,7 @@
 
 우선순위가 있고, 구현이 가볍고 재미를 주는 순서로 정리.
 
-1. **코인 자석 / 콤보**: 짧은 시간 내 연속 코인 수집 시 콤보 점수와 이펙트(10대 타깃, 쾌감). 점수는 결과 화면 개인 랭킹에 반영.
+1. **코인 자석 / 콤보**: 짧은 시간 내 연속 코인 수집 시 콤보 연출과 이펙트(10대 타깃, 쾌감).
 2. **방해자 레이더**: 일정 주기(20초)마다 가장 가까운 수집가 방향을 화살표로 표시.
 3. **수집가 팀 시너지**: 두 수집가가 가까이 있으면 이동속도 +5% (뭉치는 선택 vs 흩어지는 선택).
 4. **이모트/핑**: 모바일 대응 간단 이모트 4종(도와줘, 여기, 조심, 굿).
@@ -415,10 +425,13 @@ Assets/
       Coin_Spawner.prefab
       Items/                         # Crate.prefab
       M3/                            # 아이템 외형·픽업·투사체·장착 무기 외형
-    ScriptableObject/                # Stage, RoleAbility, PlayerStats, 이동 범위, M1 설정
-      M3/                            # 현재 비어 있음
+    ScriptableObject/                # 런타임 설정·아이템·플레이어·세션 데이터
+      ItemData/                      # Item_*.asset, Weapon_*.asset, Crate_Default.asset
+      Player/                        # AnimatorParameterSet, PlayerStats 관련 데이터
+      Session/                       # MultiplayerSession, SessionConnector
+      Spawn/                         # CrateRotation(VectorMinMaxData), CratePlacement, CoinPlacement
     Scripts/
-      Data/                          # 현재 Item_*.asset, Weapon_*.asset 데이터 에셋
+      ItemData/                      # 현재 Item_*.asset, Weapon_*.asset 데이터 에셋
       Managers/                      # GameManager
       Sessions/                      # StageSession: 로컬 라운드 상태와 이벤트
       Stage/                         # StageConfig, RoleAbilityConfig 정의
@@ -433,7 +446,7 @@ Assets/
         M2PrototypeBootstrap.cs      # InGame 단독 실행 시 Persistent 보완 로드
       Network/                       # 연결·로비·서버 판정·상태 동기화·일부 표시
       Timeline/                      # PlayableDirectorController
-      UI/                            # 역할 선택·계정·점수·진행도·HUD
+      UI/                            # 역할 선택·계정·진행도·HUD·승패 결과
       Utilities/                     # 풀·스포너·저장·씬 참조·벡터 유틸리티
       StageLoader.cs                 # Addressables 프리팹 로드와 해제
     Tests/
@@ -446,7 +459,7 @@ Assets/
     Generated/                       # 생성된 ElectricExplosion, ShieldCapsule
 ```
 
-`Scripts/Data`는 이름과 달리 현재 C# 정의가 아닌 **ScriptableObject 인스턴스 에셋**을 담는다. 정의 클래스는 `Gameplay/Combat/WeaponData.cs`, `Gameplay/Items/ItemData.cs` 등에 있다. `Material`과 `Materials`, `ScriptableObject`와 `Scripts/Data`는 실제로 공존하므로 문서에서 합치지 않았다.
+`ScriptableObject/ItemData`, `ScriptableObject/Player`, `ScriptableObject/Session`은 C# 정의가 아닌 **ScriptableObject 인스턴스 에셋**을 담는다. 정의 클래스는 `Gameplay/Combat/WeaponData.cs`, `Gameplay/Items/ItemData.cs` 등에 있다.
 
 #### 공용 설정과 외부 에셋
 
@@ -486,13 +499,13 @@ Assets/
 |---|---|
 | `NetworkRoundState.cs` | 서버의 방 설정·준비·씬 로드·배치·라운드·시간·코인·승자를 관리하고 NetworkVariable과 RPC로 공유한다. |
 | `NetworkPlayerController.cs` | 소유자 입력을 받아 이동·회전·카메라 추적을 수행하고 전투·아이템·방해 스킬 요청을 전달한다. |
-| `NetworkPlayerStats.cs` | 역할·점수·체력·생사·부활과 무적·경직·은신·부스트·습득 금지 등 상태를 서버에서 변경·동기화한다. |
-| `NetworkCoinController.cs` | 서버에서 Collector의 접촉·수집 가능 여부를 판정하고 점수·남은 코인을 갱신한다. |
+| `NetworkPlayerStats.cs` | 역할·체력·생사·부활과 무적·경직·은신·부스트·습득 금지 등 상태를 서버에서 변경·동기화한다. |
+| `NetworkCoinController.cs` | 서버에서 Collector의 접촉·수집 가능 여부를 판정하고 남은 코인을 갱신한다. |
 | `NetworkInventory.cs` | 서버 권한 무기 슬롯·현재 무기·탄창·예비 탄약·부스트·부활 보유와 아이템 효과 적용을 처리한다. |
 | `NetworkCombat.cs` | 공격·장전·무기 변경 RPC를 검증하고 서버에서 쿨타임·탄약·근접/원거리 공격을 처리한다. 장착 외형도 갱신한다. |
 | `NetworkProjectile.cs` | 서버에서 투사체 이동·충돌·피해·사거리 종료와 Despawn을 처리한다. 현재 생성은 Instantiate+Spawn이다. |
 | `NetworkCrate.cs` | 서버에서 상자 체력·파괴·가중치 드롭을 판정하고 픽업을 생성한다. |
-| `NetworkCrateSpawner.cs` | 네트워크 서버 준비 후 상자를 생성하고 수명주기에 맞춰 정리한다. |
+| `Utilities/NetworkSpawner.cs` | Coin/Crate 종류별 라운드 생성 개수·Ground 배치·서버 Spawn을 처리한다. 기존 NetworkCrateSpawner는 제거했다. |
 | `NetworkItemPickup.cs` | 서버에서 접촉·습득 제한을 확인하고 인벤토리에 아이템을 적용한다. 클라이언트에서는 아이템 외형을 구성한다. |
 | `NetworkWorldHealthBar.cs` | 월드 체력 바를 생성하고 카메라 방향에 맞춘다. 은신한 적의 체력 바는 숨긴다. |
 | `M3DebugTools.cs` | 에디터/Development Build용 F1~F9 아이템 지급 요청과 서버 처리를 제공한다. |
@@ -501,7 +514,7 @@ Assets/
 
 | 경로 | 핵심 역할 |
 |---|---|
-| `Managers/GameManager.cs` | StageConfig 로드, additive 씬 전환, 서버 상태→로컬 이벤트 중계와 종료 점수 저장을 조율한다. Camera/EventSystem 중복도 정리한다. |
+| `Managers/GameManager.cs` | StageConfig 로드, additive 씬 전환, 서버 상태→로컬 이벤트 중계와 종료 상태를 조율한다. Camera/EventSystem 중복도 정리한다. |
 | `Sessions/StageSession.cs` | 라운드 번호·목표/수집 코인·제한 시간을 담는 로컬 값 타입 스냅샷이다. 네트워크 판정의 원본은 NetworkRoundState다. |
 | `StageLoader.cs` | Addressables 주소의 프리팹을 비동기 생성하고 파괴 시 인스턴스·핸들을 해제한다. 라운드 판정 담당은 아니다. |
 | `Input/PlayerInputState.cs` | 이동 벡터와 공격·상호작용·장전·아이템·스킬 버튼 상태를 담는 구조체다. |
@@ -515,7 +528,7 @@ Assets/
 | 경로 | 핵심 역할 |
 |---|---|
 | `Stage/StageConfig.cs` | 라운드 수·제한 시간·코인 증가량과 요구/생성 코인 수 계산을 제공하는 SO다. |
-| `Stage/RoleAbilityConfig.cs` | 밀치기·코인 잠금·훔치기 등 방해 능력의 거리·효과·쿨타임 설정 SO다. |
+| `Stage/RoleAbilityConfig.cs` | 밀치기·코인 잠금 등 방해 능력의 거리·효과·쿨타임 설정 SO다. |
 | `Gameplay/Player/PlayerStatsConfig.cs` | 기본 체력·성장·회복·피격·부활·부스트 등의 수치 SO다. |
 | `Gameplay/Player/PlayerLifeState.cs` | Alive·Dead·Spectating 생명 상태를 구분한다. |
 | `Gameplay/Stage/RoundOutcomeEvaluator.cs` | 승패와 시간 초과 피해를 계산하는 순수 C# 규칙이다. 현재 NetworkRoundState의 직접 호출은 없다. |
@@ -535,15 +548,17 @@ Assets/
 - Yurowm 캐릭터 복사본과 `AC_YurowmPlayer` 컨트롤러를 `_CoinGame` 아래에 배치했다.
 - 기존 Player 루트 네트워크 컴포넌트와 모델 메시를 보존하고 Yurowm 모델을 자식으로 연결했다.
 - Palmov 기반 `Map_Palmov_A/B/C`와 앵커·구역·Bounds 표준 구조를 추가했다.
-- 코인/상자 후보 위치에 구역 탐색과 Ground 레이캐스트를 추가했다.
+- 코인/상자 후보 위치에 Grid Ground 셀 예약을 추가하고, 맵 생성 도구와 현재 InGame 씬에서 Coin/Crate 전용 Zone을 제거했다.
 - `CoinGame/Validate Active Map` 에디터 검증 메뉴를 추가했다.
 
 #### 화면 표시: UI/
 
 | 스크립트 | 핵심 역할 |
 |---|---|
-| `PlayerAccountView.cs` | 계정 닉네임 입력·표시와 계정 변경 알림을 연결한다. |
-| `PlayerStatsView.cs` | 네트워크 플레이어의 닉네임·점수·역할 등을 화면에 반영한다. |
+| `PlayerAccountView.cs` | 로컬 계정의 UI 표시 이름을 출력한다. |
+| `PlayerNamePopup.cs` | Persistent 진입 시 이름을 입력·확인하며 공백 입력을 거부한다. |
+| `RoleRosterView.cs` | 각 클라이언트에 스폰된 Player의 역할과 동기화 이름으로 Collector/Disruptor 목록을 갱신한다. |
+| `MatchResultView.cs` | 최종 승패에 따라 로컬 역할 기준 `WIN` 또는 `LOSS`를 크게 표시한다. |
 | `RoleSelectionUI.cs` | 역할 선택 버튼으로 서버에 변경을 요청하고 정원·선택 상태를 표시한다. |
 | `StageView.cs` | 라운드·남은 시간·코인 수집 진행도와 종료 상태를 표시한다. |
 | `InGameHudView.cs` | 로컬 플레이어 체력·무기·탄약·퀵슬롯·상태·부활 대기·스킬 쿨타임을 표시한다. |
@@ -554,7 +569,10 @@ Assets/
 |---|---|
 | `BaseSpawner.cs` | 생성 영역·위치 등 스포너 공통 기반을 제공한다. |
 | `Spawner.cs` | 일반 GameObjectPool을 사용하는 로컬 오브젝트 생성·회수를 담당한다. |
-| `NetworkSpawner.cs` | 서버에서 연결된 플레이어를 PlayerObject로 생성하고 게임 배치·안전 지점 재배치를 처리한다. |
+| `NetworkSpawner.cs` | 플레이어 생성·재배치를 유지하며 Coin/Crate 공통 생성에 GridSpawnPlacement, NetworkSpawnBatch를 사용한다. |
+| `GridSpawnPlacement.cs` | Ground 후보와 설정된 Vector3 회전 범위에서 배치를 선택하고 상자 몸체 겹침·전면 여유를 검사한다. |
+| `NetworkSpawnBatch.cs` | 스포너가 생성한 객체를 추적하고 라운드 변경 시 이전 객체·예약을 정리한다. |
+| `SpawnPlacementSettings.cs` | 회전 범위, 위치 보정, 전면 방향·거리·폭과 LayerMask를 담는 설정 SO다. |
 | `GameObjectPool.cs` | 일반 GameObject를 재사용하고 반환받는 풀이다. |
 | `NetworkGameObjectPool.cs` | NGO 프리팹 핸들러와 네트워크 객체 재사용을 연결하고 Spawn/Despawn 경로를 제공한다. |
 | `PlayerPrefsStorage.cs` | PlayerPrefs 기반 저장·조회 유틸리티다. |
@@ -643,7 +661,7 @@ flowchart TD
 
 핵심 권한 경계는 **이동은 소유자, 수집·피해·아이템·승패는 서버**다. `PlayerInputState`는 현재 실제 입력 경로에서 사용하지만 구조체 자체를 서버로 보내는 방식은 아니다. 서버에 필요한 행동 요청은 개별 RPC로 전달한다.
 
-`RoundOutcomeEvaluator`는 테스트되는 독립 규칙 유틸리티이며 현재 `NetworkRoundState`에서 직접 호출되지 않는다. 실제 라운드 승패 로직은 `NetworkRoundState`에 구현되어 있다. 투사체는 현재 `Instantiate+Spawn`으로 생성하며 종료 시 Despawn 유틸리티를 사용한다. 상자 스포너는 서버 라운드 상태 이벤트를 구독하며 라운드 번호가 변경될 때 기존 네트워크 상자를 정리한 뒤 새 상자를 생성한다. InGame 맵 grid 측정 도구를 추가했고, 현재 Environment 89개와 Grass 16개의 Collider를 분석한 결과 Ground 로컬 기준 복셸 footprint와 후보 셀 간격은 약 2.857이며 16×16 셀 범위로 추정된다. Border_6_7 기준 월드 간격 약 1.8과 원점을 사용해 장식 블록 26개의 X·Z 위치를 보정했고, 재측정 결과 105개 Collider가 하나의 lattice 잔차로 정렬되었다. Ground Renderer bounds는 비정사각형 mesh 특성 때문에 grid bounds의 기준으로 사용하지 않는다. `GridSpawnMap.asset`을 16×16으로 베이크했으며, 전체 셀 256개·정적 차단 셀 102개·플레이어 영역 16개·코인 영역 43개·상자 영역 12개를 기록했다. 경계 접촉만으로 인접 셀을 차단하지 않도록 점유 판정을 조정했다. 스폰너 런타임 연결과 실제 네트워크 플레이 검증은 아직 남아 있다.
+`RoundOutcomeEvaluator`는 테스트되는 독립 규칙 유틸리티이며 현재 `NetworkRoundState`에서 직접 호출되지 않는다. 실제 라운드 승패 로직은 `NetworkRoundState`에 구현되어 있다. 투사체는 현재 `Instantiate+Spawn`으로 생성하며 종료 시 Despawn 유틸리티를 사용한다. Coin_Spawner와 Crate_Spawner는 모두 NetworkSpawner를 사용하고 GameManager 라운드 이벤트에 맞춰 서버에서 이전 배치를 정리한 뒤 각각 SpawnCoins와 StageConfig.GetCrateCount 개수로 생성한다. InGame 맵 grid 측정 도구를 추가했고, 현재 Environment 89개와 Grass 16개의 Collider를 분석한 결과 Ground 로컬 기준 복셸 footprint와 후보 셀 간격은 약 2.857이며 16×16 셀 범위로 추정된다. Border_6_7 기준 월드 간격 약 1.8과 원점을 사용해 장식 블록 26개의 X·Z 위치를 보정했고, 재측정 결과 105개 Collider가 하나의 lattice 잔차로 정렬되었다. Ground Renderer bounds는 비정사각형 mesh 특성 때문에 grid bounds의 기준으로 사용하지 않는다. `GridSpawnMap.asset`을 16×16으로 베이크했으며, 전체 셀 256개·Ground 셀 256개·정적 차단 셀 102개·유효 동적 후보 154개를 기록했다. Coin/Crate Zone은 생성하지 않으며 runtime Grid 스폰 범위는 전체 Ground 유효 셀을 사용한다. `GridSpawnReservation`은 Player/Coin/Crate별 소유권과 reservation ID를 관리하며, 코인·상자는 서버에서 무작위 Ground 후보 셀을 예약한 뒤 Despawn 시 반환한다. 셀 배열 순차 선택으로 인한 한 줄 생성 편향은 제거했다. 부활 아이템 보유자의 승패 판정은 3초 유예 후 재평가하고, 최종 결과는 로컬 역할 기준 WIN/LOSS로 표시한다. Score의 NetworkVariable·RPC·증감/탈취 함수·저장 키·UI 참조를 제거하고 Remaining Coin으로 수집 진행도를 표시하며, 상자 아이템은 ItemKind별 NetworkItemPickup 프리팹 컴포넌트를 직접 참조한다. 잘못된 fileID로 공용 Ammo 외형에 fallback하던 참조를 교정했고 Gun/Sword는 기존 무기 외형을 사용하는 Item_Gun/Item_Sword 픽업을 등록했다. 정적 빌드는 오류 0개이며 실제 Host/Client·재접속·라운드별 스폰 충돌 검증은 아직 남아 있다.
 
 씬 서비스는 현재 `GameManager.ConfigureInGameSceneServices()` 기준으로 **InGame Camera와 Persistent EventSystem**을 사용한다. Persistent의 `Main Camera`와 InGame의 `EventSystem`을 비활성화한다.
 
@@ -711,7 +729,7 @@ flowchart TD
 | 프로젝트 소개 | 게임 이름·장르·대상 플랫폼·핵심 플레이 |
 | 개발 정보 | 제작자·개발 기간·Unity 및 주요 패키지 버전 |
 | 실행 자료 | 대표 이미지·플레이 영상·실행 파일과 소스의 위치 |
-| 주요 구현 기능 | 기능의 목적·구현 방식·자료 구조와 처리 순서·핵심 코드 위치 |
+| 주요 구현 기능 | 기능의 목적·구현 방식·자료 구조와 처리 순서·핵심 코드 위치. Score 없이 Remaining Coin·경기 누적 Kills·WIN/LOSS를 표시하며 Disruptor는 Remaining Coin을 숨긴다. 이름 저장 분리·이름#번호·UserName·역할 목록은 실제 MPP Main+Player2로 검증했다. Player/Crate Ground 접촉은 로컬 Host 검증 |
 | 플랫폼 대응 | 플랫폼별 입력·화면·저장·생명주기·콘텐츠 처리와 실행 결과 |
 | 추가·개선한 부분 | 수업 구현과의 차이·필요한 이유·구현 방법·동작 결과 |
 | 문제 해결 사례 | 실제 문제와 재현 조건·원인·수정 내용·재검증 결과 |
@@ -739,14 +757,47 @@ flowchart TD
 5. 최소 한 개의 대표 기기와 에디터 측정 환경에서 프로파일 결과를 저장하고 변경 전후 수치를 문서에 반영한다.
 
 ### 16.3 구현된 공용 기반과 검증 상태
+- 2026-11-17 스포너 통합: Crate_Spawner를 NetworkSpawner로 이전하고 Crate를 Local_Core Addressable에 등록했다. 기존 플레이어 스폰 경로는 유지했다. 실제 맵 배치 100회/82개 Y방향/전면 fallback 0건, 로컬 Host의 코인 10+상자 10 생성·상자 몸체 겹침 0·Environment 전면 차단 0, 다음 라운드 중복 호출 후 이전 상자 0·동적 예약 20을 확인했다. 상자 0개 설정·빠른 라운드 교체 취소·회전 상자 드롭/습득·막힌 전면 fallback·몸체 충돌 거부도 실행했다. 비활성화/재활성화 후 즉시 라운드 교체 검사에서는 기존 StageConfig(상자 7~10개)에서 선택된 7개와 실제 상자 7개·코인 10개·예약 17개가 일치했다. EditMode 기존 3개 테스트도 통과했다. 생성·검증 중 Console 오류/경고 0개이며 별도 Client의 회전 일치와 Player 빌드는 미실행이다.
+
+- 2026-11-17 상자 외형 수정: Crate의 7종 픽업 참조가 NetworkItemPickup 대신 애니메이션 컴포넌트 fileID를 가리켜 null로 처리되던 원인을 Unity에서 확인하고 교정했다. Gun/Sword 전용 픽업·NGO 등록과 공용 fallback 제거를 반영했다. 로컬 Host PlayMode에서 실제 SpawnPickupServer를 9종에 실행해 프리팹 이름·동기화 ItemKind·고유 해시·습득 활성화 전환을 검사했고 전부 통과했다. 외형 스크린샷 확인 및 테스트 중 Console Error/Warning 0개를 확인했다. 별도 Client 검증은 미실행이다.
+
+- 2026-11-17 Score 제거: 코인 점수 증가, 점수 동기화/RPC, 점수 탈취, 저장 키 및 잔여 UI 참조를 제거했다. Remaining Coin 감소·클리어·WIN/LOSS 경로는 유지한다. 정적 빌드는 오류 0개·기존 외부 셰이더 경고 1개로 확인했다. 이번 변경의 Unity Editor 컴파일·PlayMode·Host/Client 검증은 MCP 응답 중단으로 미확인이다.
 
 - `StageLoader`는 Addressables 비동기 생성 실패 시 최대 재시도 후 오류를 안내하고, 성공·실패 핸들을 해제한다. `AddressableRetryLoader`는 일반 자산 로드에도 같은 재시도·해제 규칙을 제공한다.
 - `ContentServerHealthProbe`는 localhost HTTPS 인증서를 개발 환경에서 처리하고, `RoomLobbyContentService`에서 지수형 지연 재시도를 수행한다. 실제 ASP.NET Core 서버 중단·복구 결과는 아직 미확인이다.
 - `JsonSettingsStorage`는 버전 봉투, JSON 예외 처리, 검증 실패 시 안전한 읽기 실패 반환을 제공한다. 실제 게임 설정 적용 연결은 후속 작업이다.
 - `ApplicationLifecycleService`는 앱 중단·포커스 변경 때 저장을 호출하고 복귀 이벤트를 제공한다. `SafeAreaLayout`은 해상도·Safe Area 변경을 추적한다. 실제 Android 기기 확인은 미확인이다.
 - `SoundPlayer`는 AudioSource와 AudioClip을 분리해 효과음을 재생한다. 실제 사운드 에셋 연결과 볼륨 UX는 미확인이다.
-- `Assembly-CSharp.csproj` 빌드는 오류 0개, 기존 경고 1개로 통과했다. Unity EditMode 3/3, PlayMode 4/4, Console 오류 0개를 확인했다. Unity Editor 컴파일은 통과했으며 PC Player·Android Player·Profiler 수치는 아직 실행 전이다.
+- `Assembly-CSharp.csproj` 빌드는 오류 0개, 기존 경고 1개로 통과했다. Grid 예약 확장은 Unity Editor에서 Persistent + InGame additive PlayMode 스모크 후 정상 종료와 Console Error/Warning 0개를 확인했다. EditMode 전체 3/3도 통과했다. Host/Client·재접속·PC Player·Android Player·Profiler 수치는 아직 실행 전이다.
 ## 17. 웹 플랫폼 지원 및 Lands 맵 제작 규칙 `[확정]`
 
 - 지원 플랫폼은 PC, Android와 Web을 포함한다. Web 빌드는 입력·화면 비율·Safe Area·저장·Addressables 원격 콘텐츠·HTTPS 파일 서버 경로를 WebGL 제약에 맞춰 검증한다.
 - Web에서 파일 시스템 직접 접근을 사용하지 않고 브라우저 저장소와 HTTP(S) 콘텐츠 경로를 사용한다. WebGL에서는 스레드·소켓·인증서 처리 차이를 고려해 실패 안내와 재시도 결과를 기록한다.
+
+### Grid 바닥 높이 및 목록 중복 수정 (2026-11-17)
+
+- GridSpawnMapBaker가 Ground 높이에 더하던 0.8m를 제거했다. 기존 GridSpawnMap 256개 셀은 X/Z·flags를 보존하고 Ground 레이어 Raycast의 실제 표면 Y로 갱신했다. 기존 코인 월드 높이는 CoinPlacement.PositionOffset으로 보존한다.
+- Player 이동은 X/Z 범위만 제한하고 바닥 Y는 유지한다. 기존 Y=0 Clamp로 생기던 상승을 제거했다. CharacterController의 SkinWidth 0.08m가 이동 시 발을 띄우는 것을 확인해 Player 프리팹 Center.y를 1.05에서 1.13으로 보정했다. 런타임에서 Inspector 설정을 덮어쓰지 않는다. Crate는 기존 BoxCollider/프리팹 원점이 바닥에 맞으므로 Grid 높이만 수정했다.
+- RoleRosterView는 NGO에 등록된 대표 PlayerObject를 소유자별 한 번만 표시한다. 최종 이름 표시는 NetworkPlayerIdentity의 이름#번호를 그대로 사용하며, 이전 UI 전용 (2) 구분은 제거했다. 긴 이름에서도 구분자가 보이도록 목록 TMP 자동 크기 조절을 켰다. NetworkSpawner는 비동기 위치 대기 후 생성 직전 연결·기존 PlayerObject를 다시 확인해 기존 플레이어를 덮어쓰지 않는다. 이름 문자열만으로 참가자를 삭제하지 않는다.
+- Unity 6000.6.7f1 검증: Ground 셀 256개의 표면 높이 오차 0m, 재배치한 Player 바닥 접촉, 랜덤 회전 Crate 7개 바닥 오차 최대 약 0.00000018m를 확인했다. SkinWidth 보정 상태에서 실제 MoveAsync/입력 provider로 8.66m 이동한 뒤 root Y 변화 0m, 실제 발 메시의 최저점 오차 약 -0.003m를 확인했다. 반복 SpawnPlayer 요청 5회 후 로컬 소유자 PlayerObject는 1개였다.
+- 목록 검증은 로컬 Host와 합성 PlayerObject 1개로 같은 이름·서로 다른 역할을 구성해 수행했다. 각 목록에 한 항목만 나오고 두 번째는 (2)로 구별됨을 확인했다. 16자 한글 동명이인의 구분자 표시·overflow 없음도 화면으로 확인했다. 정상 검증 중 Console 오류/경고 0개다. 테스트 중 스크립트 재컴파일로 끊긴 실행은 검증 근거에서 제외했다. 별도 원격 Client와 Player 빌드·Android/Web 검증은 미실행이다.
+
+### 표시 이름과 킬 HUD (2026-11-17)
+
+- Persistent의 OutGame_Canvas에 직렬화된 PlayerNamePopup을 배치했다. 진입할 때 저장된 이름을 미리 채우고 확인을 요구하며, 공백/제어 문자 입력은 저장하지 않는다. 기본 16자 제한은 ScriptableObject/Player/PlayerNameSettings.asset에서 조정한다. Network FixedString64Bytes 용량에 맞춰 최대 20 UTF-16 코드 단위로 제한한다.
+- LocalPlayerProfile은 확정한 이름을 프로세스 메모리에 보존하고 PlayerProfileStorage가 구분한 PlayerPrefs 키에 저장한다. Main/일반 Player는 기존 CoinGame.DisplayName.v1 키를 유지하고, MPP Virtual Player는 설치 패키지 FAQ의 -name 인자를 붙인다(실제 Player2 키: CoinGame.DisplayName.v1.Player 2). PlayerAccount의 기존 GUID/온라인 상태는 유지한다. NetworkPlayerIdentity는 소유자 RPC 요청을 서버에서 검증하고 이름과 번호를 각각 NetworkVariable로 복제한다. UserName과 역할 목록은 복제된 이름#번호를 사용한다.
+- 이름 입력·UserName·역할 목록은 richText를 끄고 NotoSansKR_Dynamic 글꼴을 사용한다. Google Fonts의 Noto Sans KR 원본과 OFL 라이선스는 Assets/_CoinGame/Fonts에 포함했다. 출처: https://github.com/google/fonts/tree/main/ofl/notosanskr
+- NetworkPlayerStats의 KillCount는 서버 권한으로 적 플레이어의 무기 피해 사망당 1 증가한다. 환경 피해·자살·팀킬·같은 사망의 중복 타격은 제외하며 부활 뒤 다시 처치하면 새 킬로 집계한다. 라운드 사이에는 유지하고 새 Player 네트워크 스폰에서 초기화한다.
+- Kills 패널은 InGame의 RemainingCoin 패널을 복제해 같은 시각 스타일로 그 아래 배치했다. StageView는 Disruptor일 때 RemainingCoin 패널만 숨기며 Kills는 유지한다.
+- Unity 6000.6.7f1 컴파일 및 로컬 Host PlayMode에서 팝업 자동 표시·공백 거부·저장/재진입 미리 채움·한글 입력 표시·UserName·역할별 목록·소유자 이름 RPC·킬 중복 방지·환경/팀 피해 제외·라운드 초기화 후 킬 유지·역할별 코인 패널 표시를 확인했다. 수정 후 Console Error/Warning 0개와 화면 캡처로 HUD 분리를 확인했다. Host 테스트는 로컬 실행과 서버 메서드 호출을 사용했으며 별도 Client의 원격 이름/킬 수신, 실제 무기 조작, Android/Web Player 검증은 미실행이다.
+- 길이 규칙 예외: 기존 PlayerAccount/NetworkPlayerStats/StageView의 GUID·네트워크 직렬화·Unity 수명주기를 보존했다. 신규 설정/로컬 저장/네트워크 이름/팝업/역할 목록은 각각 한 책임으로 분리했으며, 필수 직렬화 필드와 이벤트 구독·해제를 명시하기 위해 350자 초과를 허용했다.
+
+### MPP 이름 분리와 번호 태그 (2026-11-17)
+
+- 원인: 기존 DisplayName getter가 매번 공용 PlayerPrefs 키를 다시 읽어 스폰 시점에 다른 인스턴스가 저장한 이름을 보낼 수 있었다. Main과 Player2는 같은 제품의 PlayerPrefs 저장소를 사용한다. LocalPlayerProfile의 프로세스별 확정값 캐시와 PlayerProfileStorage의 MPP 인스턴스별 키로 분리했다. Domain Reload 비활성화 시에도 SubsystemRegistration에서 세션 캐시/이벤트를 초기화한다. 기존 Main 이름 저장값은 유지한다.
+- NetworkPlayerIdentity가 서버에서 방 내 중복 없는 네 자리 번호를 배정하고 이름과 별도로 동기화한다. PlayerNameSettings.asset의 _firstNumber/_lastNumber 기본값은 1000/9999다. 번호는 접속에 부여하며 이름을 변경해도 유지한다. 재접속하면 새 번호가 배정될 수 있고 영구 계정 ID를 대체하지 않는다. UserName/Collector List/Disruptor List의 최종 표시는 이름#1000 형식이다.
+- UserName은 기존 배경 폭을 사용하도록 RectTransform을 늘리고 글자 자동 크기 조절을 적용해 번호 잘림을 줄였다. Inspector 설정을 저장하며 런타임에서 UI 배치를 덮어쓰지 않는다.
+- Unity 6000.6.7f1의 실제 Multiplayer Play Mode Main + Player2를 로컬 Unity Transport로 연결했다. MainName#1000/PlayerTwo#1001을 양쪽 역할 목록에서 확인했고, 각자의 UserName도 해당 이름/번호와 일치했다. Player2 변경 ClientRenamed#1001도 Host에 수신됐으며 Main은 MainName을 유지했다.
+- 실제 Player2 재접속 후 PlayerTwo#1002 수신을 확인했다. 같은 기본 이름을 입력했을 때도 양쪽에서 MainName#1000/MainName#1002로 구분됐으며 Client 소유자 UI는 MainName#1002였다. 공용 저장 키에 외부 값을 써도 확정한 메모리 이름이 바뀌지 않는 검사도 통과했다.
+- 검증 중 스크린샷 도구가 Virtual Player에 없는 Game 메뉴를 호출한 경고와 일시정지 중 transport receive queue 경고/연결 끊김이 있었다. 다시 연결해 화면 캡처 없이 검증한 구간은 Host/Client Console 오류·경고 0개였다. 최종 재컴파일도 성공했다. Relay 세션 경로, 플랫폼 Player 빌드, Android/Web은 이번 이름 수정에서 미검증이다.
+- 테스트용 이름을 복원하고 임시 MCP 연결 Editor 스크립트 및 meta를 제거했다. 테스트용으로 켠 Player2는 원래 비활성 상태로 되돌렸다. PlayerProfileStorage는 저장 키 식별 한 책임으로 분리했으며 MPP 인자 처리/조건부 컴파일을 명시하기 위해 350자 규칙 예외로 기록한다.

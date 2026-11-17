@@ -8,7 +8,8 @@ namespace CoinGame.Network
 
     public class NetworkItemPickup : NetworkBehaviour
     {
-        [SerializeField] private ItemData _data;
+        [SerializeField]
+        private ItemData _data;
         private readonly NetworkVariable<byte> _kind = new((byte)ItemKind.Ammo);
         private readonly NetworkVariable<bool> _pickupEnabled = new(true);
         private bool _serverPickupEnabled = true;
@@ -22,9 +23,7 @@ namespace CoinGame.Network
             }
 
             _data = data;
-            _kind.Value = (byte)data.Kind;
             _serverPickupEnabled = pickupEnabled;
-            _pickupEnabled.Value = pickupEnabled;
             ApplyPickupState(pickupEnabled);
         }
 
@@ -40,6 +39,12 @@ namespace CoinGame.Network
 
         public override void OnNetworkSpawn()
         {
+            if (IsServer)
+            {
+                _kind.Value = (byte)_data.Kind;
+                _pickupEnabled.Value = _serverPickupEnabled;
+            }
+
             _pickupEnabled.OnValueChanged += OnPickupEnabledChanged;
             _kind.OnValueChanged += OnKindChanged;
             ApplyPickupState(_pickupEnabled.Value);

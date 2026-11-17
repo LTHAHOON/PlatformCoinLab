@@ -13,11 +13,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: CoinGame.Stage::RoleAbilityConfig
   PushCooldown: 3
   LockCooldown: 8
-  StealCooldown: 10
   CoinLockDuration: 3
   PushForce: 5
   AbilityRange: 2.5
   PushStunDuration: 0.4
   ItemBlockDuration: 5
   ItemBlockCooldown: 10
-  StealAmount: 1

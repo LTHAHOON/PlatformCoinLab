@@ -85,6 +85,7 @@ GameObject:
   - component: {fileID: 5741512235617506555}
   - component: {fileID: 7000000000000000002}
   - component: {fileID: 7000000000000000001}
+  - component: {fileID: 7892611668277838872}
   m_Layer: 0
   m_Name: Player
   m_TagString: Untagged
@@ -155,7 +156,7 @@ CharacterController:
   m_StepOffset: 0.3
   m_SkinWidth: 0.08
   m_MinMoveDistance: 0.001
-  m_Center: {x: 0, y: 1.05, z: 0}
+  m_Center: {x: 0, y: 1.13, z: 0}
 --- !u!114 &5196579780850738354
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -393,6 +394,20 @@ MonoBehaviour:
   ShowTopMostFoldoutHeaderGroup: 1
   _parameterSet: {fileID: 11400000, guid: 7b8e1c4d6f9a2b3c5d7e8f0a1b2c3d45, type: 2}
   _animatorUtility: {fileID: 7000000000000000002}
+--- !u!114 &7892611668277838872
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8182628884086657673}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4cb63cf5a2a8be941ae4fa42ad97da73, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::CoinGame.Network.NetworkPlayerIdentity
+  ShowTopMostFoldoutHeaderGroup: 1
+  _settings: {fileID: 11400000, guid: 7d91cf72f4ff2a54cacd55cf39c3743e, type: 2}
 --- !u!1001 &8463007058085934949
 PrefabInstance:
   m_ObjectHideFlags: 0

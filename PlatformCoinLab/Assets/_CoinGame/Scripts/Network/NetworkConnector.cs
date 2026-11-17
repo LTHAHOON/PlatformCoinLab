@@ -88,12 +88,15 @@ namespace CoinGame.Network
             {
                 PlayerAccount.IsOnline = false;
             }
-            if (_defaultPlayerSpawner == null)
+            if (networkManager != null && networkManager.IsServer)
             {
-                return;
+                GridSpawnReservation.ReleasePlayer(clientId);
             }
 
-            _defaultPlayerSpawner.CancelSpawnPlayer(clientId);
+            if (_defaultPlayerSpawner != null)
+            {
+                _defaultPlayerSpawner.CancelSpawnPlayer(clientId);
+            }
         }
 
         public void ConnectHost()

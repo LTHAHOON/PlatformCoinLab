@@ -10,6 +10,18 @@ namespace CoinGame.Utilities
         private static GridSpawnMap _map;
         private static readonly Dictionary<int, GridSpawnKind> _owners = new();
         private static readonly Dictionary<ulong, int> _players = new();
+        private static readonly Dictionary<int, int> _dynamicOwners = new();
+        private static int _nextReservationId = 1;
+
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        private static void ResetSession()
+        {
+            _map = null;
+            _owners.Clear();
+            _players.Clear();
+            _dynamicOwners.Clear();
+            _nextReservationId = 1;
+        }
 
         public static void Configure(GridSpawnMap map)
         {
@@ -21,6 +33,8 @@ namespace CoinGame.Utilities
             _map = map;
             _owners.Clear();
             _players.Clear();
+            _dynamicOwners.Clear();
+            _nextReservationId = 1;
         }
 
         public static void ReleasePlayer(ulong clientId)
@@ -41,6 +55,36 @@ namespace CoinGame.Utilities
             }
 
             _players.Clear();
+        }
+
+        public static void ReleaseReservation(int reservationId)
+        {
+            if (!_dynamicOwners.Remove(reservationId, out int index))
+            {
+                return;
+            }
+
+            _owners.Remove(index);
+        }
+
+        public static bool CanReserveIndex(int index)
+        {
+            return _map != null && index >= 0 && index < _map.Cells.Length &&
+                CanReserve(_map.Cells[index], GridCellFlags.Ground);
+        }
+
+        public static bool TryReserveCell(int index, GridSpawnKind kind, out int reservationId)
+        {
+            reservationId = 0;
+            if (kind == GridSpawnKind.Player || !CanReserveIndex(index))
+            {
+                return false;
+            }
+
+            reservationId = _nextReservationId++;
+            _owners[index] = kind;
+            _dynamicOwners[reservationId] = index;
+            return true;
         }
 
         public static bool TryReservePlayer(ulong clientId, PlayerRole role, out Vector3 position)

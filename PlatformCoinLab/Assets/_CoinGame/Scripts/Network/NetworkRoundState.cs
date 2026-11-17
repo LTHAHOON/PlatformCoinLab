@@ -12,6 +12,7 @@ namespace CoinGame.Network
     using CoinGame.Managers;
     using CoinGame.Gameplay.Combat;
     using CoinGame.Gameplay.Items;
+    using CoinGame.Gameplay.Player;
     using CoinGame.Gameplay.Stage;
     using CoinGame.Utilities;
 
@@ -54,6 +55,7 @@ namespace CoinGame.Network
         private ClientSyncPhase _clientSyncPhase = ClientSyncPhase.LobbyReady;
 
         private CancellationTokenSource _roundCts;
+        private CancellationTokenSource _deathEvaluationCts;
         private double _nextTickTime;
         private float _roundStartDelay = 1f;
         private float _lobbyCountdownSeconds = 10f;
@@ -91,6 +93,12 @@ namespace CoinGame.Network
                 _roundCts.Dispose();
             }
             _roundCts = null;
+            if (_deathEvaluationCts != null)
+            {
+                _deathEvaluationCts.Cancel();
+                _deathEvaluationCts.Dispose();
+            }
+            _deathEvaluationCts = null;
             _round.OnValueChanged -= OnNetworkValueChanged;
             _maxRounds.OnValueChanged -= OnNetworkValueChanged;
             _targetCoins.OnValueChanged -= OnNetworkValueChanged;
@@ -383,12 +391,95 @@ namespace CoinGame.Network
                 return;
             }
 
-            if (CountAliveCollectorsServer() <= 0 || CountAliveDisruptorsServer() <= 0)
+            EvaluateTerminalStateServer();
+        }
+
+        public void NotifyPlayerRevivedServer()
+        {
+            if (!IsServer || !IsRoundActive)
             {
-                MatchWinner winner = CountAliveCollectorsServer() <= 0
-                    ? MatchWinner.Disruptor
-                    : MatchWinner.Collector;
-                FinishMatchServer(winner);
+                return;
+            }
+
+            EvaluateTerminalStateServer();
+        }
+
+        private void EvaluateTerminalStateServer()
+        {
+            if (!IsServer || !IsRoundActive)
+            {
+                return;
+            }
+
+            bool collectorsDead = CountAliveCollectorsServer() <= 0;
+            bool disruptorsDead = CountAliveDisruptorsServer() <= 0;
+            if (!collectorsDead && !disruptorsDead)
+            {
+                return;
+            }
+
+            if (HasPendingReviveWindowServer())
+            {
+                ScheduleDeathEvaluationServer();
+                return;
+            }
+
+            FinishMatchServer(collectorsDead ? MatchWinner.Disruptor : MatchWinner.Collector);
+        }
+
+        private bool HasPendingReviveWindowServer()
+        {
+            double now = NetworkManager.Singleton.ServerTime.Time;
+            foreach (NetworkClient client in NetworkManager.Singleton.ConnectedClientsList)
+            {
+                NetworkPlayerStats stats = client.PlayerObject == null
+                    ? null
+                    : client.PlayerObject.GetComponent<NetworkPlayerStats>();
+                NetworkInventory inventory = client.PlayerObject == null
+                    ? null
+                    : client.PlayerObject.GetComponent<NetworkInventory>();
+                if (stats != null && inventory != null && stats.LifeState == PlayerLifeState.Spectating &&
+                    stats.ReviveReadyAt > now && inventory.HasRevive)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private void ScheduleDeathEvaluationServer()
+        {
+            if (_deathEvaluationCts != null)
+            {
+                return;
+            }
+
+            _deathEvaluationCts = CancellationTokenSource.CreateLinkedTokenSource(destroyCancellationToken);
+            EvaluateDeathAfterReviveWindowAsync(_deathEvaluationCts.Token).Forget();
+        }
+
+        private async UniTaskVoid EvaluateDeathAfterReviveWindowAsync(CancellationToken token)
+        {
+            try
+            {
+                while (IsRoundActive && HasPendingReviveWindowServer())
+                {
+                    await UniTask.Delay(100, cancellationToken: token);
+                }
+
+                EvaluateTerminalStateServer();
+            }
+            catch (OperationCanceledException)
+            {
+            }
+            finally
+            {
+                if (_deathEvaluationCts != null && _deathEvaluationCts.Token == token)
+                {
+                    _deathEvaluationCts.Dispose();
+                    _deathEvaluationCts = null;
+                }
             }
         }
 

@@ -17,3 +17,5 @@ MonoBehaviour:
   BaseTimeLimit: 100
   TimeDecreasePerRound: 5
   MinimumTimeLimit: 3
+  CrateMinimum: 7
+  CrateMaximum: 10

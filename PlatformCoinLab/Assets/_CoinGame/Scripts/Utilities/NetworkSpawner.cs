@@ -4,12 +4,13 @@ using System.Threading;
 using Cysharp.Threading.Tasks;
 using Unity.Netcode;
 using UnityEngine;
-using System.Linq;
 
 namespace CoinGame.Utilities
 {
     using CoinGame.Network;
     using CoinGame.Player;
+    using CoinGame.Session;
+    using CoinGame.Stage;
 
     // Kept as a component to preserve Netcode behavior and inherited serialized fields.
     public class NetworkSpawner : BaseSpawner
@@ -18,7 +19,6 @@ namespace CoinGame.Utilities
         private NetworkObject _spawnNetworkParent;
         private bool _poolHandlerRegistered;
         private Dictionary<ulong, CancellationTokenSource> _playerSpawnTokens;
-        private readonly List<Vector3> _spawnedPositions = new();
         [SerializeField]
         private List<BoxCollider> _playerZones = new();
         [SerializeField]
@@ -27,9 +27,29 @@ namespace CoinGame.Utilities
         private List<BoxCollider> _disruptorPlayerZones = new();
         [SerializeField]
         private GridSpawnMap _gridSpawnMap;
-        private readonly List<int> _zoneRemaining = new();
-        private int _lastZoneRound = -1;
-        private int _lastZoneCount = -1;
+        [SerializeField]
+        private GridSpawnKind _spawnKind = GridSpawnKind.Coin;
+        [SerializeField]
+        private StageConfig _stageConfig;
+        [SerializeField]
+        private SpawnPlacementSettings _placementSettings;
+        private readonly NetworkSpawnBatch _spawnBatch = new();
+
+        protected override int GetRoundSpawnCount(StageSession stageSession)
+        {
+            if (!NetworkManager.Singleton.IsServer)
+            {
+                return 0;
+            }
+
+            _spawnBatch.Clear();
+            if (_spawnKind == GridSpawnKind.Crate)
+            {
+                return _stageConfig.GetCrateCount();
+            }
+
+            return NetworkRoundState.Instance.SpawnCoins;
+        }
 
         protected override async UniTask<Vector3> GetSpawnPosition(CancellationToken token)
         {
@@ -38,110 +58,7 @@ namespace CoinGame.Utilities
                 return await GetPlayerSpawnPosition(token);
             }
 
-            return await GetCoinSpawnPosition(token);
-        }
-
-        private async UniTask<Vector3> GetCoinSpawnPosition(CancellationToken token)
-        {
-            List<BoxCollider> zones = ResolveCoinZones();
-            while (zones.Count == 0)
-            {
-                token.ThrowIfCancellationRequested();
-                await UniTask.Yield(PlayerLoopTiming.Update, token);
-                zones = ResolveCoinZones();
-            }
-            int round = NetworkRoundState.Instance != null ? NetworkRoundState.Instance.Round : -1;
-            if (round != _lastZoneRound || _spawnCount != _lastZoneCount)
-            {
-                _lastZoneRound = round;
-                _lastZoneCount = _spawnCount;
-                _spawnedPositions.Clear();
-                BuildZoneAllocation(zones, _spawnCount);
-            }
-
-            for (int attempt = 0; attempt < MaxIterations; attempt++)
-            {
-                token.ThrowIfCancellationRequested();
-                int zoneIndex = GetNextZoneIndex();
-                if (zoneIndex < 0)
-                {
-                    break;
-                }
-
-                Bounds bounds = zones[zoneIndex].bounds;
-                Vector3 candidate = new(
-                    UnityEngine.Random.Range(bounds.min.x, bounds.max.x),
-                    bounds.max.y + 20f,
-                    UnityEngine.Random.Range(bounds.min.z, bounds.max.z));
-                int groundMask = LayerMask.GetMask("Ground", "Default");
-                if (!Physics.Raycast(candidate, Vector3.down, out RaycastHit ground, 50f, groundMask))
-                {
-                    continue;
-                }
-                candidate = ground.point + Vector3.up * 0.8f;
-                if (IsBlocked(candidate))
-                {
-                    continue;
-                }
-                if (_spawnedPositions.Any(x => (x - candidate).sqrMagnitude < 2.25f))
-                {
-                    continue;
-                }
-                _zoneRemaining[zoneIndex]--;
-                _spawnedPositions.Add(candidate);
-                return candidate;
-            }
-
-            Debug.LogError("Coin zone capacity was insufficient for the requested spawn count.", this);
-            throw new InvalidOperationException("Coin spawn zones cannot satisfy the requested spawn count.");
-        }
-
-        private bool IsBlocked(Vector3 position)
-        {
-            int mask = _blockingLayerMask | LayerMask.GetMask("Default", "Ground");
-            foreach (Collider hit in Physics.OverlapSphere(position, _checkRadius, mask, QueryTriggerInteraction.Collide))
-            {
-                if (IsSpawnZone(hit))
-                {
-                    continue;
-                }
-
-                if (hit.gameObject.layer == LayerMask.NameToLayer("Ground"))
-                {
-                    continue;
-                }
-                return true;
-            }
-            return false;
-        }
-
-        private bool IsSpawnZone(Collider hit)
-        {
-            if (SpawnZoneRegistry.Instance != null)
-            {
-                return ContainsZone(SpawnZoneRegistry.Instance.CoinZones, hit) ||
-                    ContainsZone(SpawnZoneRegistry.Instance.CrateZones, hit) ||
-                    ContainsZone(SpawnZoneRegistry.Instance.PlayerZones, hit) ||
-                    ContainsZone(SpawnZoneRegistry.Instance.CollectorPlayerZones, hit) ||
-                    ContainsZone(SpawnZoneRegistry.Instance.DisruptorPlayerZones, hit);
-            }
-
-            return hit.name.StartsWith("CoinZone", StringComparison.Ordinal) ||
-                hit.name.StartsWith("CrateZone", StringComparison.Ordinal) ||
-                hit.name.EndsWith("_Points", StringComparison.Ordinal);
-        }
-
-        private static bool ContainsZone(List<BoxCollider> zones, Collider hit)
-        {
-            foreach (BoxCollider zone in zones)
-            {
-                if (zone == hit)
-                {
-                    return true;
-                }
-            }
-
-            return false;
+            throw new InvalidOperationException("Dynamic spawns require a GridSpawnMap.");
         }
 
         private async UniTask<Vector3> GetPlayerSpawnPosition(CancellationToken token)
@@ -169,69 +86,6 @@ namespace CoinGame.Utilities
 
             Debug.LogError("Player spawn zones could not provide a valid position.", this);
             throw new InvalidOperationException("Player spawn zones cannot provide a valid position.");
-        }
-
-        private void BuildZoneAllocation(List<BoxCollider> zones, int count)
-        {
-            _zoneRemaining.Clear();
-            if (zones.Count == 0)
-            {
-                return;
-            }
-
-            float totalArea = 0f;
-            foreach (BoxCollider zone in zones)
-            {
-                totalArea += Mathf.Max(0.01f, zone.bounds.size.x * zone.bounds.size.z);
-            }
-
-            int assigned = 0;
-            List<float> remainders = new();
-            foreach (BoxCollider zone in zones)
-            {
-                float area = Mathf.Max(0.01f, zone.bounds.size.x * zone.bounds.size.z);
-                float exact = count * area / totalArea;
-                int quota = Mathf.FloorToInt(exact);
-                _zoneRemaining.Add(quota);
-                remainders.Add(exact - quota);
-                assigned += quota;
-            }
-
-            while (assigned < count)
-            {
-                int bestIndex = 0;
-                for (int i = 1; i < remainders.Count; i++)
-                {
-                    if (remainders[i] > remainders[bestIndex])
-                    {
-                        bestIndex = i;
-                    }
-                }
-
-                _zoneRemaining[bestIndex]++;
-                remainders[bestIndex] = -1f;
-                assigned++;
-            }
-        }
-
-        private int GetNextZoneIndex()
-        {
-            if (_zoneRemaining.Count == 0)
-            {
-                return -1;
-            }
-
-            int start = UnityEngine.Random.Range(0, _zoneRemaining.Count);
-            for (int offset = 0; offset < _zoneRemaining.Count; offset++)
-            {
-                int index = (start + offset) % _zoneRemaining.Count;
-                if (_zoneRemaining[index] > 0)
-                {
-                    return index;
-                }
-            }
-
-            return -1;
         }
 
         private bool TryGetZoneCandidate(List<BoxCollider> zones, out Vector3 candidate)
@@ -316,24 +170,6 @@ namespace CoinGame.Utilities
             return _playerZones;
         }
 
-        private List<BoxCollider> ResolveCoinZones()
-        {
-            if (_spawnZones == null)
-            {
-                _spawnZones = new();
-            }
-
-            _spawnZones.RemoveAll(zone => zone == null);
-            if (_spawnZones.Count > 0)
-            {
-                return _spawnZones;
-            }
-
-            return SpawnZoneRegistry.Instance != null
-                ? SpawnZoneRegistry.Instance.CoinZones
-                : _spawnZones;
-        }
-
         private static List<BoxCollider> GetRegistryZones(List<BoxCollider> zones, List<BoxCollider> fallback)
         {
             RemoveNullZones(zones);
@@ -370,40 +206,84 @@ namespace CoinGame.Utilities
 
         protected override async UniTask<CancellationToken?> SpawnOneAsync(CancellationToken token)
         {
-            if (!_spawnPrefab.TryGetComponent(out NetworkObject prefabNetworkObject))
-            {
-                Debug.LogError("SpawnPrefab requires a NetworkObject component.", this);
-                return null;
-            }
             await UniTask.WaitUntil(() => NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening, cancellationToken: token);
             if (!NetworkManager.Singleton.IsServer)
             {
                 return null;
             }
 
-            Vector3 position = await GetSpawnPosition(token);
-            EnsurePoolHandler();
-            NetworkObject instance = _networkObjectPool != null
-                ? _networkObjectPool.Get().GetComponent<NetworkObject>()
-                : Instantiate(prefabNetworkObject, position, Quaternion.identity, _spawnParent);
-            if (instance == null)
+            if (_gridSpawnMap == null || _spawnKind == GridSpawnKind.Player)
             {
-                return null;
+                throw new InvalidOperationException("Dynamic spawns require a GridSpawnMap and Coin or Crate kind.");
             }
 
-            instance.transform.position = position;
-            if (_spawnNetworkParent != null)
+            Physics.SyncTransforms();
+            if (!GridSpawnPlacement.TrySelect(_gridSpawnMap, _spawnKind, _spawnPrefab, _placementSettings,
+                out Pose pose, out int reservationId, out bool usedFallback))
             {
-                await UniTask.WaitUntil(() => _spawnNetworkParent.IsSpawned, cancellationToken: token);
+                throw new InvalidOperationException($"No valid Ground placement for {_spawnKind}.");
             }
 
-            instance.Spawn();
-            if (_spawnNetworkParent != null && !instance.TrySetParent(_spawnNetworkParent))
+            if (usedFallback)
             {
-                Debug.LogWarning($"Failed to parent {instance.name}.", this);
+                Debug.LogWarning($"{name}: no fully clear front; using the greatest available front clearance.", this);
             }
 
-            return _networkObjectPool != null ? _networkObjectPool.GetDespawnToken(instance.gameObject) : instance.destroyCancellationToken;
+            NetworkObject instance = null;
+            try
+            {
+                EnsurePoolHandler();
+                if (_networkObjectPool != null)
+                {
+                    instance = _networkObjectPool.Get().GetComponent<NetworkObject>();
+                }
+                else
+                {
+                    instance = Instantiate(_spawnPrefab, pose.position, pose.rotation, _spawnParent).GetComponent<NetworkObject>();
+                }
+
+                instance.transform.SetPositionAndRotation(pose.position, pose.rotation);
+                if (_spawnKind == GridSpawnKind.Crate)
+                {
+                    instance.GetComponent<NetworkCrate>().SetGridReservation(reservationId);
+                }
+                else
+                {
+                    instance.GetComponent<NetworkCoinController>().SetGridReservation(reservationId);
+                }
+
+                if (_spawnNetworkParent != null)
+                {
+                    await UniTask.WaitUntil(() => _spawnNetworkParent.IsSpawned, cancellationToken: token);
+                }
+
+                token.ThrowIfCancellationRequested();
+                instance.Spawn();
+                _spawnBatch.Track(instance);
+                reservationId = 0;
+                if (_spawnNetworkParent != null && !instance.TrySetParent(_spawnNetworkParent))
+                {
+                    Debug.LogWarning($"Failed to parent {instance.name}.", this);
+                }
+
+                if (_networkObjectPool != null)
+                {
+                    return _networkObjectPool.GetDespawnToken(instance.gameObject);
+                }
+
+                return instance.destroyCancellationToken;
+            }
+            finally
+            {
+                if (reservationId != 0)
+                {
+                    GridSpawnReservation.ReleaseReservation(reservationId);
+                    if (instance != null)
+                    {
+                        NetworkGameObjectPool.Despawn(instance.gameObject);
+                    }
+                }
+            }
         }
 
         private async UniTask RegisterPoolHandlerAsync(CancellationToken token)
@@ -625,10 +505,6 @@ namespace CoinGame.Utilities
 
         private void OnValidate()
         {
-            if (_spawnZones == null)
-            {
-                _spawnZones = new();
-            }
             if (_playerZones == null)
             {
                 _playerZones = new();
@@ -653,8 +529,6 @@ namespace CoinGame.Utilities
                 return;
             }
 
-            PopulateZones(_spawnZones, "CoinZone");
-            SetTrigger(_spawnZones);
         }
 
         private static void PopulateZones(List<BoxCollider> zones, params string[] names)
@@ -701,7 +575,8 @@ namespace CoinGame.Utilities
                 return;
             }
 
-            if (!NetworkManager.Singleton.ConnectedClients.ContainsKey(clientId) || !_spawnPrefab.TryGetComponent(out NetworkObject prefab))
+            if (!NetworkManager.Singleton.ConnectedClients.TryGetValue(clientId, out NetworkClient client) ||
+                client.PlayerObject != null || !_spawnPrefab.TryGetComponent(out NetworkObject prefab))
             {
                 return;
             }
@@ -746,7 +621,15 @@ namespace CoinGame.Utilities
             {
                 await UniTask.Delay(TimeSpan.FromSeconds(_spawnDelay), cancellationToken: token);
                 await UniTask.WaitUntil(() => NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening, cancellationToken: token);
-                NetworkObject instance = Instantiate(prefab, await GetSpawnPosition(token), Quaternion.identity);
+                Vector3 position = await GetSpawnPosition(token);
+                token.ThrowIfCancellationRequested();
+                if (!NetworkManager.Singleton.ConnectedClients.TryGetValue(clientId, out NetworkClient client) ||
+                    client.PlayerObject != null)
+                {
+                    return;
+                }
+
+                NetworkObject instance = Instantiate(prefab, position, Quaternion.identity);
                 instance.SpawnAsPlayerObject(clientId);
             }
             catch (OperationCanceledException)
@@ -760,6 +643,8 @@ namespace CoinGame.Utilities
 
         protected override void OnDestroy()
         {
+            _spawnBatch.Clear();
+
             if (_poolHandlerRegistered && NetworkManager.Singleton != null)
             {
                 NetworkManager.Singleton.PrefabHandler.RemoveHandler(_spawnPrefab);
