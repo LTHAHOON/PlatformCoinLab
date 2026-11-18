@@ -156,3 +156,7 @@ Packages/packages-lock.json linguist-generated
 
 # Exceptions for .asset files such as lightning pre-baking
 LightingData.asset     binary
+
+# Submitted builds and remote Addressables bundles
+PlatformCoinLab/Build/** lfs
+ContentServer/Content/**/*.bundle lfs

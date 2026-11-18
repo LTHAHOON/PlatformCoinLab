@@ -15,7 +15,7 @@ MonoBehaviour:
   m_DefaultGroup: 435311f4a406a5d4a850c4cfc42b4914
   m_currentHash:
     serializedVersion: 2
-    Hash: 5cd6b0699a2f0d533440d33fc8fb287d
+    Hash: 91ee6ac73bf1cab7e4bfe7978e1b875f
   m_ExtractTypeTreeData: 0
   m_DisableWriteTypeTree: 0
   m_OptimizeCatalogSize: 0
@@ -109,7 +109,7 @@ MonoBehaviour:
       m_ProfileName: CoinGame_Android
       m_Values:
       - m_Id: 5766eab1c2d1ec74e8991e92a0b776e5
-        m_Value: 'http://222.120.162.193:5250/[BuildTarget]'
+        m_Value: "http://\uACF5\uC778IP:5250/[BuildTarget]"
       - m_Id: b686a805c0bf5a344a5c1e25152ec1a0
         m_Value: '../ContentServer/Content/[BuildTarget]'
       - m_Id: bff69e61d04171b4fa569ec85a7f2de2

@@ -9,6 +9,7 @@
     <type fullname="CoinGame.Gameplay.Player.CharacterAnimatorUtility" preserve="all" />
     <type fullname="CoinGame.Gameplay.Player.PlayerStatsConfig" preserve="all" />
     <type fullname="CoinGame.Gameplay.Player.RoleLoadoutData" preserve="all" />
+    <type fullname="CoinGame.Input.MobileControlInput" preserve="all" />
     <type fullname="CoinGame.Input.PlayerInputStateProvider" preserve="all" />
     <type fullname="CoinGame.Network.NetworkCoinController" preserve="all" />
     <type fullname="CoinGame.Network.NetworkCombat" preserve="all" />
@@ -29,8 +30,13 @@
     <type fullname="CoinGame.Stage.RoleAbilityConfig" preserve="all" />
     <type fullname="CoinGame.Stage.StageConfig" preserve="all" />
     <type fullname="CoinGame.Timeline.PlayableDirectorController" preserve="all" />
+    <type fullname="CoinGame.UI.FloatingJoystick" preserve="all" />
     <type fullname="CoinGame.UI.InGameHudView" preserve="all" />
     <type fullname="CoinGame.UI.MatchResultView" preserve="all" />
+    <type fullname="CoinGame.UI.MobileActionButton" preserve="all" />
+    <type fullname="CoinGame.UI.MobileControlLayout" preserve="all" />
+    <type fullname="CoinGame.UI.MobileControlsSettings" preserve="all" />
+    <type fullname="CoinGame.UI.MobileControlsView" preserve="all" />
     <type fullname="CoinGame.UI.PlayerAccountView" preserve="all" />
     <type fullname="CoinGame.UI.PlayerHealthBarLayer" preserve="all" />
     <type fullname="CoinGame.UI.PlayerHealthBarSettings" preserve="all" />
@@ -60,13 +66,12 @@
   <assembly fullname="Unity.InputSystem, Version=1.20.1.0, Culture=neutral, PublicKeyToken=null">
     <type fullname="UnityEngine.InputSystem.InputActionAsset" preserve="all" />
     <type fullname="UnityEngine.InputSystem.InputActionReference" preserve="all" />
-    <type fullname="UnityEngine.InputSystem.OnScreen.OnScreenStick" preserve="all" />
     <type fullname="UnityEngine.InputSystem.PlayerInput" preserve="all" />
     <type fullname="UnityEngine.InputSystem.UI.InputSystemUIInputModule" preserve="all" />
-    <type fullname="UnityEngine.InputSystem.InputAction" preserve="nothing" serialized="true" />
     <type fullname="UnityEngine.InputSystem.PlayerInput/ControlsChangedEvent" preserve="nothing" serialized="true" />
     <type fullname="UnityEngine.InputSystem.PlayerInput/DeviceLostEvent" preserve="nothing" serialized="true" />
     <type fullname="UnityEngine.InputSystem.PlayerInput/DeviceRegainedEvent" preserve="nothing" serialized="true" />
+    <type fullname="UnityEngine.InputSystem.InputAction" preserve="nothing" serialized="true" />
     <type fullname="UnityEngine.InputSystem.InputActionMap" preserve="nothing" serialized="true" />
     <type fullname="UnityEngine.InputSystem.InputBinding" preserve="nothing" serialized="true" />
     <type fullname="UnityEngine.InputSystem.InputControlScheme" preserve="nothing" serialized="true" />
@@ -158,7 +163,9 @@
     <type fullname="UnityEngine.Transform" preserve="all" />
     <type fullname="UnityEngine.Color" preserve="nothing" serialized="true" />
     <type fullname="UnityEngine.Color32" preserve="nothing" serialized="true" />
+    <type fullname="UnityEngine.Events.ArgumentCache" preserve="nothing" serialized="true" />
     <type fullname="UnityEngine.Events.PersistentCallGroup" preserve="nothing" serialized="true" />
+    <type fullname="UnityEngine.Events.PersistentListenerMode" preserve="nothing" serialized="true" />
     <type fullname="UnityEngine.LayerMask" preserve="nothing" serialized="true" />
     <type fullname="UnityEngine.Quaternion" preserve="nothing" serialized="true" />
     <type fullname="UnityEngine.RenderingLayerMask" preserve="nothing" serialized="true" />
@@ -182,6 +189,7 @@
   </assembly>
   <assembly fullname="UnityEngine.UI, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null">
     <type fullname="UnityEngine.EventSystems.EventSystem" preserve="all" />
+    <type fullname="UnityEngine.UI.Button" preserve="all" />
     <type fullname="UnityEngine.UI.CanvasScaler" preserve="all" />
     <type fullname="UnityEngine.UI.GraphicRaycaster" preserve="all" />
     <type fullname="UnityEngine.UI.Image" preserve="all" />
@@ -189,6 +197,7 @@
     <type fullname="UnityEngine.UI.SafeArea" preserve="all" />
     <type fullname="UnityEngine.UI.Slider" preserve="all" />
     <type fullname="UnityEngine.UI.AnimationTriggers" preserve="nothing" serialized="true" />
+    <type fullname="UnityEngine.UI.Button/ButtonClickedEvent" preserve="nothing" serialized="true" />
     <type fullname="UnityEngine.UI.ColorBlock" preserve="nothing" serialized="true" />
     <type fullname="UnityEngine.UI.MaskableGraphic/CullStateChangedEvent" preserve="nothing" serialized="true" />
     <type fullname="UnityEngine.UI.Navigation" preserve="nothing" serialized="true" />

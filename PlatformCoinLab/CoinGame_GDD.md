@@ -728,7 +728,7 @@ flowchart TD
 |---|---|
 | 프로젝트 소개 | 게임 이름·장르·대상 플랫폼·핵심 플레이 |
 | 개발 정보 | 제작자·개발 기간·Unity 및 주요 패키지 버전 |
-| 실행 자료 | 대표 이미지·플레이 영상·실행 파일과 소스의 위치 |
+| 실행 자료 | 대표 이미지·플레이 영상·실행 파일과 소스의 위치. `ContentServer/Content` 전체와 `PlatformCoinLab/Build` 내부 빌드 산출물을 Git 추적 대상에 포함하며, 빌드 파일·원격 번들은 Git LFS로 복원한다. 원격 업로드는 별도 확인 |
 | 주요 구현 기능 | 기능의 목적·구현 방식·자료 구조와 처리 순서·핵심 코드 위치. Score 없이 Remaining Coin·경기 누적 Kills·WIN/LOSS를 표시하며 Disruptor는 Remaining Coin을 숨긴다. 이름 저장 분리·이름#번호·UserName·역할 목록은 실제 MPP Main+Player2로 검증했다. Player/Crate Ground 접촉은 로컬 Host 검증. Canvas 추적 체력 바・씬 고정 HUD를 사용한다. Toon Shaders Pro 머티리얼·아웃라인과 잔디 디더링·서버 권한 위장을 추가했고 실제 MPP Host/Client 양방향에서 본체·무기·체력 바 숨김 및 퇴장 복구를 검증했다 |
 | 플랫폼 대응 | 자유형 터치 조이스틱과 모바일 공격·장전·무기·아이템·방해 스킬 HUD, 배치·크기 JSON 저장을 구현했다. Editor 로컬 Host에서 이동·공격·무기·부활·배치 복원을 확인했고 1920×1080·2160×1080 배치를 확인했다. 실제 Android 원격 다운로드·로비 진입은 사용자 확인, 새 모바일 조작·노치·전체 경기·Web은 미검증  대기 씬은 모바일 이동 조이스틱만 제공하며, 로컬 Host 이동·해제 및 PC 숨김을 확인했다  WebGL 개발 Player 빌드 및 settings/catalog/번들 HTTP 200을 확인했고 실제 브라우저 화면 검증은 도구 제한으로 미완료다 |
 | 추가·개선한 부분 | 수업 구현과의 차이·필요한 이유·구현 방법·동작 결과. 상자 드롭 높이를 0.35m로 조정해 실제 습득을 확인했다. KayKit 라이플 발사·Hit·Death를 프로젝트 Animator에 연결하고 실제 MPP Host/Player2에서 발사 동기화·피격 중 사망·사망 재접속·부활 복귀를 확인했다. 대기 씬에서는 공격 모션만 동기화하고 피해·탄약 소모·투사체 생성을 차단하며, 대기 씬 종료 후 정상 공격 복귀를 Host/Player2에서 확인했다. 스테이지별 총 자동 변경은 후속 작업 |
@@ -741,13 +741,14 @@ flowchart TD
 
 - **프로젝트 소개**: `CoinGame`, 탑뷰 비대칭 캐주얼 슈팅 아케이드, PC/Android, Collector의 코인 수집과 Disruptor의 방해·전투가 핵심이다.
 - **개발 정보**: Unity 버전은 `ProjectSettings/ProjectVersion.txt`, 패키지 버전은 `Packages/manifest.json`과 `packages-lock.json`을 기준으로 기록한다. 제작자와 개발 기간은 확정 후 기입한다.
-- **실행 자료**: 대표 이미지는 `Assets/Screenshots/`, 소스는 `Assets/_CoinGame/`, 빌드 산출물과 플레이 영상은 실제 생성 경로를 확인한 뒤 기록한다.
+- **실행 자료**: 대표 이미지는 `Assets/Screenshots/`, 소스는 `Assets/_CoinGame/`, 빌드 산출물은 프로젝트의 `Build/`, 원격 콘텐츠는 저장소의 `ContentServer/Content/`에 있다. 두 폴더의 내부 파일 전체를 Git 추적 대상에 포함하며 `git lfs pull`로 빌드·번들을 복원한다. 플레이 영상은 미등록이며 원격 업로드는 별도 확인한다.
 - **주요 구현 기능**: NGO 서버 권한 라운드·역할·체력·전투·인벤토리·아이템·Addressables 콘텐츠 흐름과 핵심 스크립트 경로를 기능별로 연결해 설명한다. 수집가와 방해자는 `K` 기본 공격으로 상자를 열며, 수집가 기본 주먹과 방해자 기본 공격력은 역할 데이터로 분리하고 상자 피해는 무기 `CrateDamage`로 분리한다. 상자는 열린 뒤 1회 추가 타격으로 파괴되고 뚜껑은 `1_chest_top` 회전축을 코드에서 보간한다.
 - **플랫폼 대응**: PC 키보드/마우스와 Android 터치 입력, Safe Area·가로 화면, 저장·앱 중단/복귀, 효과음 재생, 플랫폼별 Player 실행 결과를 각각 기록한다.
 - **추가·개선한 부분**: M1~M3의 서버 권한 판정, 모바일 입력 추상화, 콘텐츠 서버 복구, JSON 기본값 처리처럼 수업 구현과 다른 부분은 이유·방법·동작 결과를 함께 남긴다.
 - **문제 해결 사례**: Addressables 로드 실패, HTTPS 파일 서버 연결 실패, JSON 손상, 씬 재진입·네트워크 재접속 등 실제 재현 가능한 사례만 기록한다. Unity Multiplayer Play Mode에서 호스트와 클라이언트가 같은 인증 프로필을 사용해 Lobby SDK의 `SessionConnector.InvokeFailed: Object reference not set`가 발생하던 문제는 에디터 인스턴스별 `CoinDevHost`/`CoinDevClient` 프로필을 사용하도록 수정했다. 상자·능력 판정은 서버 거리 계산으로 제한하고, 호스트 대상 밀치기는 서버에서 직접 이동하도록 수정했다. 수정 후 Assembly-CSharp 빌드 오류는 0개이며 실제 두 인스턴스 Join과 상자·O·L 동작 재검증은 남아 있다. 문서는 UTF-8로 복구하고 저장 시 ANSI/CP949 변환을 사용하지 않는다.
 - **성능 개선**: 동일한 기기·빌드 설정에서 Profiler/Frame Timing/Memory Profiler 측정값을 수정 전후로 기록하고 GC Alloc·로딩·프레임 유지 여부와 측정 한계를 적는다.
 - **실행·복원 방법과 한계**: 시작 씬(`Bootstrap_CoinGameScene`), 조작법, Addressables 빌드·콘텐츠 서버 실행·Player 빌드 순서, 알려진 문제와 미확인 기기를 명시한다. `InGame_CoinGameScene`을 단독 실행할 때는 `InGamePersistentBootstrap`이 Persistent 씬을 additive 로드하지만, 실제 Host/Client와 라운드 시작은 로비 역할 선택·네트워크 연결 절차가 필요하다.
+- **Android 테스트 안내 보완 (2026-11-18)**: README의 콘텐츠 서버 및 빌드 절에 `CoinGame_Android`의 `Remote.LoadPath`를 `http://<콘텐츠 서버 공인 IP>:5250/[BuildTarget]`으로 입력하고, 콘텐츠·APK를 재빌드한 뒤 실제 기기에서 health 응답·다운로드·로비 진입을 확인하는 절차를 추가했다. 이번 작업은 문서와 Git 포함 규칙 변경이며 새 빌드·기기 실행은 수행하지 않았다.
 
 ### 16.2 필수 검증 체크리스트
 

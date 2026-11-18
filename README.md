@@ -43,7 +43,7 @@
 | 게임 코드 | `PlatformCoinLab\Assets\_CoinGame\Scripts\` |
 | 기획서 | `PlatformCoinLab\CoinGame_GDD.md` |
 | 콘텐츠 서버 코드 | `ContentServer\Program.cs` |
-| 제출용 빌드 산출물 폴더 | 로컬 Android 산출물: `PlatformCoinLab/Build/Android/`. 빌드 파일은 저장소에 포함되지 않으므로 배포 시 별도 첨부 |
+| 제출용 빌드 산출물 폴더 | 로컬 Android 산출물: `PlatformCoinLab/Build/Android/`. 내부 빌드 파일까지 Git LFS로 저장소에 포함하며, 복원 시 `git lfs pull` 실행 |
 
 ## 주요 구현 기능
 
@@ -124,6 +124,9 @@
 - Android: 왼쪽 아래 빈 영역을 누르면 해당 위치에 조이스틱이 나타납니다. 오른쪽 버튼으로 공격·장전·무기·아이템·역할 스킬을 사용합니다. `배치`에서 버튼을 드래그하고 크기를 바꾼 뒤 `완료`를 누르면 저장됩니다. 아이템은 접촉 습득 방식이며, 미구현 P 상호작용의 터치 버튼은 표시하지 않습니다.
 
 ### 콘텐츠 서버 및 빌드
+
+- **Android 실제 기기 테스트 전 공인 IP 설정:** Addressables Profiles에서 `CoinGame_Android`를 선택하고 `Remote.LoadPath`를 `http://<콘텐츠 서버 공인 IP>:5250/[BuildTarget]`으로 입력합니다. `Remote.BuildPath`는 `../ContentServer/Content/[BuildTarget]`를 유지합니다. 공인 IP를 변경했다면 콘텐츠(Addressables 카탈로그·번들)와 APK를 모두 다시 빌드한 뒤 최신 APK를 설치해 테스트합니다. 서버 실행 및 외부에서 5250 포트 접근이 가능한 상태에서 휴대폰으로 `http://<콘텐츠 서버 공인 IP>:5250/health` 응답, 게임 다운로드 완료·로비 진입을 확인합니다.
+- **저장소 산출물 복원:** `ContentServer/Content`의 카탈로그·해시·번들과 `PlatformCoinLab/Build`의 내부 빌드 파일을 저장소에 포함합니다. Git LFS를 설치한 환경에서 `git lfs pull`로 실제 산출물을 내려받습니다.
 
 - **Web 빌드 시 네트워크 설정:** `NetworkManager` 오브젝트의 `Unity Transport` 컴포넌트에서 `Use Web Sockets`를 켜 주세요. Web 이외의 플랫폼(Android/PC 등)으로 빌드할 때는 꺼 주세요.
 

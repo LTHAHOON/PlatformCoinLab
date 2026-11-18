@@ -73,3 +73,8 @@ crashlytics-build.properties
 # Temporary auto-generated Android Assets
 /[Aa]ssets/[Ss]treamingAssets/aa.meta
 /[Aa]ssets/[Ss]treamingAssets/aa/*
+# Include all submitted Player builds and remote content, including ignored extensions.
+!/PlatformCoinLab/Build/
+!/PlatformCoinLab/Build/**
+!/ContentServer/Content/
+!/ContentServer/Content/**

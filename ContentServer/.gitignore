@@ -1,6 +1,3 @@
 bin/
 obj/
 !ContentServer.csproj
-Content/**/*.bundle
-Content/**/catalog_*.json
-Content/**/catalog_*.hash
